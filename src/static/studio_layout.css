@@ -1,0 +1,60 @@
+body {
+    padding: 0;
+    margin: 0;
+}
+
+h4, p {
+    margin: 0;
+}
+i, var {
+    font-style: normal;
+}
+ul {
+    list-style-type: none;
+    margin: 0;
+}
+.studio {
+    display: flex;
+    height: 100vh;
+    flex-direction: column;
+}
+
+.studio>.menu {
+    height: 100px;
+    display: flex;
+    flex-shrink: 0;
+}
+
+.studio>.panel {
+    flex: auto;
+    display: flex;
+    height: 0;
+}
+
+.studio>.panel>.tools {
+    width: 200px;
+    border: 1px solid red;
+}
+
+.studio>.panel>.content {
+    flex: auto;
+    border: 1px solid yellow;
+    display: flex;
+    flex-direction: column;
+}
+
+.studio>.panel>.content>.workspace {
+    flex: auto;
+    height: 0;
+    overflow-y: scroll;
+}
+
+.studio>.panel>.content>.console {
+    height: 100px;
+    background-color: #000;
+}
+
+.studio>.panel>.property {
+    width: 200px;
+    border: 1px solid blue;
+}
