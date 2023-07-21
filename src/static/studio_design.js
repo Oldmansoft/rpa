@@ -82,7 +82,7 @@ function get_next_node(target) {
 }
 
 function get_first_node() {
-    var nodes = document.querySelector('.container').children;
+    var nodes = document.querySelector('.editor').children;
     if (nodes.length == 0){
         return null;
     }
@@ -125,7 +125,7 @@ $(function() {
             renumber_node = get_renumber_start_node(drop_line, drag_target);
             $(drop_line).after(drag_target);
         }
-        $('.container').after(drop_line);
+        $('.editor').after(drop_line);
         drag_target = null;
         if (drop_result){
             make_numbers(renumber_node);
@@ -137,7 +137,7 @@ $(function() {
     $('header,footer').on('dragstart', function() {
         drag_target = this.parentNode;
     });
-    $('.container').on('dragenter', function(e) {
+    $('.editor').on('dragenter', function(e) {
         e.preventDefault();
     }).on('dragover', function(e) {
         e.preventDefault();
@@ -189,8 +189,8 @@ $(function() {
             }
         }
     });
-    $('.container').on('mousedown', function() {
-        var nodes = document.querySelectorAll('.container .chosen');
+    $('.editor').on('mousedown', function() {
+        var nodes = document.querySelectorAll('.editor .chosen');
         for (var i=0; i<nodes.length; i++) {
             nodes[i].classList.remove('chosen');
         }

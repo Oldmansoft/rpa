@@ -5,29 +5,44 @@
         <title>studio</title>
         <link href="studio_layout.css" rel="stylesheet" />
         <link href="studio_design.css" rel="stylesheet" />
-        <link href="//at.alicdn.com/t/c/font_4171489_j69bafsp74d.css" rel="stylesheet" />
+        <link href="//at.alicdn.com/t/c/font_4171489_g4wilp5620u.css" rel="stylesheet" />
         <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
         <script src="studio_design.js"></script>
     </head>
     <body>
         <div class="studio">
-            <div class="menu">
-                <div>首页</div>
-                <div>打开</div>
-                <div>保存</div>
-                <div>导出</div>
-                <div>运行</div>
+            <div class="top">
+                <div class="menu">
+                    <i class="font i-home"></i>
+                    <span>首页</span>
+                </div>
+                <div class="menu">
+                    <i class="font i-open"></i>
+                    <span>打开</span>
+                </div>
+                <div class="menu">
+                    <i class="font i-save"></i>
+                    <span>保存</span>
+                </div>
+                <div class="menu">
+                    <i class="font i-export"></i>
+                    <span>导出</span>
+                </div>
+                <div class="menu">
+                    <i class="font i-run"></i>
+                    <span>运行</span>
+                </div>
             </div>
-            <div class="panel">
-                <div class="tools"></div>
-                <div class="content">
+            <div class="other">
+                <div class="left"></div>
+                <div class="center">
                     <div class="workspace">
-                        <div class="container">
-                            <article draggable="true">
+                        <div class="editor">
+                            <article class="item" draggable="true">
                                 <ul>
                                     <li>
                                         <aside>1</aside>
-                                        <i class="iconfont icon-var"></i>
+                                        <i class="font i-var"></i>
                                     </li>
                                     <li>
                                         <h4>Set Variable</h4>
@@ -40,7 +55,7 @@
                                     <ul>
                                         <li>
                                             <aside>2</aside>
-                                            <i class="iconfont icon-loop"></i>
+                                            <i class="font i-loop"></i>
                                         </li>
                                         <li>
                                             <h4>Where</h4>
@@ -49,11 +64,11 @@
                                     </ul>
                                 </header>
                                 <main>
-                                    <article draggable="true">
+                                    <article class="item" draggable="true">
                                         <ul>
                                             <li>
                                                 <aside>3</aside>
-                                                <i class="iconfont icon-var"></i>
+                                                <i class="font i-var"></i>
                                             </li>
                                             <li>
                                                 <h4>Print</h4>
@@ -66,7 +81,7 @@
                                             <ul>
                                                 <li>
                                                     <aside>4</aside>
-                                                    <i class="iconfont icon-loop"></i>
+                                                    <i class="font i-loop"></i>
                                                 </li>
                                                 <li>
                                                     <h4>If</h4>
@@ -75,11 +90,11 @@
                                             </ul>
                                         </header>
                                         <main>
-                                            <article draggable="true">
+                                            <article class="item" draggable="true">
                                                 <ul>
                                                     <li>
                                                         <aside>5</aside>
-                                                        <i class="iconfont icon-var"></i>
+                                                        <i class="font i-var"></i>
                                                     </li>
                                                     <li>
                                                         <h4>Log</h4>
@@ -87,11 +102,11 @@
                                                     </li>
                                                 </ul>
                                             </article>
-                                            <article draggable="true">
+                                            <article class="item" draggable="true">
                                                 <ul>
                                                     <li>
                                                         <aside>6</aside>
-                                                        <i class="iconfont icon-loop-none"></i>
+                                                        <i class="font i-loop-none"></i>
                                                     </li>
                                                     <li>
                                                         <h4>Break</h4>
@@ -103,7 +118,7 @@
                                             <ul>
                                                 <li>
                                                     <aside>7</aside>
-                                                    <i class="iconfont icon-flag"></i>
+                                                    <i class="font i-flag"></i>
                                                 </li>
                                                 <li>
                                                     <h4>End</h4>
@@ -116,7 +131,7 @@
                                     <ul>
                                         <li>
                                             <aside>8</aside>
-                                            <i class="iconfont icon-flag"></i>
+                                            <i class="font i-flag"></i>
                                         </li>
                                         <li>
                                             <h4>End</h4>
@@ -124,11 +139,11 @@
                                     </ul>
                                 </footer>
                             </section>
-                            <article draggable="true">
+                            <article class="item" draggable="true">
                                 <ul>
                                     <li>
                                         <aside>9</aside>
-                                        <i class="iconfont icon-var"></i>
+                                        <i class="font i-var"></i>
                                     </li>
                                     <li>
                                         <h4>Log</h4>
@@ -139,9 +154,9 @@
                         </div>
                         <div id="drop_line"><div></div></div>
                     </div>
-                    <div class="console"></div>
+                    <div class="bottom"></div>
                 </div>
-                <div class="property"></div>
+                <div class="right"></div>
             </div>
         </div>
     </body>

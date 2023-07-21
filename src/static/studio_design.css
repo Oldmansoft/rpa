@@ -1,28 +1,29 @@
-.container {
+.editor {
     position: relative;
-    border-left: 1px solid #bbb;
-    margin-left: 20px;
+    border-left: 1px solid #aaa;
+    margin-left: 30px;
     margin-right: 5px;
     padding-left: 10px;
     padding-top: 1px;
     padding-bottom: 1px;
     font-size: 13px;
     color: #333;
+    min-height: calc(100% - 2px);
 }
 
-.container aside {
+.editor aside {
     position: absolute;
     left: -15px;
     line-height: 21px;
 }
 
-.container #drop_line {
+.editor #drop_line {
     position: absolute;
     left: 0;
     width: 100%;
 }
 
-.container #drop_line div {
+.editor #drop_line div {
     position: absolute;
     top: -1px;
     width: 100%;
@@ -30,30 +31,26 @@
     background-color: rgba(0,0,0,0.6);
 }
 
-.container article>small {
-    line-height: 31px;
-}
-
-.container article,
-.container section,
-.container main {
+.editor article,
+.editor section,
+.editor main {
     padding: 4px 0 4px 10px;
 }
 
-.container i.iconfont {
+.editor i.iconfont {
     font-size: 20px;
     vertical-align: bottom;
 }
 
-.container ul>li:first-child {
+.editor ul>li:first-child {
     margin: 0 5px;
 }
 
-.container ul>li:nth-child(2) {
+.editor ul>li:nth-child(2) {
     margin: 0 5px;
 }
 
-.container article>ul {
+.editor article>ul {
     display: flex;
     padding: 5px;
     overflow: auto;
@@ -66,86 +63,86 @@
     background-color: #fff;
 }
 
-.container article>ul:hover {
+.editor article>ul:hover {
     background-color: #efefef;
 }
-.container article.chosen>ul {
+.editor article.chosen>ul {
     background-color: #f3f2f1;
 }
-.container article.chosen>ul:hover {
+.editor article.chosen>ul:hover {
     background-color: #e1dfdd;
 }
 
-.container article>ul>li:nth-child(2) {
+.editor article>ul>li:nth-child(2) {
     flex: auto;
 }
 
-.container article>ul>li>p {
+.editor article>ul>li>p {
     color: #666;
 }
-.container article>ul>li>p var {
+.editor article>ul>li>p var {
     margin: 0 5px;
     color: blue;
 }
 
-.container section>header,
-.container section>footer {
+.editor section>header,
+.editor section>footer {
     display: inline-block;
 }
 
-.container section>header>ul,
-.container section>footer>ul {
+.editor section>header>ul,
+.editor section>footer>ul {
     display: inline-flex;
     align-items: center;
     padding: 5px;
     background-color: #dbe9ff;
 }
-.container section>header>ul:hover,
-.container section>footer>ul:hover {
+.editor section>header>ul:hover,
+.editor section>footer>ul:hover {
     background-color: #cce0ff;
 }
-.container section.chosen>header>ul,
-.container section.chosen>footer>ul {
+.editor section.chosen>header>ul,
+.editor section.chosen>footer>ul {
     background-color: #b4d2ff;
 }
-.container section.loop>header>ul,
-.container section.loop>footer>ul {
+.editor section.loop>header>ul,
+.editor section.loop>footer>ul {
     background-color: #cff6f9;
 }
-.container section.loop>header>ul:hover,
-.container section.loop>footer>ul:hover {
+.editor section.loop>header>ul:hover,
+.editor section.loop>footer>ul:hover {
     background-color: #abeeec;
 }
-.container section.loop.chosen>header>ul,
-.container section.loop.chosen>footer>ul {
+.editor section.loop.chosen>header>ul,
+.editor section.loop.chosen>footer>ul {
     background-color: #73e3df;
 }
-.container section>main {
+.editor section>main {
     border-left: 4px solid #dbe9ff;
 }
-.container section.chosen>main {
+.editor section.chosen>main {
     border-color: #b4d2ff;
 }
-.container section.loop>main {
+.editor section.loop>main {
     border-color: #cff6f9;
 }
-.container section.loop.chosen>main {
+.editor section.loop.chosen>main {
     border-color: #73e3df;
 }
 
-.container section>header>ul h4,
-.container section>footer>ul h4 {
+.editor section>header>ul h4,
+.editor section>footer>ul h4 {
     display: inline-block;
 }
 
-.container section>header>ul p {
+.editor section>header>ul p {
     display: inline-block;
 }
 
-.container section>header:first-child>ul {
+.editor section>header:first-child>ul {
     border-radius: 5px 5px 5px 0;
 }
 
-.container section>footer:last-child>ul {
+.editor section>footer:last-child>ul {
     border-radius: 0 5px 5px 5px;
 }

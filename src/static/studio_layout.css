@@ -19,42 +19,63 @@ ul {
     flex-direction: column;
 }
 
-.studio>.menu {
-    height: 100px;
+.studio>.top {
     display: flex;
     flex-shrink: 0;
+    border-bottom: 1px solid #aaa;
 }
 
-.studio>.panel {
+.studio>.other {
     flex: auto;
     display: flex;
     height: 0;
 }
 
-.studio>.panel>.tools {
+.studio>.other>.left {
     width: 200px;
-    border: 1px solid red;
+    border-right: 1px solid #aaa;
 }
 
-.studio>.panel>.content {
+.studio>.other>.center {
     flex: auto;
-    border: 1px solid yellow;
     display: flex;
     flex-direction: column;
 }
 
-.studio>.panel>.content>.workspace {
+.studio>.other>.center>.workspace {
     flex: auto;
     height: 0;
     overflow-y: scroll;
 }
 
-.studio>.panel>.content>.console {
+.studio>.other>.center>.bottom {
     height: 100px;
-    background-color: #000;
+    border-top: 1px solid #aaa;
 }
 
-.studio>.panel>.property {
+.studio>.other>.right {
     width: 200px;
-    border: 1px solid blue;
+    border-left: 1px solid #aaa;
+}
+
+.studio>.top>.menu {
+    margin: 10px 5px;
+    padding: 5px 10px;
+}
+.studio>.top>.menu:hover {
+    border-radius: 3px;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+.studio>.top>.menu i {
+    font-size: 28px;
+}
+.studio>.top>.menu span {
+    margin-top: 2px;
+    font-size: 14px;
+}
+.studio>.top>.menu i,
+.studio>.top>.menu span {
+    display: block;
+    text-align: center;
+    color: #333;
 }
