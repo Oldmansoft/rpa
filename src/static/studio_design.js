@@ -54,28 +54,42 @@ function get_previous_node(current) {
     if (previous_node == null) {
         return null;
     }
-    if (previous_node.tagName == 'SECTION') {
-        return previous_node.children[2];
+    if (previous_node.classList.contains('container')) {
+        return previous_node.children[previous_node.children.length - 1];
     }
     return previous_node;
 }
 
 function get_next_node(target) {
-    if (target.tagName == 'HEADER') {
-        if (target.nextElementSibling.children.length == 0) {
-            return target.nextElementSibling.nextElementSibling;
+    var nextElementSibling;
+    if (target.classList.contains('header')) {
+        if (target.nextElementSibling.children.length > 0) {
+            nextElementSibling = target.nextElementSibling.children[0];
+        } else {
+            // footer
+            nextElementSibling = target.nextElementSibling.nextElementSibling;
         }
-        return target.nextElementSibling.children[0];
+    } else if (target.classList.contains('footer')) {
+        var container = target.parentNode;
+        if (container.nextElementSibling != null) {
+            nextElementSibling = container.nextElementSibling;
+        } else if (container.parentNode.classList.contains('editor')) {
+            return null;  
+        } else {
+            // footer
+            nextElementSibling = container.parentNode.nextElementSibling;
+        }
+    } else {
+        nextElementSibling = target.nextElementSibling;
     }
-    if (target.nextElementSibling != null) return target.nextElementSibling;
-    if (target.tagName == 'FOOTER') {
-        if (target.parentNode.nextElementSibling != null) {
-            return target.parentNode.nextElementSibling;
+    if (nextElementSibling != null) {
+        if (nextElementSibling.classList.contains('container')) {
+            return nextElementSibling.children[0];
         }
-        if (target.parentNode.parentNode.classList.contains('container')) return null;
-        return target.parentNode.parentNode.nextElementSibling;
+        return nextElementSibling;
     }
     if (target.parentNode.tagName == 'MAIN') {
+        // footer
         return target.parentNode.nextElementSibling;
     }
     return null;
@@ -86,7 +100,7 @@ function get_first_node() {
     if (nodes.length == 0){
         return null;
     }
-    if (nodes[0].tagName == 'SECTION') {
+    if (nodes[0].classList.contains('container')) {
         return nodes[0].children[0];
     }
     return nodes[0];
@@ -107,7 +121,8 @@ function make_numbers(target) {
     var number = start_number;
     var node = get_next_node(start_node);
     while (node != null) {
-        node = get_current_aside_node(node)
+        console.info(node);
+        node = get_current_aside_node(node);
         number++;
         set_node_number(node, number);
         node = get_next_node(node);
@@ -118,7 +133,7 @@ $(function() {
     var drag_target = null;
     var drop_line = document.querySelector('#drop_line');
 
-    $('article,header,footer').on('dragend', function() {
+    $('article').on('dragend', function() {
         var drop_result = drop_line.previousElementSibling != drag_target && drop_line.nextElementSibling != drag_target;
         var renumber_node;
         if (drop_result) {
@@ -131,10 +146,10 @@ $(function() {
             make_numbers(renumber_node);
         }
     });
-    $('article').on('dragstart', function() {
+    $('article.item').on('dragstart', function() {
         drag_target = this;
     })
-    $('header,footer').on('dragstart', function() {
+    $('article.label').on('dragstart', function() {
         drag_target = this.parentNode;
     });
     $('.editor').on('dragenter', function(e) {
@@ -142,7 +157,7 @@ $(function() {
     }).on('dragover', function(e) {
         e.preventDefault();
     });
-    $('article').on('dragover', function(e) {
+    $('article.item').on('dragover', function(e) {
         if (section_drag_to_self(drag_target, e.currentTarget)) return;
 
         if (window.event.clientY < e.currentTarget.getBoundingClientRect().y + e.currentTarget.getBoundingClientRect().height / 2) {
@@ -159,7 +174,7 @@ $(function() {
     }).on('click', function(e) {
         this.classList.add('chosen');
     });
-    $('header').on('dragover', function(e) {
+    $('article.label.header').on('dragover', function(e) {
         if (section_drag_to_self(drag_target, e.currentTarget)) return;
 
         if (window.event.clientY < e.currentTarget.getBoundingClientRect().y + e.currentTarget.getBoundingClientRect().height / 2) {
@@ -174,7 +189,7 @@ $(function() {
             }
         }
     });
-    $('footer').on('dragover', function(e) {
+    $('article.label.footer').on('dragover', function(e) {
         if (section_drag_to_self(drag_target, e.currentTarget)) return;
 
         if (window.event.clientY < e.currentTarget.getBoundingClientRect().y + e.currentTarget.getBoundingClientRect().height / 2) {
@@ -195,7 +210,7 @@ $(function() {
             nodes[i].classList.remove('chosen');
         }
     });
-    $('header,footer').on('mouseup', function() {
+    $('article.label').on('mouseup', function() {
         this.parentNode.classList.add('chosen');
     });
 });

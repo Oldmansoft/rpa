@@ -31,8 +31,8 @@
     background-color: rgba(0,0,0,0.6);
 }
 
-.editor article,
-.editor section,
+.editor article.item,
+.editor .container,
 .editor main {
     padding: 4px 0 4px 10px;
 }
@@ -50,7 +50,7 @@
     margin: 0 5px;
 }
 
-.editor article>ul {
+.editor article.item>ul {
     display: flex;
     padding: 5px;
     overflow: auto;
@@ -63,86 +63,79 @@
     background-color: #fff;
 }
 
-.editor article>ul:hover {
+.editor article.item>ul:hover {
     background-color: #efefef;
 }
-.editor article.chosen>ul {
+.editor article.item.chosen>ul {
     background-color: #f3f2f1;
 }
-.editor article.chosen>ul:hover {
+.editor article.item.chosen>ul:hover {
     background-color: #e1dfdd;
 }
 
-.editor article>ul>li:nth-child(2) {
+.editor article.item>ul>li:nth-child(2) {
     flex: auto;
 }
 
-.editor article>ul>li>p {
+.editor article.item>ul>li>p {
     color: #666;
 }
-.editor article>ul>li>p var {
+.editor article.item>ul>li>p var {
     margin: 0 5px;
     color: blue;
 }
 
-.editor section>header,
-.editor section>footer {
+.editor .container>article.label {
     display: inline-block;
 }
 
-.editor section>header>ul,
-.editor section>footer>ul {
+.editor .container>article.label>ul {
     display: inline-flex;
     align-items: center;
     padding: 5px;
     background-color: #dbe9ff;
 }
-.editor section>header>ul:hover,
-.editor section>footer>ul:hover {
+.editor .container>article.label>ul:hover {
     background-color: #cce0ff;
 }
-.editor section.chosen>header>ul,
-.editor section.chosen>footer>ul {
+.editor .container.chosen>article.label>ul {
     background-color: #b4d2ff;
 }
-.editor section.loop>header>ul,
-.editor section.loop>footer>ul {
+.editor .container.loop>article.label>ul {
     background-color: #cff6f9;
 }
-.editor section.loop>header>ul:hover,
-.editor section.loop>footer>ul:hover {
+.editor .container.loop>article.label>ul:hover {
     background-color: #abeeec;
 }
-.editor section.loop.chosen>header>ul,
-.editor section.loop.chosen>footer>ul {
+.editor .container.loop.chosen>article.label>ul {
     background-color: #73e3df;
 }
-.editor section>main {
+.editor .container>main {
     border-left: 4px solid #dbe9ff;
 }
-.editor section.chosen>main {
+.editor .container.chosen>main {
     border-color: #b4d2ff;
 }
-.editor section.loop>main {
+.editor .container.loop>main {
     border-color: #cff6f9;
 }
-.editor section.loop.chosen>main {
+.editor .container.loop.chosen>main {
     border-color: #73e3df;
 }
 
-.editor section>header>ul h4,
-.editor section>footer>ul h4 {
+.editor .container>header>ul h4,
+.editor .container>article.label>ul h4 {
     display: inline-block;
 }
 
-.editor section>header>ul p {
+.editor .container>article.label:first-child>ul p {
     display: inline-block;
 }
 
-.editor section>header:first-child>ul {
+.editor .container>article.label:first-child>ul {
     border-radius: 5px 5px 5px 0;
 }
 
-.editor section>footer:last-child>ul {
+.editor .container>article.label:last-child>ul {
     border-radius: 0 5px 5px 5px;
 }
