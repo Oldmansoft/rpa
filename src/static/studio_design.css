@@ -1,4 +1,6 @@
 .editor {
+    --AsideLeft: -15px;
+
     position: relative;
     border-left: 1px solid #aaa;
     margin-left: 30px;
@@ -13,7 +15,7 @@
 
 .editor aside {
     position: absolute;
-    left: -15px;
+    left: var(--AsideLeft);
     line-height: 21px;
 }
 
@@ -85,57 +87,66 @@
     color: blue;
 }
 
+.editor .container>section>article.label,
 .editor .container>article.label {
     display: inline-block;
 }
 
+.editor .container>section>article.label>ul,
 .editor .container>article.label>ul {
     display: inline-flex;
     align-items: center;
     padding: 5px;
     background-color: #dbe9ff;
 }
+.editor .container>section>article.label>ul:hover,
 .editor .container>article.label>ul:hover {
     background-color: #cce0ff;
 }
+.editor .container>section.chosen>article.label>ul,
+.editor .container.chosen>section>article.label>ul,
 .editor .container.chosen>article.label>ul {
     background-color: #b4d2ff;
 }
+.editor .container.loop>section>article.label>ul,
 .editor .container.loop>article.label>ul {
     background-color: #cff6f9;
 }
+.editor .container.loop>section>article.label>ul:hover,
 .editor .container.loop>article.label>ul:hover {
     background-color: #abeeec;
 }
+.editor .container.loop>section.chosen>article.label>ul,
+.editor .container.loop.chosen>section>article.label>ul,
 .editor .container.loop.chosen>article.label>ul {
     background-color: #73e3df;
 }
-.editor .container>main {
+.editor .container>section>main {
     border-left: 4px solid #dbe9ff;
 }
-.editor .container.chosen>main {
+.editor .container>section.chosen>main,
+.editor .container.chosen>section>main {
     border-color: #b4d2ff;
 }
-.editor .container.loop>main {
+.editor .container.loop>section>main {
     border-color: #cff6f9;
 }
-.editor .container.loop.chosen>main {
+.editor .container.loop>section.chosen>main,
+.editor .container.loop.chosen>section>main {
     border-color: #73e3df;
 }
 
-.editor .container>header>ul h4,
-.editor .container>article.label>ul h4 {
+.editor .container article.label>ul h4,
+.editor .container article.label>ul p {
     display: inline-block;
 }
 
-.editor .container>article.label:first-child>ul p {
-    display: inline-block;
+.editor .container section>article.label>ul {
+    border-radius: 0 5px 5px 0;
 }
-
-.editor .container>article.label:first-child>ul {
+.editor .container section:first-child>article.label>ul {
     border-radius: 5px 5px 5px 0;
 }
-
-.editor .container>article.label:last-child>ul {
+.editor .container article.label:last-child>ul {
     border-radius: 0 5px 5px 5px;
 }
