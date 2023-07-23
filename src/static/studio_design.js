@@ -1,6 +1,7 @@
 var TagName = {
     article: 'ARTICLE',
-    section: 'SECTION'
+    section: 'SECTION',
+    main: 'MAIN'
 }
 var ClassName = {
     editor: 'editor',
@@ -89,9 +90,9 @@ function set_node_number(node, number) {
 }
 
 function get_renumber_start_node(line, target) {
-    var line_previous_node = get_previous_node(line);
+    var line_previous_node = find_previous_tag(line, TagName.article);
     if (line_previous_node == null) return null;
-    var target_previous_node = get_previous_node(target);
+    var target_previous_node = find_previous_tag(target, TagName.article);
     if (target_previous_node == null) return null;
     var line_previous_number = get_node_number(line_previous_node);
     var target_previous_number = get_node_number(target_previous_node);
@@ -102,9 +103,9 @@ function get_renumber_start_node(line, target) {
     }
 }
 
-function get_previous_node(node) {
+function find_previous_tag(node, tag_name) {
     var previous_node = node.previousElementSibling;
-    while (previous_node == null || previous_node.tagName != TagName.article) {
+    while (previous_node == null || previous_node.tagName != tag_name) {
         while (previous_node == null) {
             node = node.parentNode;
             if (node.classList.contains(ClassName.editor)) {
@@ -112,8 +113,8 @@ function get_previous_node(node) {
             }
             previous_node = node.previousElementSibling;
         }
-        while (previous_node.tagName != TagName.article) {
-            if (previous_node.children == 0) {
+        while (previous_node.tagName != tag_name) {
+            if (previous_node.children.length == 0) {
                 previous_node = previous_node.previousElementSibling;
                 if (previous_node == null) {
                     break;
@@ -126,9 +127,9 @@ function get_previous_node(node) {
     return previous_node;
 }
 
-function get_next_node(node) {
+function find_next_tag(node, tag_name) {
     var next_node = node.nextElementSibling;
-    while (next_node == null || next_node.tagName != TagName.article) {
+    while (next_node == null || next_node.tagName != tag_name) {
         while (next_node == null) {
             node = node.parentNode;
             if (node.classList.contains(ClassName.editor)) {
@@ -136,7 +137,7 @@ function get_next_node(node) {
             }
             next_node = node.nextElementSibling;
         }
-        while (next_node.tagName != TagName.article) {
+        while (next_node.tagName != tag_name) {
             if (next_node.children.length == 0) {
                 next_node = next_node.nextElementSibling;
                 if (next_node == null) {
@@ -150,7 +151,7 @@ function get_next_node(node) {
     return next_node;
 }
 
-function get_first_node() {
+function get_first_article_node() {
     var nodes = document.querySelector('.editor').children;
     if (nodes.length == 0) {
         return null;
@@ -192,7 +193,7 @@ function make_numbers(target) {
     var start_number;
     if (start_node == null) {
         start_number = 1;
-        start_node = get_first_node();
+        start_node = get_first_article_node();
         if (start_node == null) return;
         set_node_number(start_node, start_number);
     } else {
@@ -200,12 +201,12 @@ function make_numbers(target) {
     }
 
     var number = start_number;
-    var node = get_next_node(start_node);
+    var node = find_next_tag(start_node, TagName.article);
     while (node != null) {
         node = get_current_aside_node(node);
         number++;
         set_node_number(node, number);
-        node = get_next_node(node);
+        node = find_next_tag(node, TagName.article);
     }
     document.querySelector('.editor').style.setProperty('--AsideLeft', '-' + (number.toString().length * 8 + 7) + 'px');
 }
@@ -276,14 +277,14 @@ $(function() {
         if (drag_to_self(drag_target, e.currentTarget, drop_line)) return;
 
         if (window.event.clientY < e.currentTarget.getBoundingClientRect().y + e.currentTarget.getBoundingClientRect().height / 2) {
-            var previous = e.currentTarget.previousElementSibling;
+            var previous = e.currentTarget.parentNode.parentNode.previousElementSibling;
             if (previous == null || previous != drop_line) {
                 $(e.currentTarget.parentNode.parentNode).before(drop_line);
             }
         } else {
-            var next = e.currentTarget.nextElementSibling;
-            if (next == null || next != drop_line) {
-                e.currentTarget.nextElementSibling.prepend(drop_line);
+            var main_node = e.currentTarget.nextElementSibling;
+            if (main_node.children.length == 0 || main_node.firstElementChild != drop_line) {
+                main_node.prepend(drop_line);
             }
         }
     });
@@ -293,14 +294,14 @@ $(function() {
         if (drag_to_self(drag_target, e.currentTarget, drop_line)) return;
 
         if (window.event.clientY < e.currentTarget.getBoundingClientRect().y + e.currentTarget.getBoundingClientRect().height / 2) {
-            var previous = e.currentTarget.previousElementSibling;
-            if (previous == null || previous != drop_line) {
-                $(e.currentTarget.parentNode.parentNode).before(drop_line);
+            var main_node = find_previous_tag(e.currentTarget, TagName.main);
+            if (main_node.children.length == 0 || main_node.lastElementChild != drop_line) {
+                main_node.append(drop_line);
             }
         } else {
-            var next = e.currentTarget.nextElementSibling;
-            if (next == null || next != drop_line) {
-                e.currentTarget.nextElementSibling.prepend(drop_line);
+            var main_node = e.currentTarget.nextElementSibling;
+            if (main_node.children.length == 0 || main_node.firstElementChild != drop_line) {
+                main_node.prepend(drop_line);
             }
         }
     });
@@ -310,12 +311,12 @@ $(function() {
         if (drag_to_self(drag_target, e.currentTarget, drop_line)) return;
 
         if (window.event.clientY < e.currentTarget.getBoundingClientRect().y + e.currentTarget.getBoundingClientRect().height / 2) {
-            var previous = e.currentTarget.previousElementSibling;
-            if (previous == null || previous != drop_line) {
-                e.currentTarget.previousElementSibling.children[1].append(drop_line);
+            var main_node = find_previous_tag(e.currentTarget, TagName.main);
+            if (main_node.children.length == 0 || main_node.lastElementChild != drop_line) {
+                main_node.append(drop_line);
             }
         } else {
-            var next = e.currentTarget.nextElementSibling;
+            var next = e.currentTarget.parentNode.nextElementSibling;
             if (next == null || next != drop_line) {
                 $(e.currentTarget.parentNode).after(drop_line);
             }
