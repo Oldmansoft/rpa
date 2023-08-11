@@ -3,7 +3,7 @@
 
     position: relative;
     border-left: 1px solid #aaa;
-    margin-left: 30px;
+    margin-left: 60px;
     margin-right: 5px;
     padding-left: 10px;
     padding-top: 1px;
@@ -79,12 +79,33 @@
     flex: auto;
 }
 
-.editor article.item>ul>li>p {
+.editor article>ul>li>p {
     color: #666;
 }
-.editor article.item>ul>li>p var {
-    margin: 0 5px;
+.editor article>ul>li>p var {
     color: blue;
+}
+.editor article>ul>li>p>var {
+    margin: 0 5px;
+}
+.editor article>ul>li>p>var:first-child {
+    margin-left: 0;
+}
+.editor article>ul>li>p>var:last-child {
+    margin-right: 0;
+}
+.editor article>ul>li>p>var.error {
+    color: red;
+}
+.editor article>ul>li>p>code {
+    margin: 0 5px;
+    font-family: 黑体;
+}
+.editor article>ul>li>p code:first-child {
+    margin-left: 0;
+}
+.editor article>ul>li>p code:last-child {
+    margin-right: 0;
 }
 
 .editor .container>.boundary>section>article.label,
@@ -113,19 +134,6 @@
 .editor .container.chosen>article.label>ul {
     background-color: #b4d2ff;
 }
-.editor .container.loop>section>article.label>ul,
-.editor .container.loop>article.label>ul {
-    background-color: #cff6f9;
-}
-.editor .container.loop>section>article.label>ul:hover,
-.editor .container.loop>article.label>ul:hover {
-    background-color: #abeeec;
-}
-.editor .container.loop>section.chosen>article.label>ul,
-.editor .container.loop.chosen>section>article.label>ul,
-.editor .container.loop.chosen>article.label>ul {
-    background-color: #73e3df;
-}
 .editor .container>.boundary>section>main,
 .editor .container>section>main {
     border-left: 4px solid #dbe9ff;
@@ -136,17 +144,34 @@
 .editor .container.chosen>section>main {
     border-color: #b4d2ff;
 }
-.editor .container.loop>section>main {
+
+.editor .container.While>section>article.label>ul,
+.editor .container.While>article.label>ul {
+    background-color: #cff6f9;
+}
+.editor .container.While>section>article.label>ul:hover,
+.editor .container.While>article.label>ul:hover {
+    background-color: #abeeec;
+}
+.editor .container.While>section.chosen>article.label>ul,
+.editor .container.While.chosen>section>article.label>ul,
+.editor .container.While.chosen>article.label>ul {
+    background-color: #73e3df;
+}
+.editor .container.While>section>main {
     border-color: #cff6f9;
 }
-.editor .container.loop>section.chosen>main,
-.editor .container.loop.chosen>section>main {
+.editor .container.While>section.chosen>main,
+.editor .container.While.chosen>section>main {
     border-color: #73e3df;
 }
 
 .editor .container article.label>ul h4,
 .editor .container article.label>ul p {
     display: inline-block;
+}
+.editor .container article.label>ul p {
+    margin-left: 5px;
 }
 
 .editor .container section>article.label>ul {

@@ -1,34 +1,11 @@
-function create_component_node(data) {
-    var node = document.createElement('article');
-    node.setAttribute('class', 'item');
-    node.setAttribute('draggable', 'true');
-    var ul = document.createElement('ul');
-    node.append(ul);
-    var li = document.createElement('li');
-    ul.append(li);
-    var aside = document.createElement('aside');
-    li.append(aside);
-    var i = document.createElement('i');
-    li.append(i);
-    i.setAttribute('class', 'font i-' + data['id']);
-    li = document.createElement('li');
-    ul.append(li);
-    var h4 = document.createElement('h4');
-    li.append(h4);
-    h4.append(data['name']);
-    var p = document.createElement('p');
-    li.append(p);
-    return node;
-}
-
 function create_component_content() {
     function create_node(data) {
         var node = document.createElement('div');
         var i = document.createElement('i');
-        if (data['type'] == 'item') {
+        if (data['category'] == 'item') {
             i.setAttribute('class', 'font i-' + data['id']);
         } else {
-            i.append(document.createTextNode('>'));
+            i.setAttribute('class', 'font i-nav-right');
         }
         node.append(i);
         var span = document.createElement('span');
@@ -40,10 +17,10 @@ function create_component_content() {
     function create_content_to(list, parent_node) {
         for (var i = 0; i < list.length; i++) {
             var node = create_node(list[i]);
-            if (list[i]['type'] == 'item') {
+            if (list[i]['category'] == 'item') {
                 node.setAttribute('class', 'leaf');
                 node.setAttribute('draggable', 'true');
-                $(node).data('init_data', list[i]);
+                node.data_component = list[i];
                 parent_node.append(node);
             } else {
                 var group = document.createElement('div');
@@ -68,7 +45,7 @@ function create_component_content() {
         });
         document.querySelector('.studio>.other>.left').firstChild.classList.toggle('expand');
         $('.studio>.other>.left .leaf').on('dragstart', function () {
-            studio.designer.drag.start(create_component_node($(this).data('init_data')));
+            studio.designer.drag.start_choose(new studio.designer.Action(this.data_component).node);
         }).on('dragend', studio.designer.drag.finish);
     });
 }

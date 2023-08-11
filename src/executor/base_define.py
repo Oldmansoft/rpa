@@ -167,6 +167,8 @@ class FormatValue(Value):
         :return: 表达式的对应值
         '''
         expression = self.content.replace('\'', '\\\'')
+        expression = self.content.replace('\n', '\\n')
+        #TODO: 其它转义符
         return eval(f"f'{expression}'", None, self.procedure.local_values)
 
 class Procedure(ActionContainer):

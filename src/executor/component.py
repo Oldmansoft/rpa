@@ -58,6 +58,21 @@ class If(CompositionComponent):
             self.else_action.log_output()
             self.else_action.execute()
 
+class While(CompositionComponent):
+    '''循环'''
+
+    def param_definition(self) -> ParameterDefinition:
+        return ParameterDefinition().append('condition', ConditionalComponent)
+
+    def set_param(self, *args) -> None:
+        self.condition:ConditionalComponent = args[0]
+    
+    def execute(self) -> None:
+        self.condition.log_output()
+        while self.condition.compute():
+            self.condition.action.execute()
+            self.condition.log_output()
+
 def info():
     result = {}
     classes = SequenceComponent.__subclasses__()

@@ -18,6 +18,12 @@
 .studio>.other>.left .group.expand>.list {
     display: block;
 }
+.studio>.other>.left .group>.branch>i {
+    display: inline-block;
+}
+.studio>.other>.left .group.expand>.branch>i {
+    transform: rotate(90deg);
+}
 .studio>.other>.left .leaf {
     padding: 5px 0 5px 30px;
 }

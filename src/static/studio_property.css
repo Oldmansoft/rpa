@@ -1,0 +1,13 @@
+.studio>.other>.right label {
+    display: block;
+    margin: 10px;
+}
+.studio>.other>.right label>span {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+.studio>.other>.right label>input {
+    width: calc(100% - 10px);
+    height: 20px;
+}
