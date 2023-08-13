@@ -47,9 +47,15 @@
 .editor ul>li:first-child {
     margin: 0 5px;
 }
-
 .editor ul>li:nth-child(2) {
     margin: 0 5px;
+}
+.editor ul>li:nth-child(3) {
+    visibility: hidden;
+    cursor: pointer;
+}
+.editor article:hover>ul>li:nth-child(3) {
+    visibility: visible;
 }
 
 .editor article.item>ul {

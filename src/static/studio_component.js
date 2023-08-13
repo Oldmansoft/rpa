@@ -45,7 +45,7 @@ function create_component_content() {
         });
         document.querySelector('.studio>.other>.left').firstChild.classList.toggle('expand');
         $('.studio>.other>.left .leaf').on('dragstart', function () {
-            studio.designer.drag.start_choose(new studio.designer.Action(this.data_component).node);
+            studio.designer.drag.start_choose(new studio.designer.Statement(this.data_component).element);
         }).on('dragend', studio.designer.drag.finish);
     });
 }

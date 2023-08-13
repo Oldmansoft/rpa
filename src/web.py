@@ -107,10 +107,11 @@ def component():
                         }
                     ],
                     'format': '{condition}',
-                    'more': {
-                        'ElseIf': {
-                            'type': '?',
-                            'name': '否则如果',
+                    'optional': [
+                        {
+                            'id': 'ElseIf',
+                            'type': 'boundary',
+                            'name': '如果',
                             'params': [
                                 {
                                     'id': 'condition',
@@ -120,11 +121,12 @@ def component():
                             ],
                             'format': '{condition}'
                         },
-                        'Else': {
-                            'type': '+',
+                        {
+                            'id': 'Else',
+                            'type': 'last',
                             'name': '否则'
                         }
-                    }
+                    ]
                 }
             ]
         }

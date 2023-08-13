@@ -1,18 +1,3 @@
-body {
-    padding: 0;
-    margin: 0;
-}
-
-h4, p {
-    margin: 0;
-}
-i, var {
-    font-style: normal;
-}
-ul {
-    list-style-type: none;
-    margin: 0;
-}
 .studio {
     display: flex;
     height: 100vh;

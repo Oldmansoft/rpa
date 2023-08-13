@@ -1,4 +1,3 @@
-if (!window.studio) window.studio = {};
 studio.config = {}
 studio.constant = {}
 
@@ -57,288 +56,8 @@ function create_format_code_node(text) {
         node.textContent = text.substring(last_index);
         result.append(node);
     }
-    console.info(result.childNodes, result.children);
     return result;
 }
-
-var content_node_creator = {
-    'Variable': function (text) {
-        var result = document.createElement('var');
-        text = text.trim();
-        if (text == '') {
-            result.textContent = '[请填写]';
-            result.classList.add('error');
-        } else {
-            result.textContent = text;
-        }
-        return result;
-    },
-    'Format': function (text) {
-        var result = document.createElement('code');
-        result.append(create_format_code_node(text));
-        return result;
-    },
-    'Expression': function (text) {
-        var result = document.createElement('var');
-        text = text.trim();
-        if (text == '') {
-            result.textContent = '[请填写]';
-            result.classList.add('error');
-        } else {
-            result.textContent = text;
-        }
-        return result;
-    }
-}
-
-function create_description_format_node(text, values) {
-    var result = document.createDocumentFragment();
-    var last_index = 0;
-    var matches = text.matchAll(/\{\w+\}/g);
-    for (var match of matches) {
-        if (match.index > last_index) {
-            var node = document.createElement('span');
-            node.textContent = text.substring(last_index, match.index);
-            result.append(node);
-        }
-        if (match[0] in values) {
-            result.append(content_node_creator[values[match[0]].type](values[match[0]].value));
-        } else {
-            node = document.createElement('var');
-            node.textContent = match[0];
-            result.append(node);
-        }
-        last_index = match.index + match[0].length;
-    }
-    if (last_index < text.length) {
-        var node = document.createElement('span');
-        node.textContent = text.substring(last_index);
-        result.append(node);
-    }
-    return result;
-}
-
-studio.designer = new (function () {
-    this.Action = function (data) {
-        function create_data(source) {
-            var result = JSON.parse(JSON.stringify(source))
-            result['display'] = result['name'];
-            for (var i in result['params']) {
-                result['params'][i]['value'] = '';
-            }
-            return result;
-        }
-        function create_node_article(data, action, class_name) {
-            var node = document.createElement('article');
-            node.setAttribute('class', class_name);
-            node.setAttribute('draggable', 'true');
-            var ul = document.createElement('ul');
-            node.append(ul);
-            var li = document.createElement('li');
-            ul.append(li);
-            var aside = document.createElement('aside');
-            li.append(aside);
-            var i = document.createElement('i');
-            li.append(i);
-            i.setAttribute('class', 'font i-' + data['id']);
-            li = document.createElement('li');
-            ul.append(li);
-            var h4 = document.createElement('h4');
-            li.append(h4);
-            h4.append(data['name']);
-
-            node.data_context = action;
-            if (action && 'format' in action.data) {
-                var p = document.createElement('p');
-                li.append(p);
-                refresh_description(p, action);
-            }
-            return node;
-        }
-        function create_node(data, action) {
-            if (data['type'] == 'unit') {
-                return create_node_article(data, action, 'item');
-            } else {
-                var node = document.createElement('div');
-                node.classList.add('container');
-                node.classList.add(data['id']);
-                var section = document.createElement('section');
-                section.classList.add('header');
-                node.append(section);
-                section.append(create_node_article(data, action, 'label'));
-                section.append(document.createElement('main'));
-                node.append(create_node_article({'id': 'flag', 'name': 'End'}, null, 'label footer'));
-                return node;
-            }
-        }
-        function refresh_description(area, action) {
-            while (area.hasChildNodes()) {
-                area.lastChild.remove();
-            }
-            var values = {}
-            for (var i in action.data.params) {
-                values['{' + action.data.params[i]['id'] + '}'] = {
-                    type: action.data.params[i]['type'],
-                    value: action.data.params[i]['value']
-                };
-            }
-            area.append(create_description_format_node(action.data['format'], values));
-        }
-        var $Action = this;
-
-        this.data = create_data(data);
-        this.node = create_node(data, this);
-        this.set_param = function (key, value) {
-            for (var i in this.data['params']) {
-                var item = this.data['params'][i];
-                if (item['id'] == key) {
-                    item['value'] = value;
-                    if ('format' in this.data) {
-                        refresh_description(this.node.querySelector('p'), this);
-                    }
-                    return;
-                }
-            }
-        }
-        this.set_display = function (display) {
-            this.data['display'] = display;
-            if (display == '') display = this.data['name'];
-            this.node.querySelector('h4').textContent = display.replaceAll(' ', '\u00A0');
-        }
-        this.create_property_panel = function (area) {
-            var label = document.createElement('label');
-            var span = document.createElement('span');
-            span.textContent = '显示';
-            label.append(span);
-            var input = document.createElement('input');
-            input.setAttribute('value', this.data['display']);
-            input.addEventListener('change', function (e) {
-                e.currentTarget.value = e.currentTarget.value.trim();
-                $Action.set_display(e.currentTarget.value);
-            });
-            label.append(input);
-            area.append(label);
-            for (var i in this.data['params']) {
-                var item = this.data['params'][i];
-                label = document.createElement('label');
-                span = document.createElement('span');
-                span.textContent = item['name'];
-                label.append(span);
-                input = document.createElement('input');
-                input.setAttribute('name', item['id']);
-                input.setAttribute('type', item['type']);
-                input.setAttribute('value', item['value']);
-                input.setAttribute('placeholder', studio.config.InputTypeTips[item['type']]);
-                input.addEventListener('change', function (e) {
-                    $Action.set_param(e.currentTarget.getAttribute('name'), e.currentTarget.value);
-                });
-                label.append(input);
-                area.append(label);
-            }
-        }
-    }
-
-    this.drag = new (function () {
-        var mode = null,
-            boundary = null,
-            target = null,
-            when_finish_choose = false;
-
-        this.start = function (node) {
-            mode = studio.constant.DragMode.normal;
-            target = node;
-            when_finish_choose = false;
-        }
-        this.start_choose = function (node) {
-            mode = studio.constant.DragMode.normal;
-            target = node;
-            when_finish_choose = true;
-        }
-        this.start_boundary = function (node) {
-            mode = studio.constant.DragMode.boundary;
-            boundary = node.parentNode;
-            target = node;
-        }
-        this.is_working = function (current_target) {
-            if (target == null) return false;
-            if (drag_in_boundary(mode, boundary, current_target, drop_line)) return false;
-            if (drag_to_self(target, current_target, drop_line)) return false;
-            return true;
-        }
-        this.finish = function () {
-            var drop_line = document.querySelector('#drop_line');
-            var drop_result = drop_line.previousElementSibling != target && drop_line.nextElementSibling != target && drop_line.previousElementSibling != document.querySelector('.editor');
-            var renumber_node;
-            if (drop_result) {
-                renumber_node = get_renumber_start_node(drop_line, target);
-                $(drop_line).after(target);
-                if (when_finish_choose) {
-                    studio.designer.editor.chosen.choose(target);
-                }
-            }
-            $('.editor').after(drop_line);
-            boundary = null;
-            target = null;
-            if (drop_result) {
-                make_numbers(renumber_node);
-            }
-        }
-    })();
-    this.editor = new (function () {
-        this.chosen = new (function () {
-            $chosen = this;
-            this.clear = function (click_node) {
-                var nodes = document.querySelectorAll('.editor .chosen');
-                for (var i = 0; i < nodes.length; i++) {
-                    if (nodes[i] == click_node) {
-                        return;
-                    }
-                    nodes[i].classList.remove(studio.constant.ClassName.chosen);
-                }
-                studio.designer.property.clear();
-            }
-            this.choose = function (node) {
-                if (node == null) {
-                    return;
-                }
-                var target_node = null;
-                if (node.classList.contains(studio.constant.ClassName.item)) {
-                    target_node = node;
-                } else if (node.classList.contains(studio.constant.ClassName.footer)) {
-                    target_node = node.parentNode;
-                } else if (node.parentNode.classList.contains(studio.constant.ClassName.header)) {
-                    target_node = node.parentNode.parentNode;
-                } else if (node.parentNode.tagName == studio.constant.TagName.section && !node.parentNode.classList.contains(studio.constant.ClassName.header)) {
-                    target_node = node.parentNode;
-                }
-
-                if (target_node == null || target_node.classList.contains(studio.constant.ClassName.chosen)) {
-                    return;
-                }
-                $chosen.clear();
-                target_node.classList.add(studio.constant.ClassName.chosen);
-
-                studio.designer.property.create_panel(node);
-            }
-        })();
-    })();
-    this.property = new (function () {
-        this.clear = function () {
-            var area = document.querySelector('.studio>.other>.right');
-            while (area.hasChildNodes()) {
-                area.lastChild.remove();
-            }
-        }
-
-        this.create_panel = function (node) {
-            if (!node.data_context) {
-                return;
-            }
-            var area = document.querySelector('.studio>.other>.right');
-            node.data_context.create_property_panel(area);
-        }
-    })();
-})();
 
 function mouse_in_node_top(node) {
     return window.event.clientY < node.getBoundingClientRect().y + node.getBoundingClientRect().height / 2;
@@ -544,25 +263,330 @@ function make_numbers(start_node) {
     document.querySelector('.editor').style.setProperty('--AsideLeft', '-' + (number.toString().length * 8 + 7) + 'px');
 }
 
-function find_article_node(node) {
-    while (node.tagName != studio.constant.TagName.article) {
-        if (node.classList.contains(studio.constant.ClassName.editor)) {
+function get_element_parents_from_tag(element, tag_name) {
+    while (element.tagName != tag_name) {
+        if (element.classList.contains(studio.constant.ClassName.editor)) {
             return null;
         }
-        node = node.parentNode;
+        element = element.parentNode;
     }
-    return node;
+    return element;
+}
+function get_element_parents_from_class(element, class_name) {
+    while (!element.classList.contains(class_name)) {
+        if (element.classList.contains(studio.constant.ClassName.editor)) {
+            return null;
+        }
+        element = element.parentNode;
+    }
+    return element;
 }
 
-$(function () {
-    var drop_line = document.querySelector('#drop_line');
+var content_node_creator = {
+    'Variable': function (text) {
+        var result = document.createElement('var');
+        text = text.trim();
+        if (text == '') {
+            result.textContent = '[请填写]';
+            result.classList.add('error');
+        } else {
+            result.textContent = text;
+        }
+        return result;
+    },
+    'Format': function (text) {
+        var result = document.createElement('code');
+        result.append(create_format_code_node(text));
+        return result;
+    },
+    'Expression': function (text) {
+        var result = document.createElement('var');
+        text = text.trim();
+        if (text == '') {
+            result.textContent = '[请填写]';
+            result.classList.add('error');
+        } else {
+            result.textContent = text;
+        }
+        return result;
+    }
+}
 
+function create_description_format_node(text, values) {
+    var result = document.createDocumentFragment();
+    var last_index = 0;
+    var matches = text.matchAll(/\{\w+\}/g);
+    for (var match of matches) {
+        if (match.index > last_index) {
+            var node = document.createElement('span');
+            node.textContent = text.substring(last_index, match.index);
+            result.append(node);
+        }
+        if (match[0] in values) {
+            result.append(content_node_creator[values[match[0]].type](values[match[0]].value));
+        } else {
+            node = document.createElement('var');
+            node.textContent = match[0];
+            result.append(node);
+        }
+        last_index = match.index + match[0].length;
+    }
+    if (last_index < text.length) {
+        var node = document.createElement('span');
+        node.textContent = text.substring(last_index);
+        result.append(node);
+    }
+    return result;
+}
+
+studio.designer = new (function () {
+    this.Statement = function (component) {
+        function get_data_from_component(source) {
+            var data = JSON.parse(JSON.stringify(source))
+            data['display'] = data['name'];
+            for (var i in data['params']) {
+                data['params'][i]['value'] = '';
+            }
+            data['boundary'] = null;
+            data['last'] = null;
+            return data;
+        }
+        function create_element_article(data, class_name) {
+            var article = document.createElement('article');
+            article.setAttribute('class', class_name);
+            article.setAttribute('draggable', 'true');
+            var ul = document.createElement('ul');
+            article.append(ul);
+            var li = document.createElement('li');
+            ul.append(li);
+            var aside = document.createElement('aside');
+            li.append(aside);
+            var i = document.createElement('i');
+            li.append(i);
+            i.setAttribute('class', 'font i-' + data['id']);
+
+            li = document.createElement('li');
+            ul.append(li);
+            var h4 = document.createElement('h4');
+            li.append(h4);
+            h4.append(data['name']);
+
+            if (data && 'format' in data) {
+                var p = document.createElement('p');
+                li.append(p);
+                refresh_description(p, data);
+            }
+
+            if (data && 'optional' in data) {
+                li = document.createElement('li');
+                ul.append(li);
+                i = document.createElement('i');
+                li.append(i);
+                i.setAttribute('class', 'font i-more');
+            }
+            return article;
+        }
+        function create_section_element(data) {
+            var section = document.createElement('section');
+            section.append(create_element_article(data, 'label'));
+            section.append(document.createElement('main'));
+            return section;
+        }
+        function create_element(data) {
+            var element;
+            if (data['type'] == 'unit') {
+                return create_element_article(data, 'item');
+            } else {
+                element = document.createElement('div');
+                element.classList.add('container');
+                element.classList.add(data['id']);
+                var section = create_section_element(data);
+                section.classList.add('header');
+                element.append(section);
+                element.append(create_element_article({ 'id': 'flag', 'name': '结束' }, 'label footer'));
+            }
+            return element;
+        }
+        function refresh_description(area, data) {
+            while (area.hasChildNodes()) {
+                area.lastChild.remove();
+            }
+            var values = {}
+            for (var i in data.params) {
+                values['{' + data.params[i]['id'] + '}'] = {
+                    type: data.params[i]['type'],
+                    value: data.params[i]['value']
+                };
+            }
+            area.append(create_description_format_node(data['format'], values));
+        }
+        this.create_section_element = create_section_element;
+        this.get_data_from_component = get_data_from_component;
+        var $statement = this;
+
+        this.component = component;
+        this.data = get_data_from_component(component);
+        this.element = create_element(this.data);
+        this.element.data_statement = this;
+        this.set_param = function (key, value) {
+            for (var i in this.data['params']) {
+                var item = this.data['params'][i];
+                if (item['id'] == key) {
+                    item['value'] = value;
+                    if ('format' in this.data) {
+                        refresh_description(this.element.querySelector('p'), this.data);
+                    }
+                    return;
+                }
+            }
+        }
+        this.set_display = function (display) {
+            this.data['display'] = display;
+            if (display == '') display = this.data['name'];
+            this.element.querySelector('h4').textContent = display.replaceAll(' ', '\u00A0');
+        }
+        this.create_property_panel = function (area) {
+            var label = document.createElement('label');
+            var span = document.createElement('span');
+            span.textContent = '显示';
+            label.append(span);
+            var input = document.createElement('input');
+            input.setAttribute('value', this.data['display']);
+            input.addEventListener('change', function (e) {
+                e.currentTarget.value = e.currentTarget.value.trim();
+                $statement.set_display(e.currentTarget.value);
+            });
+            label.append(input);
+            area.append(label);
+            for (var i in this.data['params']) {
+                var item = this.data['params'][i];
+                label = document.createElement('label');
+                span = document.createElement('span');
+                span.textContent = item['name'];
+                label.append(span);
+                input = document.createElement('input');
+                input.setAttribute('name', item['id']);
+                input.setAttribute('type', item['type']);
+                input.setAttribute('value', item['value']);
+                input.setAttribute('placeholder', studio.config.InputTypeTips[item['type']]);
+                input.addEventListener('change', function (e) {
+                    $statement.set_param(e.currentTarget.getAttribute('name'), e.currentTarget.value);
+                });
+                label.append(input);
+                area.append(label);
+            }
+        }
+    }
+
+    this.drag = new (function () {
+        var mode = null,
+            boundary = null,
+            target = null,
+            when_finish_choose = false;
+
+        this.start = function (node) {
+            mode = studio.constant.DragMode.normal;
+            target = node;
+            when_finish_choose = false;
+        }
+        this.start_choose = function (node) {
+            mode = studio.constant.DragMode.normal;
+            target = node;
+            when_finish_choose = true;
+        }
+        this.start_boundary = function (node) {
+            mode = studio.constant.DragMode.boundary;
+            boundary = node.parentNode;
+            target = node;
+        }
+        this.is_working = function (current_target) {
+            if (target == null) return false;
+            if (drag_in_boundary(mode, boundary, current_target, drop_line)) return false;
+            if (drag_to_self(target, current_target, drop_line)) return false;
+            return true;
+        }
+        this.finish = function () {
+            var drop_line = document.querySelector('#drop_line');
+            var drop_result = drop_line.previousElementSibling != target && drop_line.nextElementSibling != target && drop_line.previousElementSibling != document.querySelector('.editor');
+            var renumber_node;
+            if (drop_result) {
+                renumber_node = get_renumber_start_node(drop_line, target);
+                $(drop_line).after(target);
+                if (when_finish_choose) {
+                    studio.designer.editor.chosen.choose(target);
+                }
+            }
+            $('.editor').after(drop_line);
+            boundary = null;
+            target = null;
+            if (drop_result) {
+                make_numbers(renumber_node);
+            }
+        }
+    })();
+    this.editor = new (function () {
+        this.chosen = new (function () {
+            $chosen = this;
+            this.clear = function (click_node) {
+                var nodes = document.querySelectorAll('.editor .chosen');
+                for (var i = 0; i < nodes.length; i++) {
+                    if (nodes[i] == click_node) {
+                        return;
+                    }
+                    nodes[i].classList.remove(studio.constant.ClassName.chosen);
+                }
+                studio.designer.property.clear();
+            }
+            this.choose = function (node) {
+                if (node == null) {
+                    return;
+                }
+                var target_node = null;
+                if (node.classList.contains(studio.constant.ClassName.item)) {
+                    target_node = node;
+                } else if (node.classList.contains(studio.constant.ClassName.footer)) {
+                    target_node = node.parentNode;
+                } else if (node.parentNode.classList.contains(studio.constant.ClassName.header)) {
+                    target_node = node.parentNode.parentNode;
+                } else if (node.parentNode.tagName == studio.constant.TagName.section && !node.parentNode.classList.contains(studio.constant.ClassName.header)) {
+                    target_node = node.parentNode;
+                }
+
+                if (target_node == null || target_node.classList.contains(studio.constant.ClassName.chosen)) {
+                    return;
+                }
+                $chosen.clear();
+                target_node.classList.add(studio.constant.ClassName.chosen);
+
+                studio.designer.property.create_panel(node);
+            }
+        })();
+    })();
+    this.property = new (function () {
+        this.clear = function () {
+            var area = document.querySelector('.studio>.other>.right');
+            while (area.hasChildNodes()) {
+                area.lastChild.remove();
+            }
+        }
+
+        this.create_panel = function (node) {
+            if (!node.data_statement) {
+                return;
+            }
+            var area = document.querySelector('.studio>.other>.right');
+            node.data_statement.create_property_panel(area);
+        }
+    })();
+})();
+
+$(function () {
     $('.editor').on('dragenter', function (e) {
         e.preventDefault();
     }).on('dragover', function (e) {
         e.preventDefault();
     }).on('dragstart', function (e) {
-        var currentTarget = find_article_node(e.target);
+        var currentTarget = get_element_parents_from_tag(e.target, studio.constant.TagName.article);
         if (currentTarget.classList.contains(studio.constant.ClassName.item)) {
             studio.designer.drag.start(currentTarget);
         } else if (currentTarget.classList.contains(studio.constant.ClassName.footer)) {
@@ -575,7 +599,8 @@ $(function () {
     }).on('dragend', studio.designer.drag.finish);
 
     $('.editor').on('dragover', function (e) {
-        var currentTarget = find_article_node(e.target);
+        var drop_line = document.querySelector('#drop_line');
+        var currentTarget = get_element_parents_from_tag(e.target, studio.constant.TagName.article);
         if (currentTarget == null) return;
         if (!studio.designer.drag.is_working(currentTarget)) return;
 
@@ -633,6 +658,47 @@ $(function () {
     $('.editor').on('mousedown', function (e) {
         studio.designer.editor.chosen.clear(find_chosen_content_node(e.target));
     }).on('click', function (e) {
-        studio.designer.editor.chosen.choose(find_article_node(e.target));
+        if (e.target.classList.contains('i-more')) {
+            var article = get_element_parents_from_tag(e.target, studio.constant.TagName.article);
+            var statement;
+            if (article.classList.contains(studio.constant.ClassName.label)) {
+                statement = get_element_parents_from_class(article, studio.constant.ClassName.container).data_statement;
+            } else {
+                statement = article.data_statement;
+            }
+            var element = statement.element;
+            if (statement && 'optional' in statement.data) {
+                var menu = studio.menu.open(e);
+                for (var optional of statement.data['optional']) {
+                    menu.add('添加语句: ' + optional['name'], (function (o) {
+                        return function () {
+                            if (o['type'] == 'boundary') {
+                                var boundary;
+                                if (statement.data['boundary'] == null) {
+                                    statement.data['boundary'] = []
+                                    boundary = document.createElement('div');
+                                    boundary.setAttribute('class', 'boundary');
+                                    $(element.firstChild).after(boundary);
+                                } else {
+                                    boundary = element.querySelector('.boundary');
+                                }
+                                var section = statement.create_section_element(statement.get_data_from_component(o));
+                                statement.data['boundary'].push(section);
+                                boundary.append(section);
+                            } else {
+                                if (statement.data['last'] == null) {
+                                    var section = statement.create_section_element(statement.get_data_from_component(o));
+                                    statement.data['last'] = section;
+                                    $(element.lastChild).before(section);
+                                }
+                            }
+                        }
+                    })(optional));
+                }
+                menu.show();
+            }
+            return;
+        }
+        studio.designer.editor.chosen.choose(get_element_parents_from_tag(e.target, studio.constant.TagName.article));
     });
 });
