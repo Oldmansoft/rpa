@@ -371,7 +371,7 @@ studio.designer = new (function () {
             li.append(h4);
             h4.append(data['name']);
 
-            if (data && 'format' in data) {
+            if (data && 'format' in data && data['format'] != null) {
                 var p = document.createElement('p');
                 li.append(p);
                 refresh_description(p, data);
@@ -428,12 +428,13 @@ studio.designer = new (function () {
         this.data = get_data_from_component(component);
         this.element = create_element(this.data);
         this.element.data_statement = this;
-        this.set_param = function (key, value) {
+        this.set_parameter = function (key, value) {
             for (var i in this.data['params']) {
                 var item = this.data['params'][i];
                 if (item['id'] == key) {
                     item['value'] = value;
-                    if ('format' in this.data) {
+
+                    if ('format' in this.data && this.data['format'] != null) {
                         refresh_description(this.element.querySelector('p'), this.data);
                     }
                     return;
@@ -454,7 +455,7 @@ studio.designer = new (function () {
             input.setAttribute('value', this.data['display']);
             input.addEventListener('change', function (e) {
                 e.currentTarget.value = e.currentTarget.value.trim();
-                $statement.set_display(e.currentTarget.value);
+                $statement.set_log_display(e.currentTarget.value);
             });
             label.append(input);
             area.append(label);
@@ -470,7 +471,7 @@ studio.designer = new (function () {
                 input.setAttribute('value', item['value']);
                 input.setAttribute('placeholder', studio.config.InputTypeTips[item['type']]);
                 input.addEventListener('change', function (e) {
-                    $statement.set_param(e.currentTarget.getAttribute('name'), e.currentTarget.value);
+                    $statement.set_parameter(e.currentTarget.getAttribute('name'), e.currentTarget.value);
                 });
                 label.append(input);
                 area.append(label);
@@ -558,7 +559,7 @@ studio.designer = new (function () {
                 $chosen.clear();
                 target_node.classList.add(studio.constant.ClassName.chosen);
 
-                studio.designer.property.create_panel(node);
+                studio.designer.property.create_panel(target_node);
             }
         })();
     })();
@@ -672,7 +673,7 @@ $(function () {
                 for (var optional of statement.data['optional']) {
                     menu.add('添加语句: ' + optional['name'], (function (o) {
                         return function () {
-                            if (o['type'] == 'boundary') {
+                            if (o['category'] == 'Boundary') {
                                 var boundary;
                                 if (statement.data['boundary'] == null) {
                                     statement.data['boundary'] = []
