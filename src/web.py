@@ -40,8 +40,8 @@ def component():
     groups = []
     items = []
     classes = executor.component.ActionComponent.__subclasses__()
-    classes.extend(executor.component.ActionGroupComponent.__subclasses__())
-    classes.extend(executor.component.MultiActionGroupComponent.__subclasses__())
+    classes.extend(executor.component.ContainerComponent.__subclasses__())
+    classes.extend(executor.component.CompositionComponent.__subclasses__())
     for class_type in classes:
         items.append(class_type().get_definition_content())
     

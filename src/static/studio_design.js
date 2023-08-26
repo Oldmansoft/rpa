@@ -140,9 +140,7 @@ function set_node_number(node, number) {
 function get_renumber_start_node(line, target) {
     var line_previous_node = find_previous_tag(line, studio.constant.TagName.article);
     var target_previous_node = find_previous_tag(target, studio.constant.TagName.article);
-    if (target_previous_node == null && line_previous_node == null) return null;
-    if (target_previous_node == null) return line_previous_node;
-    if (line_previous_node == null) return target_previous_node;
+    if (target_previous_node == null || line_previous_node == null) return null;
 
     var line_previous_number = get_node_number(line_previous_node);
     var target_previous_number = get_node_number(target_previous_node);
@@ -339,146 +337,192 @@ function create_description_format_node(text, values) {
     return result;
 }
 
-studio.designer = new (function () {
-    this.Statement = function (component) {
-        function get_data_from_component(source) {
-            var data = JSON.parse(JSON.stringify(source))
-            data['display'] = data['name'];
-            for (var i in data['params']) {
-                data['params'][i]['value'] = '';
-            }
-            data['boundary'] = null;
-            data['last'] = null;
-            return data;
+studio.Action = class {
+    constructor(component) {
+        this.component = component;
+        this.display = '';
+        this.params = {}
+        for (var i in component['params']) {
+            this.params['{' + component['params'][i]['id'] + '}'] = {
+                name: component['params'][i]['name'],
+                type: component['params'][i]['type'],
+                value: ''
+            };
         }
-        function create_element_article(data, class_name) {
-            var article = document.createElement('article');
-            article.setAttribute('class', class_name);
-            article.setAttribute('draggable', 'true');
-            var ul = document.createElement('ul');
-            article.append(ul);
+        this.element_description = null;
+        this.element = this.draw();
+        this.element.object = this;
+    }
+
+    draw() {
+        var article = this.draw_article();
+        article.setAttribute('class', 'item');
+        return article;
+    }
+
+    draw_article_element(id, name) {
+        var article = document.createElement('article');
+        article.setAttribute('draggable', 'true');
+        var ul = document.createElement('ul');
+        article.append(ul);
+        var li = document.createElement('li');
+        ul.append(li);
+        var aside = document.createElement('aside');
+        li.append(aside);
+        var i = document.createElement('i');
+        li.append(i);
+        i.setAttribute('class', 'font i-' + id);
+
+        li = document.createElement('li');
+        ul.append(li);
+        var h4 = document.createElement('h4');
+        li.append(h4);
+        h4.append(name);
+        return article;
+    }
+
+    draw_article() {
+        var article = this.draw_article_element(this.component['id'], this.component['name']);
+
+        if (this.component['format'] != null) {
+            this.element_description = document.createElement('p');
+            article.querySelector('ul li:last-child').append(this.element_description);
+            this.draw_description();
+        }
+
+        if ('optional' in this.component) {
             var li = document.createElement('li');
-            ul.append(li);
-            var aside = document.createElement('aside');
-            li.append(aside);
+            article.querySelector('ul').append(li);
             var i = document.createElement('i');
             li.append(i);
-            i.setAttribute('class', 'font i-' + data['id']);
+            i.setAttribute('class', 'font i-more');
+        }
+        return article;
+    }
 
-            li = document.createElement('li');
-            ul.append(li);
-            var h4 = document.createElement('h4');
-            li.append(h4);
-            h4.append(data['name']);
+    draw_description() {
+        if (this.element_description == null) {
+            return;
+        }
+        while (this.element_description.hasChildNodes()) {
+            this.element_description.lastChild.remove();
+        }
+        this.element_description.append(create_description_format_node(this.component['format'], this.params));
+    }
 
-            if (data && 'format' in data && data['format'] != null) {
-                var p = document.createElement('p');
-                li.append(p);
-                refresh_description(p, data);
-            }
+    draw_display(display) {
+        var display = this.display;
+        if (display == '') display = this.component['name'];
+        this.element.querySelector('h4').textContent = display.replaceAll(' ', '\u00A0');
+    }
 
-            if (data && 'optional' in data) {
-                li = document.createElement('li');
-                ul.append(li);
-                i = document.createElement('i');
-                li.append(i);
-                i.setAttribute('class', 'font i-more');
-            }
-            return article;
-        }
-        function create_section_element(data) {
-            var section = document.createElement('section');
-            section.append(create_element_article(data, 'label'));
-            section.append(document.createElement('main'));
-            return section;
-        }
-        function create_element(data) {
-            var element;
-            if (data['type'] == 'unit') {
-                return create_element_article(data, 'item');
-            } else {
-                element = document.createElement('div');
-                element.classList.add('container');
-                element.classList.add(data['id']);
-                var section = create_section_element(data);
-                section.classList.add('header');
-                element.append(section);
-                element.append(create_element_article({ 'id': 'flag', 'name': '结束' }, 'label footer'));
-            }
-            return element;
-        }
-        function refresh_description(area, data) {
-            while (area.hasChildNodes()) {
-                area.lastChild.remove();
-            }
-            var values = {}
-            for (var i in data.params) {
-                values['{' + data.params[i]['id'] + '}'] = {
-                    type: data.params[i]['type'],
-                    value: data.params[i]['value']
-                };
-            }
-            area.append(create_description_format_node(data['format'], values));
-        }
-        this.create_section_element = create_section_element;
-        this.get_data_from_component = get_data_from_component;
-        var $statement = this;
-
-        this.component = component;
-        this.data = get_data_from_component(component);
-        this.element = create_element(this.data);
-        this.element.data_statement = this;
-        this.set_parameter = function (key, value) {
-            for (var i in this.data['params']) {
-                var item = this.data['params'][i];
-                if (item['id'] == key) {
-                    item['value'] = value;
-
-                    if ('format' in this.data && this.data['format'] != null) {
-                        refresh_description(this.element.querySelector('p'), this.data);
-                    }
-                    return;
-                }
-            }
-        }
-        this.set_display = function (display) {
-            this.data['display'] = display;
-            if (display == '') display = this.data['name'];
-            this.element.querySelector('h4').textContent = display.replaceAll(' ', '\u00A0');
-        }
-        this.create_property_panel = function (area) {
-            var label = document.createElement('label');
-            var span = document.createElement('span');
-            span.textContent = '显示';
+    draw_property_panel(area) {
+        var label = document.createElement('label');
+        var span = document.createElement('span');
+        span.textContent = '显示';
+        label.append(span);
+        var input = document.createElement('input');
+        input.object = this;
+        input.setAttribute('value', this.display);
+        input.setAttribute('placeholder', this.component['name']);
+        input.addEventListener('change', function (e) {
+            this.object.display = e.currentTarget.value.trim();
+            this.object.draw_display();
+        });
+        label.append(input);
+        area.append(label);
+        for (var id in this.params) {
+            var item = this.params[id];
+            label = document.createElement('label');
+            span = document.createElement('span');
+            span.textContent = item['name'];
             label.append(span);
-            var input = document.createElement('input');
-            input.setAttribute('value', this.data['display']);
+            input = document.createElement('input');
+            input.object = this;
+            input.setAttribute('name', id);
+            input.setAttribute('type', item['type']);
+            input.setAttribute('value', item['value']);
+            input.setAttribute('placeholder', studio.config.InputTypeTips[item['type']]);
             input.addEventListener('change', function (e) {
-                e.currentTarget.value = e.currentTarget.value.trim();
-                $statement.set_log_display(e.currentTarget.value);
+                this.object.params[e.currentTarget.getAttribute('name')]['value'] = e.currentTarget.value;
+                this.object.draw_description();
             });
             label.append(input);
             area.append(label);
-            for (var i in this.data['params']) {
-                var item = this.data['params'][i];
-                label = document.createElement('label');
-                span = document.createElement('span');
-                span.textContent = item['name'];
-                label.append(span);
-                input = document.createElement('input');
-                input.setAttribute('name', item['id']);
-                input.setAttribute('type', item['type']);
-                input.setAttribute('value', item['value']);
-                input.setAttribute('placeholder', studio.config.InputTypeTips[item['type']]);
-                input.addEventListener('change', function (e) {
-                    $statement.set_parameter(e.currentTarget.getAttribute('name'), e.currentTarget.value);
-                });
-                label.append(input);
-                area.append(label);
-            }
         }
     }
+}
+studio.Section = class extends studio.Action {
+    draw() {
+        return this.draw_section();
+    }
+    draw_section() {
+        var section = document.createElement('section');
 
+        var article = this.draw_article();
+        article.object = this;
+        article.setAttribute('class', 'label');
+        section.append(article);
+
+        section.append(document.createElement('main'));
+        return section;
+    }
+}
+studio.Container = class extends studio.Section {
+    draw() {
+        var element = document.createElement('div');
+        element.classList.add('container');
+        element.classList.add(this.component['id']);
+
+        var section = this.draw_section();
+        section.object = this;
+        section.classList.add('header');
+        element.append(section);
+
+        var article = this.draw_article_element('flag', '结束');
+        article.setAttribute('class', 'label footer');
+        element.append(article);
+        return element;
+    }
+}
+studio.Composition = class extends studio.Container {
+    constructor(component) {
+        super(component);
+        this.element_boundary = null;
+        this.element_last = null;
+    }
+    add_boundary_action(optional) {
+        if (this.element_boundary == null) {
+            this.element_boundary = document.createElement('div');
+            this.element_boundary.setAttribute('class', 'boundary');
+            $(this.element.firstChild).after(this.element_boundary);
+        }
+
+        this.element_boundary.append(new studio.Section(optional).element);
+    }
+    add_last_action(optional) {
+        if (this.element_last != null) {
+            return;
+        }
+
+        this.element_last = new studio.Section(optional).element;
+        $(this.element.lastChild).before(this.element_last);
+    }
+}
+studio.Procedure = class {
+    create(component) {
+        if (component['type'] == 'unit') {
+            return new studio.Action(component);
+        } else if (component['type'] == 'container') {
+            return new studio.Container(component);
+        } else {
+            return new studio.Composition(component);
+        }
+    }
+}
+
+studio.designer = new (function () {
+    this.procedure = new studio.Procedure();
     this.drag = new (function () {
         var mode = null,
             boundary = null,
@@ -543,12 +587,14 @@ studio.designer = new (function () {
                     return;
                 }
                 var target_node = null;
-                if (node.classList.contains(studio.constant.ClassName.item)) {
+                if (node.classList.contains(studio.constant.ClassName.container)) {
+                    target_node = node.firstChild;
+                } else if (node.classList.contains(studio.constant.ClassName.item)) {
                     target_node = node;
                 } else if (node.classList.contains(studio.constant.ClassName.footer)) {
-                    target_node = node.parentNode;
+                    target_node = node;
                 } else if (node.parentNode.classList.contains(studio.constant.ClassName.header)) {
-                    target_node = node.parentNode.parentNode;
+                    target_node = node.parentNode;
                 } else if (node.parentNode.tagName == studio.constant.TagName.section && !node.parentNode.classList.contains(studio.constant.ClassName.header)) {
                     target_node = node.parentNode;
                 }
@@ -572,11 +618,10 @@ studio.designer = new (function () {
         }
 
         this.create_panel = function (node) {
-            if (!node.data_statement) {
+            if (!node.object) {
                 return;
             }
-            var area = document.querySelector('.studio>.other>.right');
-            node.data_statement.create_property_panel(area);
+            node.object.draw_property_panel(document.querySelector('.studio>.other>.right'));
         }
     })();
 })();
@@ -661,37 +706,15 @@ $(function () {
     }).on('click', function (e) {
         if (e.target.classList.contains('i-more')) {
             var article = get_element_parents_from_tag(e.target, studio.constant.TagName.article);
-            var statement;
-            if (article.classList.contains(studio.constant.ClassName.label)) {
-                statement = get_element_parents_from_class(article, studio.constant.ClassName.container).data_statement;
-            } else {
-                statement = article.data_statement;
-            }
-            var element = statement.element;
-            if (statement && 'optional' in statement.data) {
+            if (article.object && 'optional' in article.object.component) {
                 var menu = studio.menu.open(e);
-                for (var optional of statement.data['optional']) {
-                    menu.add('添加语句: ' + optional['name'], (function (o) {
+                for (var optional of article.object.component['optional']) {
+                    menu.add('添加: ' + optional['name'], (function (o) {
                         return function () {
                             if (o['category'] == 'Boundary') {
-                                var boundary;
-                                if (statement.data['boundary'] == null) {
-                                    statement.data['boundary'] = []
-                                    boundary = document.createElement('div');
-                                    boundary.setAttribute('class', 'boundary');
-                                    $(element.firstChild).after(boundary);
-                                } else {
-                                    boundary = element.querySelector('.boundary');
-                                }
-                                var section = statement.create_section_element(statement.get_data_from_component(o));
-                                statement.data['boundary'].push(section);
-                                boundary.append(section);
+                                article.object.add_boundary_action(o);
                             } else {
-                                if (statement.data['last'] == null) {
-                                    var section = statement.create_section_element(statement.get_data_from_component(o));
-                                    statement.data['last'] = section;
-                                    $(element.lastChild).before(section);
-                                }
+                                article.object.add_last_action(o);
                             }
                         }
                     })(optional));

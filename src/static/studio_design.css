@@ -128,26 +128,18 @@
     padding: 5px;
     background-color: #dbe9ff;
 }
-.editor .container>.boundary>section>article.label>ul:hover,
-.editor .container>section>article.label>ul:hover,
-.editor .container>article.label>ul:hover {
+.editor .container section>article.label>ul:hover,
+.editor .container article.label>ul:hover {
     background-color: #cce0ff;
 }
-.editor .container>.boundary>section.chosen>article.label>ul,
-.editor .container.chosen>.boundary>section>article.label>ul,
-.editor .container>section.chosen>article.label>ul,
-.editor .container.chosen>section>article.label>ul,
-.editor .container.chosen>article.label>ul {
+.editor .container section.chosen>article.label>ul,
+.editor .container article.label.chosen>ul {
     background-color: #b4d2ff;
 }
-.editor .container>.boundary>section>main,
-.editor .container>section>main {
+.editor .container section>main {
     border-left: 4px solid #dbe9ff;
 }
-.editor .container>.boundary>section.chosen>main,
-.editor .container.chosen>.boundary>section>main,
-.editor .container>section.chosen>main,
-.editor .container.chosen>section>main {
+.editor .container section.chosen>main {
     border-color: #b4d2ff;
 }
 
@@ -160,15 +152,13 @@
     background-color: #abeeec;
 }
 .editor .container.While>section.chosen>article.label>ul,
-.editor .container.While.chosen>section>article.label>ul,
-.editor .container.While.chosen>article.label>ul {
+.editor .container.While>article.label.chosen>ul {
     background-color: #73e3df;
 }
 .editor .container.While>section>main {
     border-color: #cff6f9;
 }
-.editor .container.While>section.chosen>main,
-.editor .container.While.chosen>section>main {
+.editor .container.While>section.chosen>main {
     border-color: #73e3df;
 }
 

@@ -5,8 +5,8 @@ from enum import Enum
 
 from .value import *
 
-class ContainerComponent(SequenceComponent, ABC):
-    '''容器组件'''
+class ActionBodyComponent(SequenceComponent, ABC):
+    '''带容器动作组件'''
 
     body:Component = None
 
@@ -18,7 +18,7 @@ class ContainerComponent(SequenceComponent, ABC):
         if self.body == None: return
         self.body.execute()
 
-class ConditionalParametersComponent(ContainerComponent):
+class ConditionalParametersComponent(ActionBodyComponent):
     '''条件组件'''
 
     def __init__(self) -> None:
@@ -34,7 +34,7 @@ class ConditionalParametersComponent(ContainerComponent):
     def compute(self) -> bool:
         return self.expression.get()
 
-class EmptyParametersComponent(ContainerComponent):
+class EmptyParametersComponent(ActionBodyComponent):
     '''无参数组件'''
 
     def define_parameter(self) -> ParameterDefinition:
@@ -44,13 +44,13 @@ class EmptyParametersComponent(ContainerComponent):
         pass
 
 class ActionComponent(SequenceComponent, ABC):
-    '''单语句'''
+    '''动作组件'''
 
-class ActionGroupComponent(ContainerComponent, ABC):
+class ContainerComponent(ActionBodyComponent, ABC):
     '''语句组'''
     
     def get_type(self) -> str:
-        return 'composition'
+        return 'container'
 
 class OptionalCategory(Enum):
     '''可选项类型'''
@@ -61,7 +61,7 @@ class OptionalCategory(Enum):
 class Optional(object):
     '''可选项'''
 
-    def __init__(self, category:OptionalCategory, id:str, name:str, optional_component_type:Type[ContainerComponent]) -> None:
+    def __init__(self, category:OptionalCategory, id:str, name:str, optional_component_type:Type[ActionBodyComponent]) -> None:
         self.category = category
         self.id = id
         self.name = name
@@ -74,7 +74,7 @@ class OptionalDefinition(object):
     def __init__(self) -> None:
         self.value:List[Optional] = []
     
-    def append(self, category:OptionalCategory, id:str, name:str, optional_component_type:Type[ContainerComponent]) -> OptionalDefinition:
+    def append(self, category:OptionalCategory, id:str, name:str, optional_component_type:Type[ActionBodyComponent]) -> OptionalDefinition:
         self.value.append(Optional(category, id, name, optional_component_type))
         return self
     
@@ -94,7 +94,7 @@ class OptionalDefinition(object):
             result.append(item)
         return result
 
-class MultiActionGroupComponent(ContainerComponent, ABC):
+class CompositionComponent(ActionBodyComponent, ABC):
     '''多语句组'''
 
     def get_type(self) -> str:

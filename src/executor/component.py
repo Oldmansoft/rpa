@@ -1,10 +1,10 @@
 from .sequence import *
 
 class Assign(ActionComponent):
-    '''分配'''
+    '''分配变量'''
 
     def __init__(self) -> None:
-        self.set_name('分配')
+        self.set_name('分配变量')
         self.set_format('将{name}设置为{value}')
 
     def define_parameter(self) -> ParameterDefinition:
@@ -20,10 +20,10 @@ class Assign(ActionComponent):
         self.procedure.local_values[self.var_name] = self.var_value.get()
 
 class Print(ActionComponent):
-    '''打印'''
+    '''调试打印'''
 
     def __init__(self) -> None:
-        self.set_name('打印')
+        self.set_name('调试打印')
         self.set_format('{content}')
 
     def define_parameter(self) -> ParameterDefinition:
@@ -38,7 +38,7 @@ class Print(ActionComponent):
         print(self.content.get())
         print('\033[0m', end='')
 
-class If(MultiActionGroupComponent):
+class If(CompositionComponent):
     '''条件判断'''
 
     else_action: EmptyParametersComponent = None
@@ -82,11 +82,11 @@ class If(MultiActionGroupComponent):
             self.else_action.log_output()
             self.else_action.execute()
 
-class While(ActionGroupComponent):
-    '''循环'''
+class While(ContainerComponent):
+    '''条件循环'''
 
     def __init__(self) -> None:
-        self.set_name('循环')
+        self.set_name('条件循环')
         self.set_format('{condition}')
 
     def define_parameter(self) -> ParameterDefinition:
@@ -101,11 +101,11 @@ class While(ActionGroupComponent):
             self.body.execute()
             self.log_output()
 
-class For(ActionGroupComponent):
-    '''遍历'''
+class For(ContainerComponent):
+    '''遍历循环'''
 
     def __init__(self) -> None:
-        self.set_name('遍历')
+        self.set_name('遍历循环')
         self.set_format('{item} in {collection}')
 
     def define_parameter(self) -> ParameterDefinition:
@@ -121,6 +121,36 @@ class For(ActionGroupComponent):
             self.body.execute()
             self.log_output()
 
+class Break(ActionComponent):
+    '''跳出结束循环'''
+
+    def __init__(self) -> None:
+        self.set_name('跳出结束循环')
+
+    def define_parameter(self) -> ParameterDefinition:
+        return ParameterDefinition()
+
+    def set_parameter(self, *args) -> None:
+        pass
+        
+    def execute(self) -> None:
+        pass
+
+class Continue(ActionComponent):
+    '''跳过继续循环'''
+
+    def __init__(self) -> None:
+        self.set_name('跳过继续循环')
+
+    def define_parameter(self) -> ParameterDefinition:
+        return ParameterDefinition()
+
+    def set_parameter(self, *args) -> None:
+        pass
+        
+    def execute(self) -> None:
+        pass
+
 class Builder:
     def __init__(self) -> None:
         self.component_classes = {}
@@ -130,12 +160,12 @@ class Builder:
             if ABC in item.__bases__: continue
             self.component_classes[item.__name__] = item
         
-        classes = ActionGroupComponent.__subclasses__()
+        classes = ContainerComponent.__subclasses__()
         for item in classes:
             if ABC in item.__bases__: continue
             self.component_classes[item.__name__] = item
 
-        classes = MultiActionGroupComponent.__subclasses__()
+        classes = CompositionComponent.__subclasses__()
         for item in classes:
             if ABC in item.__bases__: continue
             self.component_classes[item.__name__] = item
@@ -158,14 +188,14 @@ class Builder:
         component.set_procedure(procedure)
         if 'params' in node:
             self.set_sequence_component_params(component, node['params'], procedure)
+        if component.__class__.__base__ == ActionBodyComponent:
+            group:ActionBodyComponent = component
+            group.set_body(self.create_body(procedure, node['body']))
         if component.__class__.__base__ == ContainerComponent:
             group:ContainerComponent = component
             group.set_body(self.create_body(procedure, node['body']))
-        if component.__class__.__base__ == ActionGroupComponent:
-            group:ActionGroupComponent = component
-            group.set_body(self.create_body(procedure, node['body']))
-        elif component.__class__.__base__ == MultiActionGroupComponent:
-            mgruop:MultiActionGroupComponent = component
+        elif component.__class__.__base__ == CompositionComponent:
+            mgruop:CompositionComponent = component
             mgruop.set_body(self.create_body(procedure, node['body']))
             definitions = mgruop.define_optional().to_dict()
             if 'optional' in node:
