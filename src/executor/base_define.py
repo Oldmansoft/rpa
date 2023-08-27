@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Dict
+from typing import List, Dict, Type
 from abc import ABC, abstractmethod
 
 from .error import *
@@ -15,7 +15,7 @@ class Component(ABC):
 class Value(ABC):
     '''值基类'''
 
-    def __init__(self, content:str, procedure:Procedure) -> None:
+    def set(self, content:str, procedure:Procedure) -> None:
         self.content = content
         self.procedure = procedure
 
@@ -29,7 +29,7 @@ class Parameter(object):
     def __init__(self, id:str, name:str, value_type:type) -> None:
         self.id = id
         self.name = name
-        self.value_type = value_type
+        self.value_type:Type[Value] = value_type
     
     def get_value_type(self):
         return self.value_type.__name__.replace('Value', '')
@@ -131,15 +131,39 @@ class MultiSequenceComponent(Component):
             component.log_output()
             component.execute()
 
+class StackKeyValue(object):
+    def __init__(self) -> None:
+        self.names:List[str] = []
+        self.values:List[any] = []
+
+    def push(self, name:str) -> None:
+        self.names.append(name)
+        self.values.append(None)
+    
+    def pop(self) -> None:
+        self.names.pop()
+        self.values.pop()
+    
+    def set(self, value:any) -> None:
+        self.values[-1] = value
+    
+    def peek(self) -> dict:
+        if len(self.names) == 0:
+            return {}
+        return {
+            self.names[-1]: self.values[-1]
+        }
+
 class Procedure(Component):
     '''流程'''
 
-    body: Component = None
-
     def __init__(self) -> None:
         super().__init__()
-        self.line_number: int = 0
-        self.local_values: Dict[str, any] = {}
+        self.line_number:int = 0
+        self.local_values:Dict[str,any] = {}
+        self.stack_values = []
+        self.loop_values = StackKeyValue()
+        self.body:Component = None
      
     def get_line_number(self) -> int:
         self.line_number += 1
@@ -151,12 +175,42 @@ class Procedure(Component):
         :param name: 变量名称。
         :param value: 值。
         '''
-        if name in self.local_values: raise NameComponentError(f'{name} 已经存在，不能重新定义。')
+        if name in self.local_values:
+            raise NameDefinitionError(f'{name} 已经存在，不能重新定义。')
         if value == None:
             self.local_values[name] = None
         else:
             self.local_values[name] = value.get()
+    
+    def assign(self, name:str, value:any) -> None:
+        if not name in self.local_values:
+            raise NameDefinitionError(f'变量 {name} 未定义')
+        self.local_values[name] = value
 
+    def get_all_values(self) -> Dict[str,any]:
+        result = self.local_values.copy()
+        result.update(self.loop_values.peek())
+        return result
+    
     def execute(self) -> None:
         if self.body == None: return
-        self.body.execute()
+        try:
+            self.body.execute()
+        except ReturnFunction:
+            pass
+
+class Project(Component):
+    '''程序'''
+    @staticmethod
+    def Create(name:str, folder_path:str) -> None:
+        pass
+
+    @staticmethod
+    def Load(file_path:str) -> Project:
+        pass
+
+    def execute(self) -> None:
+        try:
+            super().execute()
+        except QuitFunction:
+            pass
