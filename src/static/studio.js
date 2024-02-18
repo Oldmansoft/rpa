@@ -26,13 +26,13 @@ studio.menu = new (function () {
         var li = document.createElement('li');
         li.textContent = name;
         element.append(li);
-        li.addEventListener('click', function() {
+        li.addEventListener('click', function () {
             func();
             $menu.close();
         });
         return this;
     }
-    this.show = function() {
+    this.show = function () {
         element.classList.add('active');
     }
     this.close = function () {
@@ -49,7 +49,7 @@ studio.menu = new (function () {
         element = document.createElement('ul');
         element.setAttribute('class', 'menu');
         studio.element.parentNode.append(element);
-        document.querySelector('body').addEventListener('mousedown', function (e) {
+        document.body.addEventListener('mousedown', function (e) {
             if ($.contains(element, e.target)) {
                 return;
             }
@@ -57,3 +57,62 @@ studio.menu = new (function () {
         });
     });
 })();
+
+studio.data = {}
+studio.definition = {}
+studio.definition.event = class {
+    constructor() {
+        this.executes = [];
+    }
+    add(func) {
+        if (typeof (func) != 'function') return;
+        this.executes.push(func);
+    }
+    execute() {
+        for (var func of this.executes) {
+            func.apply(null, arguments);
+        }
+    }
+}
+studio.dialog = {}
+studio.dialog.create = function (title) {
+    var dialog = document.createElement('dialog');
+
+    var h1 = document.createElement('h1');
+    dialog.append(h1);
+    h1.append(document.createTextNode(title));
+
+    var icon_close = document.createElement('i');
+    h1.append(icon_close);
+    icon_close.setAttribute('class', 'font i-close');
+    icon_close.addEventListener('click', function () {
+        dialog.close();
+    });
+
+    dialog.addEventListener('close', function () {
+        dialog.remove();
+    });
+    document.body.prepend(dialog);
+    return dialog;
+}
+studio.dialog.loading = class {
+    constructor(content) {
+        this.dialog = document.createElement('dialog');
+        this.dialog.setAttribute('class', 'loading');
+        var p = document.createElement('p');
+        p.append(document.createTextNode(content));
+        this.dialog.append(p);
+        document.body.append(this.dialog);
+        setTimeout(() => {
+            if (this.dialog != null) {
+                this.dialog.showModal();
+            }
+        }, 100);
+    }
+
+    close() {
+        this.dialog.close();
+        this.dialog.remove();
+        this.dialog = null;
+    }
+}

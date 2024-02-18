@@ -626,7 +626,7 @@ studio.designer = new (function () {
     })();
 })();
 
-$(function () {
+studio.ready(function () {
     $('.editor').on('dragenter', function (e) {
         e.preventDefault();
     }).on('dragover', function (e) {
@@ -647,7 +647,10 @@ $(function () {
     $('.editor').on('dragover', function (e) {
         var drop_line = document.querySelector('#drop_line');
         var currentTarget = get_element_parents_from_tag(e.target, studio.constant.TagName.article);
-        if (currentTarget == null) return;
+        if (currentTarget == null) {
+            $('.editor').append(drop_line);
+            return;
+        }
         if (!studio.designer.drag.is_working(currentTarget)) return;
 
         if (currentTarget.classList.contains(studio.constant.ClassName.item)) {

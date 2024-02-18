@@ -1,10 +1,12 @@
-from flask import Flask, redirect
+from flask import Flask, redirect, request
 from flask_socketio import SocketIO, emit
 from uuid import uuid4
-from json import dumps
-import executor.component
+from json import dumps, loads
 
-app = Flask('studio')
+import executor.component
+import studio.client_message
+
+app = Flask(__name__)
 app.secret_key = str(uuid4())
 socket = SocketIO(app)
 socket.init_app(app, cors_allowed_origins='*')
@@ -30,10 +32,46 @@ def disconnect_msg():
 @socket.on('message')
 def handle_message(data):
     print(f'received message: {data}')
+    if not 'type' in data or not 'action' in data:
+        print('缺少 type 或者 action')
+        return '缺少 type 或者 action'
+    kwargs = {}
+    if 'params' in data:
+        kwargs = data['params']
+        if type(kwargs) != dict:
+            print('params 内容无效')
+            return 'params 内容无效'
+    getattr(studio.client_message.messages[data['type']], data['action'])(**kwargs)
 
 @app.route('/')
 def index():
-    return redirect('/static/studio.htm')
+    return redirect('/static/start.htm')
+
+@app.route('/get_message', methods=["POST"])
+def get_message():
+    binary_data = request.get_data()
+    if len(binary_data) == 0:
+        print('请求数据无效')
+        return dumps({'code': 400, 'message': '请求数据无效', 'data': None}, ensure_ascii=False)
+    
+    data = loads(binary_data)
+    if not 'type' in data or not 'action' in data:
+        print('请求数据缺少 type 或者 action')
+        return dumps({'code': 406, 'message': '请求数据缺少 type 或者 action', 'data': None}, ensure_ascii=False)
+    kwargs = {}
+    if 'params' in data:
+        kwargs = data['params']
+        if type(kwargs) != dict:
+            print('请求数据 params 内容无效')
+            return dumps({'code': 406, 'message': '请求数据 params 内容无效', 'data': None}, ensure_ascii=False)
+    try:
+        result = getattr(studio.client_message.messages[data['type']], data['action'])(**kwargs)
+    except Exception as ex:
+        return dumps({'code': 500, 'message': ex, 'data': result}, ensure_ascii=False)
+    if result == None:
+        return dumps({'code': 0, 'message': '', 'data': None})
+    else:
+        return dumps({'code': 0, 'message': '', 'data': result}, ensure_ascii=False)
 
 @app.route('/get_component')
 def component():

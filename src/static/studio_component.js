@@ -39,6 +39,7 @@ function create_component_content() {
     }
 
     $.get("/get_component", function (data) {
+        studio.data.component = data;
         create_content_to(data, $('.studio>.other>.left'));
         $('.studio>.other>.left .group>.branch').on('click', function () {
             this.parentNode.classList.toggle('expand');
@@ -50,6 +51,6 @@ function create_component_content() {
     });
 }
 
-$(function () {
+studio.ready(function () {
     create_component_content();
 });

@@ -178,10 +178,10 @@ class Return(ActionComponent):
         raise ReturnFunction()
 
 class Quit(ActionComponent):
-    '''退出流程'''
+    '''退出应用'''
 
     def __init__(self) -> None:
-        self.set_name('退出程序')
+        self.set_name('退出应用')
 
     def define_parameter(self) -> ParameterDefinition:
         return ParameterDefinition()
