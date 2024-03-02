@@ -338,15 +338,21 @@ function create_description_format_node(text, values) {
 }
 
 studio.Action = class {
-    constructor(component) {
+    constructor(component, variables) {
         this.component = component;
         this.display = '';
         this.params = {}
         for (var i in component['params']) {
-            this.params['{' + component['params'][i]['id'] + '}'] = {
-                name: component['params'][i]['name'],
+            var value = '';
+            var id = component['params'][i]['id'];
+            var name = component['params'][i]['name'];
+            if (variables && id in variables) {
+                value = variables[id];
+            }
+            this.params['{' + id + '}'] = {
+                name: name,
                 type: component['params'][i]['type'],
-                value: ''
+                value: value
             };
         }
         this.element_description = null;
@@ -464,7 +470,8 @@ studio.Section = class extends studio.Action {
         article.setAttribute('class', 'label');
         section.append(article);
 
-        section.append(document.createElement('main'));
+        this.element_main = document.createElement('main');
+        section.append(this.element_main);
         return section;
     }
 }
@@ -486,37 +493,40 @@ studio.Container = class extends studio.Section {
     }
 }
 studio.Composition = class extends studio.Container {
-    constructor(component) {
-        super(component);
+    constructor(component, variables) {
+        super(component, variables);
         this.element_boundary = null;
         this.element_last = null;
     }
-    add_boundary_action(optional) {
+    add_boundary_action(optional, variables) {
         if (this.element_boundary == null) {
             this.element_boundary = document.createElement('div');
             this.element_boundary.setAttribute('class', 'boundary');
             $(this.element.firstChild).after(this.element_boundary);
         }
-
-        this.element_boundary.append(new studio.Section(optional).element);
+        var boundary_action = new studio.Section(optional, variables);
+        this.element_boundary.append(boundary_action.element);
+        return boundary_action;
     }
     add_last_action(optional) {
         if (this.element_last != null) {
             return;
         }
 
-        this.element_last = new studio.Section(optional).element;
+        var last_action = new studio.Section(optional);
+        this.element_last = last_action.element;
         $(this.element.lastChild).before(this.element_last);
+        return last_action;
     }
 }
 studio.Procedure = class {
-    create(component) {
+    create(component, variables) {
         if (component['type'] == 'unit') {
-            return new studio.Action(component);
+            return new studio.Action(component, variables);
         } else if (component['type'] == 'container') {
-            return new studio.Container(component);
+            return new studio.Container(component, variables);
         } else {
-            return new studio.Composition(component);
+            return new studio.Composition(component, variables);
         }
     }
 }

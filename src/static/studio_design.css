@@ -1,3 +1,13 @@
+.parameters {
+    margin-left: 60px;
+    border-left: 1px solid #aaa;
+}
+
+.variables {
+    margin-left: 60px;
+    border-left: 1px solid #aaa;
+}
+
 .editor {
     --AsideLeft: -15px;
 

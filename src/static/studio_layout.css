@@ -27,6 +27,18 @@
     flex-direction: column;
 }
 
+.studio>.other>.center>.tabs {
+    display: flex;
+    border-bottom: 1px solid #aaa;
+}
+.studio>.other>.center>.tabs>div {
+    padding: 2px 5px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #fff;
+    background-color: gray;
+}
+
 .studio>.other>.center>.workspace {
     flex: auto;
     height: 0;

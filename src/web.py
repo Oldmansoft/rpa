@@ -67,7 +67,7 @@ def get_message():
     try:
         result = getattr(studio.client_message.messages[data['type']], data['action'])(**kwargs)
     except Exception as ex:
-        return dumps({'code': 500, 'message': ex, 'data': result}, ensure_ascii=False)
+        return dumps({'code': 500, 'message': str(ex), 'data': None}, ensure_ascii=False)
     if result == None:
         return dumps({'code': 0, 'message': '', 'data': None})
     else:

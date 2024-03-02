@@ -32,18 +32,52 @@ studio.communication.server.message = function (type, action, params, callback) 
 }
 
 studio.project = {}
+studio.project.run = function (path) {
+    studio.communication.server.message('Project', 'Run', { 'path': path }, function() {});
+}
 studio.project.open = function (path) {
     function find_component(id, list) {
-        for (var i = 0; i < list.length; i++) {
-            if (list[i]['category'] == 'item') {
-                if (list[i]['id'] == id) {
-                    return list[i];
+        for (var item of list) {
+            if (item['category'] == 'item') {
+                if (item['id'] == id) {
+                    return item;
                 }
             } else {
-                return find_component(id, list[i]['list']);
+                return find_component(id, item['list']);
             }
         }
         return null;
+    }
+
+    function find_component_optional(id, list) {
+        for (var item of list) {
+            if (item['id'] == id) {
+                return item;
+            }
+        }
+    }
+
+    function element_append_body(element_main, body) {
+        for (var item of body) {
+            var component = find_component(item['id'], studio.data.component);
+            var action = studio.designer.procedure.create(component, item['params']);
+            element_main.append(action.element);
+            if ('body' in item && item['body'].length > 0) {
+                element_append_body(action.element_main, item['body']);
+            }
+            if ('optional' in item && item['optional'].length > 0) {
+                for (var optional_item of item['optional']) {
+                    component_optional = find_component_optional(optional_item['id'], component['optional']);
+                    if (component_optional['category'] == 'Boundary') {
+                        var boundary_action = action.add_boundary_action(component_optional, optional_item['params']);
+                        element_append_body(boundary_action.element_main, optional_item['body']);
+                    } else {
+                        var last_action = action.add_last_action(component_optional);
+                        element_append_body(last_action.element_main, optional_item['body']);
+                    }
+                }
+            }
+        }
     }
 
     studio.communication.server.message('Project', 'Open', {
@@ -54,15 +88,24 @@ studio.project.open = function (path) {
             document.location = '/static/start.htm';
             return;
         }
-        var editor = document.querySelector('.editor');
-        for (var item of data['data']['Main']['body']) {
-            var component = find_component(item['id'], studio.data.component);
-            console.info(item['id'], item, component);
-            editor.append(studio.designer.procedure.create(component).element);
+        var tab = document.createElement('div');
+        tab.innerText = 'Main';
+        document.querySelector('.tabs').append(tab);
+
+        var variables = document.querySelector('.variables');
+        for (var name in data['data']['Main']['local']) {
+            var variable = document.createElement('div');
+            variable.innerText = name;
+            variables.append(variable);
         }
+
+        var editor = document.querySelector('.editor');
+        element_append_body(editor, data['data']['Main']['body']);
+        make_numbers();
     })
 }
-studio.project.creator_panel = function () {
+studio.project.dialog_panel = {}
+studio.project.dialog_panel.create = function () {
     var dialog = studio.dialog.create('新建应用');
     function check_value() {
         var disabled = dialog.querySelector('input[name=ProjectName]').value.trim() == '' && dialog.querySelector('input[name=ProjectPath]').value.trim() == '';
@@ -120,7 +163,7 @@ studio.project.creator_panel = function () {
                 return;
             }
             dialog.close();
-            document.location = '/static/studio.htm#' + data['path']
+            document.location = '/static/studio.htm#' + data['path'];
         });
     });
 

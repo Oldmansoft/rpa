@@ -74,6 +74,10 @@ studio.definition.event = class {
         }
     }
 }
+studio.events = {
+    'component_loaded': new studio.definition.event(),
+    'project_loaded': new studio.definition.event()
+}
 studio.dialog = {}
 studio.dialog.create = function (title) {
     var dialog = document.createElement('dialog');

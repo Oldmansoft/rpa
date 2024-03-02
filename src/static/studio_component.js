@@ -48,6 +48,7 @@ function create_component_content() {
         $('.studio>.other>.left .leaf').on('dragstart', function () {
             studio.designer.drag.start_choose(studio.designer.procedure.create(this.data_component).element);
         }).on('dragend', studio.designer.drag.finish);
+        studio.events['component_loaded'].execute();
     });
 }
 

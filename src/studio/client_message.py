@@ -3,7 +3,6 @@ from os.path import expanduser, join, isdir, isfile
 from win32api import RegOpenKey, RegQueryValueEx
 from win32con import HKEY_CURRENT_USER, KEY_READ
 from psutil import disk_partitions
-from json import load
 
 import studio.project
 
@@ -51,33 +50,11 @@ class ProjectMessage(Message):
     
     @staticmethod
     def Open(path):
-        if not isdir(path):
-            return {
-                'result': False,
-                'message': f'无法找到应用目录 {path}'
-            }
-        project_path = join(path, 'App.proj')
-        if not isfile(project_path):
-            return {
-                'result': False,
-                'message': f'无效的应用目录 {path}，缺少 App.proj 文件。'
-            }
-        data = {}
-        with open(project_path, mode='r') as file:
-            data['App'] = load(file)
-
-        main_path = data['App']['project']['main']
-        if not isfile(join(path, main_path)):
-            return {
-                'result': False,
-                'message': f'无效的应用目录 {path}，缺少主运行 {main_path} 文件。'
-            }
-        with open(main_path, mode='r') as file:
-            data['Main'] = load(file)
-        return {
-            'result': True,
-            'data': data
-        }
+        return studio.project.Project.open(path)
+        
+    @staticmethod
+    def Run(path):
+        return studio.project.Project.Current.run(path)
 
 class SystemMessage(Message):
     CurrentFolderPath = expanduser('~')
