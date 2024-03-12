@@ -1,4 +1,10 @@
-//studio.socket = io();
+studio.socket = io();
+studio.socket.on('message', function(response) {
+    console.info(response);
+    if ('print' in response) {
+        studio.terminal.print(response['print']);
+    }
+});
 //studio.socket.emit('message', { type: 'Project', action: 'Create' });
 studio.communication = {}
 studio.communication.server = {}

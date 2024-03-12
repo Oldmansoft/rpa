@@ -4,6 +4,7 @@ class Assign(ActionComponent):
     '''分配变量'''
 
     def __init__(self) -> None:
+        super().__init__()
         self.set_name('分配变量')
         self.set_format('将{name}设置为{value}')
 
@@ -12,7 +13,7 @@ class Assign(ActionComponent):
 
     def set_parameter(self, *args) -> None:
         self.var_name = args[0].get()
-        self.var_value:Value = args[1]
+        self.var_value: Value = args[1]
         self.set_log_display(f'{self.var_name} = {self.var_value.content}')
         
     def execute(self) -> None:
@@ -22,6 +23,7 @@ class Print(ActionComponent):
     '''调试打印'''
 
     def __init__(self) -> None:
+        super().__init__()
         self.set_name('调试打印')
         self.set_format('{content}')
 
@@ -29,13 +31,11 @@ class Print(ActionComponent):
         return ParameterDefinition().append('content', '内容', FormatValue)
 
     def set_parameter(self, *args) -> None:
-        self.content:Value = args[0]
+        self.content: Value = args[0]
         self.set_log_display(self.content.content)
         
     def execute(self) -> None:
-        print('\033[0;34;40m', end='')
-        print(self.content.get())
-        print('\033[0m', end='')
+        self.procedure.logger.print(self.content.get())
 
 class If(CompositionComponent):
     '''条件判断'''
@@ -44,6 +44,7 @@ class If(CompositionComponent):
     conditions: List[ConditionalParametersComponent] = []
 
     def __init__(self) -> None:
+        super().__init__()
         self.set_name('如果')
         self.set_format('{condition}')
 
@@ -51,7 +52,7 @@ class If(CompositionComponent):
         return ParameterDefinition().append('condition', '条件', ExpressionValue)
 
     def set_parameter(self, *args) -> None:
-        self.condition:ExpressionValue = args[0]
+        self.condition: ExpressionValue = args[0]
         self.set_log_display(self.condition.content)
     
     def define_optional(self) -> OptionalDefinition:
@@ -85,6 +86,7 @@ class While(ContainerComponent):
     '''条件循环'''
 
     def __init__(self) -> None:
+        super().__init__()
         self.set_name('条件循环')
         self.set_format('{condition}')
 
@@ -92,7 +94,7 @@ class While(ContainerComponent):
         return ParameterDefinition().append('condition', '条件', ExpressionValue)
     
     def set_parameter(self, *args) -> None:
-        self.condition:ExpressionValue = args[0]
+        self.condition: ExpressionValue = args[0]
         self.set_log_display(self.condition.content)
     
     def execute(self) -> None:
@@ -109,6 +111,7 @@ class For(ContainerComponent):
     '''遍历循环'''
 
     def __init__(self) -> None:
+        super().__init__()
         self.set_name('遍历循环')
         self.set_format('{item} in {collection}')
 
@@ -116,8 +119,8 @@ class For(ContainerComponent):
         return ParameterDefinition().append('item', '项', VariableValue).append('collection', '集合', ExpressionValue)
     
     def set_parameter(self, *args) -> None:
-        self.item:VariableValue = args[0]
-        self.collection:ExpressionValue = args[1]
+        self.item: VariableValue = args[0]
+        self.collection: ExpressionValue = args[1]
         self.set_log_display(f'{self.item.content} in {self.collection.content}')
     
     def execute(self) -> None:
@@ -136,6 +139,7 @@ class Break(ActionComponent):
     '''跳出结束循环'''
 
     def __init__(self) -> None:
+        super().__init__()
         self.set_name('跳出结束循环')
 
     def define_parameter(self) -> ParameterDefinition:
@@ -151,6 +155,7 @@ class Continue(ActionComponent):
     '''跳过继续循环'''
 
     def __init__(self) -> None:
+        super().__init__()
         self.set_name('跳过继续循环')
 
     def define_parameter(self) -> ParameterDefinition:
@@ -166,6 +171,7 @@ class Return(ActionComponent):
     '''返回流程'''
 
     def __init__(self) -> None:
+        super().__init__()
         self.set_name('返回流程')
 
     def define_parameter(self) -> ParameterDefinition:
@@ -181,6 +187,7 @@ class Quit(ActionComponent):
     '''退出应用'''
 
     def __init__(self) -> None:
+        super().__init__()
         self.set_name('退出应用')
 
     def define_parameter(self) -> ParameterDefinition:
@@ -211,12 +218,12 @@ class Builder:
             if ABC in item.__bases__: continue
             self.component_classes[item.__name__] = item
     
-    def create_sequence_component_by_classname(self, name) -> SequenceComponent:
+    def create_sequence_component_by_classname(self, name: str) -> SequenceComponent:
         if name in self.component_classes:
             return self.component_classes[name]()
         raise NotFoundDefinitionError(name)
 
-    def set_sequence_component_params(self, result:SequenceComponent, params:dict, procedure:Procedure):
+    def set_sequence_component_params(self, result: SequenceComponent, params: dict, procedure: Procedure):
         parameters = []
         for definition in result.define_parameter().value:
             if not definition.id in params:
@@ -227,19 +234,19 @@ class Builder:
                 parameters.append(value)
         result.set_parameter(*parameters)
 
-    def set_sequence_component(self, component:SequenceComponent, node:dict, procedure:Procedure) -> SequenceComponent:
+    def set_sequence_component(self, component: SequenceComponent, node: dict, procedure: Procedure) -> SequenceComponent:
         component.set_procedure(procedure)
         if 'params' in node:
             self.set_sequence_component_params(component, node['params'], procedure)
         if component.__class__.__base__ == ActionBodyComponent:
-            group:ActionBodyComponent = component
+            group: ActionBodyComponent = component
             group.set_body(self.create_body(procedure, node['body']))
         if component.__class__.__base__ == ContainerComponent:
-            group:ContainerComponent = component
+            group: ContainerComponent = component
             group.set_body(self.create_body(procedure, node['body']))
             procedure.get_line_number()
         elif component.__class__.__base__ == CompositionComponent:
-            mgruop:CompositionComponent = component
+            mgruop: CompositionComponent = component
             mgruop.set_body(self.create_body(procedure, node['body']))
             definitions = mgruop.define_optional().to_dict()
             if 'optional' in node:
@@ -250,7 +257,7 @@ class Builder:
                     mgruop.set_optional(optional['id'], optional_component)
             procedure.get_line_number()
     
-    def create_body(self, procedure:Procedure, nodes:List[dict]):
+    def create_body(self, procedure: Procedure, nodes: List[dict]):
         result = MultiSequenceComponent()
         for node in nodes:
             component = self.create_sequence_component_by_classname(node['id'])
@@ -258,8 +265,8 @@ class Builder:
             result.append(component)
         return result
     
-    def create(self, data:dict) -> Procedure:
-        procedure = Procedure()
+    def create(self, logger: Logger, data: dict) -> Procedure:
+        procedure = Procedure(logger)
         local_variables = data['local']
         for local_variable_name in local_variables:
             value = FormatValue()

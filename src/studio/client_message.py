@@ -50,7 +50,7 @@ class ProjectMessage(Message):
     
     @staticmethod
     def Open(path):
-        return studio.project.Project.open(path)
+        return studio.project.Project.Open(path)
         
     @staticmethod
     def Run(path):

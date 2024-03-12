@@ -8,8 +8,6 @@ from .value import *
 class ActionBodyComponent(SequenceComponent, ABC):
     '''带容器动作组件'''
 
-    body:Component = None
-
     def set_body(self, body:Component):
         '''设置执行组'''
         self.body = body
@@ -22,6 +20,7 @@ class ConditionalParametersComponent(ActionBodyComponent):
     '''条件组件'''
 
     def __init__(self) -> None:
+        super().__init__()
         self.set_format('{condition}')
 
     def define_parameter(self) -> ParameterDefinition:

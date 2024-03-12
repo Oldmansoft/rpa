@@ -636,6 +636,15 @@ studio.designer = new (function () {
     })();
 })();
 
+studio.terminal = new (function() {
+    this.print = function (content) {
+        var node = document.querySelector('.studio>.other>.center>.bottom');
+        var item = document.createElement('div');
+        item.innerText = content;
+        node.append(item);
+    }
+})();
+
 studio.ready(function () {
     $('.editor').on('dragenter', function (e) {
         e.preventDefault();

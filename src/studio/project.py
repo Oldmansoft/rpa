@@ -7,21 +7,23 @@ import executor.component
 
 class Project:
     Current = None
+    Logger: executor.component.Logger = executor.component.PrintLogger()
+
     def __init__(self, path:str, data:any) -> None:
-        print(path)
+        print('打开项目', path)
         self.project_path = path
         self.data = data
 
     def run(self, file_path):
         path = join(self.project_path, file_path)
-        print(self.project_path, file_path, path)
+        print('运行流程', path)
         with open(path, mode='r', encoding='utf-8') as file:
             component_data = load(file)
-        procedure = executor.component.builder.create(component_data)
+        procedure = executor.component.builder.create(Project.Logger, component_data)
         procedure.execute()
 
     @staticmethod
-    def open(project_path):
+    def Open(project_path):
         if not isdir(project_path):
             return {
                 'result': False,

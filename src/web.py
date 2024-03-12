@@ -5,12 +5,12 @@ from json import dumps, loads
 
 import executor.component
 import studio.client_message
+import studio.project
 
 app = Flask(__name__)
 app.secret_key = str(uuid4())
 socket = SocketIO(app)
 socket.init_app(app, cors_allowed_origins='*')
-
 
 def background_thread():
     count = 0
@@ -91,5 +91,17 @@ def component():
     groups.append(program)
     return groups
 
+class SocketLogger(executor.component.Logger):
+    def __init__(self, socket: SocketIO) -> None:
+        self.socket = socket
+    
+    def write(self, index: int, content: str, name: str) -> None:
+        self.socket.emit('message', {'write': content})
+
+    def print(self, content: str) -> None:
+        self.socket.emit('message', {'print': content})
+    
+
 if __name__ == '__main__':
+    studio.project.Project.Logger = SocketLogger(socket)
     socket.run(app)

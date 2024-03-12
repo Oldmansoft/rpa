@@ -5,6 +5,38 @@ from abc import ABC, abstractmethod
 
 from .error import *
 
+class Logger(ABC):
+    '''终端输出'''
+
+    @abstractmethod
+    def write(self, index: int, content: str, name: str) -> None:
+        '''写入'''
+    
+    @abstractmethod
+    def print(self, content:str) -> None:
+        '''打印'''
+
+class PrintLogger(Logger):
+    '''打印输出'''
+
+    def write(self, index: int, content: str, name: str) -> None:
+        print('\033[0;33;40m', end='')
+        print(index, end=' ')
+        print('\033[0m', end='')
+        print('\033[0;35;40m', end='')
+        if content != None:
+            print(name, end=' ')
+        else:
+            print(name)
+        print('\033[0m', end='')
+        if content != None:
+            print(content)
+    
+    def print(self, content: str) -> None:
+        print('\033[0;34;40m', end='')
+        print(content)
+        print('\033[0m', end='')
+
 class Component(ABC):
     '''组件基类'''
 
@@ -15,7 +47,7 @@ class Component(ABC):
 class Value(ABC):
     '''值基类'''
 
-    def set(self, content:str, procedure:Procedure) -> None:
+    def set(self, content: str, procedure: Procedure) -> None:
         self.content = content
         self.procedure = procedure
 
@@ -26,10 +58,10 @@ class Value(ABC):
 class Parameter(object):
     '''参数'''
 
-    def __init__(self, id:str, name:str, value_type:type) -> None:
+    def __init__(self, id: str, name: str, value_type: type) -> None:
         self.id = id
         self.name = name
-        self.value_type:Type[Value] = value_type
+        self.value_type: Type[Value] = value_type
     
     def get_value_type(self):
         return self.value_type.__name__.replace('Value', '')
@@ -40,7 +72,7 @@ class ParameterDefinition(object):
     def __init__(self) -> None:
         self.value:List[Parameter] = []
 
-    def append(self, id:str, name:str, value_type:type) -> ParameterDefinition:
+    def append(self, id: str, name: str, value_type: type) -> ParameterDefinition:
         self.value.append(Parameter(id, name, value_type))
         return self
     
@@ -58,9 +90,10 @@ class ParameterDefinition(object):
 class SequenceComponent(Component):
     '''序列组件'''
 
-    __display_content:str = None
-    __name:str = None
-    __format:str = None
+    def __init__(self) -> None:
+        self.__display_content: str = None
+        self.__name: str = None
+        self.__format: str = None
 
     @abstractmethod
     def define_parameter(self) -> ParameterDefinition:
@@ -70,14 +103,14 @@ class SequenceComponent(Component):
     def set_parameter(self, *args) -> None:
         pass
 
-    def set_procedure(self, procedure:Procedure) -> None:
+    def set_procedure(self, procedure: Procedure) -> None:
         self.procedure = procedure
         self.index = procedure.get_line_number()
     
-    def set_log_display(self, content:str) -> None:
+    def set_log_display(self, content: str) -> None:
         self.__display_content = content
 
-    def set_name(self, name:str) -> None:
+    def set_name(self, name: str) -> None:
         self.__name = name
     
     def get_name(self) -> str:
@@ -85,7 +118,7 @@ class SequenceComponent(Component):
             return self.__class__.__name__
         return self.__name
     
-    def set_format(self, format:str) -> None:
+    def set_format(self, format: str) -> None:
         self.__format = format
     
     def get_format(self) -> str:
@@ -95,17 +128,7 @@ class SequenceComponent(Component):
         return 'unit'
 
     def log_output(self) -> None:
-        print('\033[0;33;40m', end='')
-        print(self.index, end=' ')
-        print('\033[0m', end='')
-        print('\033[0;35;40m', end='')
-        if self.__display_content != None:
-            print(self.get_name(), end=' ')
-        else:
-            print(self.get_name())
-        print('\033[0m', end='')
-        if self.__display_content != None:
-            print(self.__display_content)
+        self.procedure.logger.write(self.index, self.__display_content, self.get_name())
     
     def get_definition_content(self) -> dict:
         return {
@@ -123,7 +146,7 @@ class MultiSequenceComponent(Component):
     def __init__(self) -> None:
         self.components: List[SequenceComponent] = []
 
-    def append(self, component:SequenceComponent) -> None:
+    def append(self, component: SequenceComponent) -> None:
         self.components.append(component)
     
     def execute(self) -> None:
@@ -132,11 +155,13 @@ class MultiSequenceComponent(Component):
             component.execute()
 
 class StackKeyValue(object):
-    def __init__(self) -> None:
-        self.names:List[str] = []
-        self.values:List[any] = []
+    '''栈 键值'''
 
-    def push(self, name:str) -> None:
+    def __init__(self) -> None:
+        self.names: List[str] = []
+        self.values: List[any] = []
+
+    def push(self, name: str) -> None:
         self.names.append(name)
         self.values.append(None)
     
@@ -144,7 +169,7 @@ class StackKeyValue(object):
         self.names.pop()
         self.values.pop()
     
-    def set(self, value:any) -> None:
+    def set(self, value: any) -> None:
         self.values[-1] = value
     
     def peek(self) -> dict:
@@ -157,19 +182,19 @@ class StackKeyValue(object):
 class Procedure(Component):
     '''流程'''
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.line_number:int = 0
-        self.local_values:Dict[str,any] = {}
+    def __init__(self, logger: Logger) -> None:
+        self.logger = logger
+        self.line_number: int = 0
+        self.local_values: Dict[str,any] = {}
         self.stack_values = []
         self.loop_values = StackKeyValue()
-        self.body:Component = None
+        self.body: Component = None
      
     def get_line_number(self) -> int:
         self.line_number += 1
         return self.line_number
     
-    def define(self, name:str, value:Value=None) -> None:
+    def define(self, name: str, value: Value = None) -> None:
         '''定义变量
         格式化列表的内容写入到文件中。
         :param name: 变量名称。
@@ -182,7 +207,7 @@ class Procedure(Component):
         else:
             self.local_values[name] = value.get()
     
-    def assign(self, name:str, value:any) -> None:
+    def assign(self, name: str, value: any) -> None:
         if not name in self.local_values:
             raise NameDefinitionError(f'变量 {name} 未定义')
         self.local_values[name] = value
@@ -201,12 +226,13 @@ class Procedure(Component):
 
 class Project(Component):
     '''程序'''
+
     @staticmethod
-    def Create(name:str, folder_path:str) -> None:
+    def Create(name: str, folder_path: str) -> None:
         pass
 
     @staticmethod
-    def Load(file_path:str) -> Project:
+    def Load(file_path: str) -> Project:
         pass
 
     def execute(self) -> None:
