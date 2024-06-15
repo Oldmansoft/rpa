@@ -13,6 +13,9 @@
         <link href="//at.alicdn.com/t/c/font_4171489_0zcln0ssybx.css" rel="stylesheet" />
         <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+        <script src="https://cdn.staticfile.org/react/16.4.0/umd/react.development.js"></script>
+        <script src="https://cdn.staticfile.org/react-dom/16.4.0/umd/react-dom.development.js"></script>
+        <script src="https://cdn.staticfile.org/babel-standalone/6.26.0/babel.min.js"></script>
         <script src="studio.js"></script>
         <script src="studio_design.js"></script>
         <script src="studio_component.js"></script>
@@ -52,18 +55,34 @@
                 <div class="center">
                     <div class="tabs"></div>
                     <div class="workspace">
-                        <div class="parameters">
-                            <span>参数设置</span>
+                        <div class="parameters in">
+                            <span>输入参数设置</span>
                         </div>
                         <div class="variables">
-                            <span>变量设置</span>
+                            <span>局部变量设置</span>
                         </div>
                         <div class="editor"></div>
                         <div id="drop_line"><div></div></div>
+                        <div class="parameters out">
+                            <span>输出参数设置</span>
+                        </div>
                     </div>
-                    <div class="bottom"></div>
+                    <div class="bottom">
+                        <div class="label-group">
+                            <label>属性</label>
+                            <label>输出</label>
+                            <label>业务</label>
+                        </div>
+                        <div class="label-content">
+                            <div class="property"></div>
+                            <div class="output"></div>
+                            <div class="bussiness"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="right"></div>
+                <div class="right">
+                    <div class="project"></div>
+                </div>
             </div>
         </div>
     </body>

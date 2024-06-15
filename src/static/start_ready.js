@@ -7,4 +7,8 @@ studio.ready(function () {
             document.location = '/static/studio.htm#' + path;
         });
     });
+    document.querySelector('.menu .i-export').parentNode.addEventListener('click', function () {
+        var filePath = window.electronAPI.openFile();
+        console.info(filePath);
+    });
 });

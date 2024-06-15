@@ -1,13 +1,16 @@
-.studio>.other>.right label {
-    display: block;
+.studio>.other .property label {
+    display: flex;
     margin: 10px;
 }
-.studio>.other>.right label>span {
+.studio>.other .property label>span {
     display: block;
-    margin-bottom: 5px;
+    width: 100px;
     font-size: 14px;
 }
-.studio>.other>.right label>input {
+.studio>.other .property label>.content {
+    flex: auto;
+}
+.studio>.other .property label>.content>input {
     width: calc(100% - 10px);
     height: 20px;
 }

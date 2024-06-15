@@ -1,11 +1,15 @@
 from flask import Flask, redirect, request
+from flask.wrappers import Response
 from flask_socketio import SocketIO, emit
+from gevent.pywsgi import WSGIServer
+from geventwebsocket.handler import WebSocketHandler
 from uuid import uuid4
 from json import dumps, loads
 
 import executor.component
 import studio.client_message
 import studio.project
+from executor.logger import Logger
 
 app = Flask(__name__)
 app.secret_key = str(uuid4())
@@ -21,17 +25,17 @@ def background_thread():
 
 @socket.on('connect')
 def connected_msg():
-    print('client connected.')
-    socket.start_background_task(background_thread)
-    emit('message', {'data': 'Connected', 'count': 0})
+    logger.info('socket client connected.')
+    #socket.start_background_task(background_thread)
+    #emit('message', {'data': 'Connected', 'count': 0})
 
 @socket.on('disconnect')
 def disconnect_msg():
-    print('client disconnected.')
+    logger.info('socket client disconnected.')
 
 @socket.on('message')
 def handle_message(data):
-    print(f'received message: {data}')
+    logger.info(f'socket received message: {data}')
     if not 'type' in data or not 'action' in data:
         print('缺少 type 或者 action')
         return '缺少 type 或者 action'
@@ -51,18 +55,18 @@ def index():
 def get_message():
     binary_data = request.get_data()
     if len(binary_data) == 0:
-        print('请求数据无效')
+        logger.warning('请求数据无效')
         return dumps({'code': 400, 'message': '请求数据无效', 'data': None}, ensure_ascii=False)
     
     data = loads(binary_data)
     if not 'type' in data or not 'action' in data:
-        print('请求数据缺少 type 或者 action')
+        logger.warning('请求数据缺少 type 或者 action')
         return dumps({'code': 406, 'message': '请求数据缺少 type 或者 action', 'data': None}, ensure_ascii=False)
     kwargs = {}
     if 'params' in data:
         kwargs = data['params']
         if type(kwargs) != dict:
-            print('请求数据 params 内容无效')
+            logger.warning('请求数据 params 内容无效')
             return dumps({'code': 406, 'message': '请求数据 params 内容无效', 'data': None}, ensure_ascii=False)
     try:
         result = getattr(studio.client_message.messages[data['type']], data['action'])(**kwargs)
@@ -91,6 +95,13 @@ def component():
     groups.append(program)
     return groups
 
+@app.after_request
+def change_header(response:Response):
+    disposition = response.get_wsgi_headers('environ').get('Content-Disposition') or ''
+    if disposition.rfind('.js') == len(disposition) - 3:
+        response.mimetype = 'application/javascript'
+    return response
+
 class SocketLogger(executor.component.Logger):
     def __init__(self, socket: SocketIO) -> None:
         self.socket = socket
@@ -103,5 +114,6 @@ class SocketLogger(executor.component.Logger):
     
 
 if __name__ == '__main__':
+    logger = Logger("服务端")
     studio.project.Project.Logger = SocketLogger(socket)
     socket.run(app)

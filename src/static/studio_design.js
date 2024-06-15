@@ -427,6 +427,8 @@ studio.Action = class {
         var span = document.createElement('span');
         span.textContent = '显示';
         label.append(span);
+        var content = document.createElement('div');
+        content.setAttribute('class', 'content');
         var input = document.createElement('input');
         input.object = this;
         input.setAttribute('value', this.display);
@@ -435,14 +437,18 @@ studio.Action = class {
             this.object.display = e.currentTarget.value.trim();
             this.object.draw_display();
         });
-        label.append(input);
+        content.append(input);
+        label.append(content);
         area.append(label);
+        
         for (var id in this.params) {
             var item = this.params[id];
             label = document.createElement('label');
             span = document.createElement('span');
             span.textContent = item['name'];
             label.append(span);
+            content = document.createElement('div');
+            content.setAttribute('class', 'content');
             input = document.createElement('input');
             input.object = this;
             input.setAttribute('name', id);
@@ -453,7 +459,8 @@ studio.Action = class {
                 this.object.params[e.currentTarget.getAttribute('name')]['value'] = e.currentTarget.value;
                 this.object.draw_description();
             });
-            label.append(input);
+            content.append(input);
+            label.append(content);
             area.append(label);
         }
     }
@@ -621,7 +628,7 @@ studio.designer = new (function () {
     })();
     this.property = new (function () {
         this.clear = function () {
-            var area = document.querySelector('.studio>.other>.right');
+            var area = document.querySelector('.studio>.other .property');
             while (area.hasChildNodes()) {
                 area.lastChild.remove();
             }
@@ -631,14 +638,15 @@ studio.designer = new (function () {
             if (!node.object) {
                 return;
             }
-            node.object.draw_property_panel(document.querySelector('.studio>.other>.right'));
+            document.querySelectorAll('.label-group>label')[0].click();
+            node.object.draw_property_panel(document.querySelector('.studio>.other .property'));
         }
     })();
 })();
 
-studio.terminal = new (function() {
+studio.output = new (function() {
     this.print = function (content) {
-        var node = document.querySelector('.studio>.other>.center>.bottom');
+        var node = document.querySelector('.studio>.other .output');
         var item = document.createElement('div');
         item.innerText = content;
         node.append(item);

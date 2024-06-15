@@ -58,6 +58,38 @@ studio.menu = new (function () {
     });
 })();
 
+studio.ready(function () {
+    function getIndex(node) {
+        var index = 0;
+        while ((node = node.previousElementSibling) != null) index++;
+        return index;
+    }
+    var group = document.querySelector('.label-group');
+    if (group == null) {
+        return;
+    }
+    if (group.children.length > 0) {
+        group.children[0].classList.add('on');
+    }
+    if (group.nextElementSibling.children.length > 0) {
+        group.nextElementSibling.children[0].classList.add('on');
+    }
+
+    group.addEventListener('click', function (event) {
+        var last_index = getIndex(this.querySelector('label.on'));
+        this.children[last_index].classList.remove('on');
+        if (this.nextElementSibling.children.length > last_index) {
+            this.nextElementSibling.children[last_index].classList.remove('on');
+        }
+
+        var index = getIndex(event.target);
+        this.children[index].classList.add('on');
+        if (this.nextElementSibling.children.length > index) {
+            this.nextElementSibling.children[index].classList.add('on');
+        }
+    });
+});
+
 studio.data = {}
 studio.definition = {}
 studio.definition.event = class {

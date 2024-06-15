@@ -1,5 +1,5 @@
-from os import mkdir
-from os.path import join, isdir, isfile, split
+from os import mkdir, listdir
+from os.path import join, isdir, isfile, splitext
 from json import dump, load
 from datetime import datetime
 
@@ -48,6 +48,17 @@ class Project:
             }
         with open(main_path, mode='r') as file:
             data['Main'] = load(file)
+
+        data['Folders'] = []
+        data['Files'] = []
+        for item in listdir(project_path):
+            item_path = join(project_path, item)
+            if isfile(item_path):
+                _, ext_name = splitext(item)
+                data['Files'].append(item)
+            elif isdir(item_path):
+                data['Folders'].append(item)
+        
         Project.Current = Project(project_path, data)
         return {
             'result': True,

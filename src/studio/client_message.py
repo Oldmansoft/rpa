@@ -1,5 +1,5 @@
 from os import listdir, stat
-from os.path import expanduser, join, isdir, isfile
+from os.path import expanduser, join, isdir, isfile, splitext
 from win32api import RegOpenKey, RegQueryValueEx
 from win32con import HKEY_CURRENT_USER, KEY_READ
 from psutil import disk_partitions
@@ -117,6 +117,19 @@ class SystemMessage(Message):
                 continue
             result.append(path_info)
         return result
+    
+    def GetFolderContent(path):
+        data = {}
+        data['Folders'] = []
+        data['Files'] = []
+        for item in listdir(path):
+            item_path = join(path, item)
+            if isfile(item_path):
+                _, ext_name = splitext(item)
+                data['Files'].append(item)
+            elif isdir(item_path):
+                data['Folders'].append(item)
+        return data
 
 messages = {}
 for subclass in Message.__subclasses__():

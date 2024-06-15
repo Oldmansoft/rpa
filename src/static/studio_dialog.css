@@ -50,6 +50,7 @@ dialog section .folders {
     background-color: #fff;
     overflow-y: auto;
 }
+.project .folders h2,
 dialog section .folders h2 {
     margin: 0;
     padding: 2px;
@@ -57,14 +58,17 @@ dialog section .folders h2 {
     font-weight: normal;
     cursor: default;
 }
+.project .folders h2 span,
 dialog section .folders h2 span {
     display: inline-block;
     text-align: right;
 }
+.project .folders ul,
 dialog section .folders ul {
     margin: 0;
     padding-left: 0;
 }
+.project .folders ul li,
 dialog section .folders ul li {
     list-style-type: none;
 }
@@ -74,17 +78,21 @@ dialog section .folders ul li:hover>h2 {
 dialog section .folders ul li.choose>h2 {
     background-color: #ddd;
 }
+.project .folders i.font,
 dialog section .folders i.font {
     margin-right: 3px;
     vertical-align: bottom;
 }
+.project .folders span i.font,
 dialog section .folders span i.font {
     color: #999;
 }
+.project .folders .expand>h2>span i.font,
 dialog section .folders .expand>h2>span i.font {
     transform: rotate(90deg);
     display: inline-block;
 }
+.project .folders .i-computer,
 dialog section .folders .i-computer {
     color: rgb(0, 116, 188);
 }
@@ -97,6 +105,7 @@ dialog section .folders .i-documents {
 dialog section .folders .i-hard-driver {
     color: #667581;
 }
+.project .folders .i-folder,
 dialog section .folders .i-folder {
     color: #ffd900;
 }

@@ -2,7 +2,7 @@ studio.socket = io();
 studio.socket.on('message', function(response) {
     console.info(response);
     if ('print' in response) {
-        studio.terminal.print(response['print']);
+        studio.output.print(response['print']);
     }
 });
 //studio.socket.emit('message', { type: 'Project', action: 'Create' });
@@ -94,6 +94,58 @@ studio.project.open = function (path) {
             document.location = '/static/start.htm';
             return;
         }
+        var target_folder;
+        var margin_left = 18;
+        function set_folder_content(data) {
+            var top_ul = document.createElement('ul');
+            var current_left = Number(target_folder.getAttribute('data-left')) + margin_left;
+
+            for (var folder of data['Folders']) {
+                var li = document.createElement('li');
+                li.setAttribute('data-left', current_left);
+                var h2 = document.createElement('h2');
+                h2.setAttribute('data-path', target_folder.firstChild.getAttribute('data-path') + '\\' + folder);
+                var span = document.createElement('span');
+                span.style.width = current_left + 'px';
+                h2.append(span);
+                var icon = document.createElement('i');
+                icon.setAttribute('class', 'font i-nav-right');
+                span.append(icon);
+                icon.addEventListener('click', function () {
+                    target_folder = this.parentNode.parentNode.parentNode;
+                    if (target_folder.classList.contains('expand')) {
+                        target_folder.classList.remove('expand');
+                        target_folder.lastChild.remove();
+                        return;
+                    }
+                    studio.communication.server.message('System', 'GetFolderContent', {
+                        path: this.parentNode.parentNode.getAttribute('data-path')
+                    }, set_folder_content);
+                });
+                var i = document.createElement('i');
+                i.setAttribute('class', 'font i-folder');
+                h2.append(i);
+                h2.append(document.createTextNode(folder));
+                li.append(h2);
+                top_ul.append(li);
+            }
+            for (var file of data['Files']) {
+                var li = document.createElement('li');
+                h2 = document.createElement('h2');
+                var span = document.createElement('span');
+                span.style.width = current_left + 'px';
+                h2.append(span);
+                var i = document.createElement('i');
+                i.setAttribute('class', 'font i-desktop');
+                h2.append(i);
+                h2.append(document.createTextNode(file));
+                li.append(h2);
+                top_ul.append(li);
+            }
+            target_folder.append(top_ul);
+            target_folder.classList.add('expand');
+        }
+
         var tab = document.createElement('div');
         tab.innerText = 'Main';
         document.querySelector('.tabs').append(tab);
@@ -108,6 +160,22 @@ studio.project.open = function (path) {
         var editor = document.querySelector('.editor');
         element_append_body(editor, data['data']['Main']['body']);
         make_numbers();
+
+        var folders = document.createElement('div');
+        folders.setAttribute('data-left', '0');
+        folders.setAttribute('class', 'folders');
+
+        var top_h2 = document.createElement('h2');
+        var i = document.createElement('i');
+        i.setAttribute('class', 'font i-computer');
+        top_h2.append(i);
+        top_h2.append(document.createTextNode(data['data']['App']['project']['name']));
+        top_h2.setAttribute('data-path', path);
+        folders.append(top_h2);
+        target_folder = folders
+        set_folder_content(data['data'])
+        var project = document.querySelector('.studio .project');
+        project.append(folders);
     })
 }
 studio.project.dialog_panel = {}
@@ -217,7 +285,7 @@ studio.system.get_folder = function (title, description) {
             if (data[i].more) {
                 var icon = document.createElement('i');
                 span.append(icon);
-                icon.setAttribute('class', 'font i-nav-right')
+                icon.setAttribute('class', 'font i-nav-right');
                 icon.addEventListener('click', function () {
                     target_folder = this.parentNode.parentNode.parentNode;
                     if (target_folder.classList.contains('expand')) {

@@ -46,14 +46,41 @@
 }
 
 .studio>.other>.center>.bottom {
-    height: 100px;
+    display: flex;
+    height: 150px;
     border-top: 1px solid #aaa;
     overflow-y: scroll;
+}
+.studio>.other>.center>.bottom>.label-group {
+    width: 20px;
+    background-color: #aaa;
+}
+.studio>.other>.center>.bottom>.label-group>label {
+    display: block;
+    width: 20px;
+    border-bottom: 1px solid #aaa;
+    background-color: #ccc;
+}
+.studio>.other>.center>.bottom>.label-group>label.on {
+    background-color: #fff;
+}
+.studio>.other>.center>.bottom>.label-content {
+    flex: auto;
+}
+.studio>.other>.center>.bottom>.label-content>div {
+    display: none;
+}
+.studio>.other>.center>.bottom>.label-content>div.on {
+    display: block;
 }
 
 .studio>.other>.right {
     width: 300px;
     border-left: 1px solid #aaa;
+}
+
+.studio>.other>.right>.project {
+    height: 200px;
 }
 
 .studio>.top>.menu {
