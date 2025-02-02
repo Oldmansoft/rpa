@@ -37,13 +37,13 @@ def disconnect_msg():
 def handle_message(data):
     logger.info(f'socket received message: {data}')
     if not 'type' in data or not 'action' in data:
-        print('缺少 type 或者 action')
+        logger.warning('缺少 type 或者 action')
         return '缺少 type 或者 action'
     kwargs = {}
     if 'params' in data:
         kwargs = data['params']
         if type(kwargs) != dict:
-            print('params 内容无效')
+            logger.warning('params 内容无效')
             return 'params 内容无效'
     getattr(studio.client_message.messages[data['type']], data['action'])(**kwargs)
 
