@@ -3,8 +3,10 @@ from os.path import expanduser, join, isdir, isfile, splitext
 from win32api import RegOpenKey, RegQueryValueEx
 from win32con import HKEY_CURRENT_USER, KEY_READ
 from psutil import disk_partitions
+from tkinter import filedialog, Tk
 
 import studio.project
+from executor.process_pipe import ClientProcess
 
 def get_diskes():
     result = []
@@ -58,6 +60,13 @@ class ProjectMessage(Message):
 
 class SystemMessage(Message):
     CurrentFolderPath = expanduser('~')
+
+    @staticmethod
+    def OpenFolder(title) -> str:
+        root = Tk()
+        root.withdraw()
+        root.call('wm', 'attributes', '.', '-topmost', True)
+        return filedialog.askdirectory(title=title)
 
     @staticmethod
     def GetFolders(path=''):

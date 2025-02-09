@@ -193,3 +193,5 @@ class Logger:
 
 def json_format(data: any) -> str:
     return dumps(data, ensure_ascii=False)
+
+logger = Logger("", None)

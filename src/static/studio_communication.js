@@ -1,40 +1,47 @@
 studio.socket = io();
+// 接收服务器 emit 调用
 studio.socket.on('message', function(response) {
     console.info(response);
     if ('print' in response) {
         studio.output.print(response['print']);
+    } else if ('callback' in response) {
+        studio.callback[response['callback']](response['result']);
+        delete studio.callback[response['callback']]
     }
 });
-//studio.socket.emit('message', { type: 'Project', action: 'Create' });
+
 studio.communication = {}
 studio.communication.server = {}
 
 studio.communication.server.message = function (type, action, params, callback) {
     var loading = new studio.dialog.loading('数据加载中...');
-    return $.ajax({
-        type: 'post',
-        url: '/get_message',
-        data: JSON.stringify({
+
+    fetch("/get_message", {
+        method: 'POST',
+        headers: {
+        "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
             type: type,
             action: action,
             params: params
-        }),
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function (data) {
+        })
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
             if (data.code != 0) {
                 console.error(data.code, data.message);
                 return;
             }
             callback(data.data);
-        },
-        error: function (XMLHttpRequest, textStatus, errorThrown) {
-            console.error(textStatus, errorThrown);
-        },
-        complete: function (XMLHttpRequest, textStatus) {
-            loading.close();
-        }
-    });
+        })
+        .catch(error => console.error('Fetch error:', error))
+        .finally(() => loading.close());
 }
 
 studio.project = {}
@@ -90,7 +97,7 @@ studio.project.open = function (path) {
         path: path
     }, function (data) {
         if (!data['result']) {
-            alert(data['message']);
+            console.warn(data);
             document.location = '/static/start.htm';
             return;
         }
@@ -213,7 +220,7 @@ studio.project.dialog_panel.create = function () {
     var button = document.createElement('button');
     button.append(document.createTextNode('...'));
     button.addEventListener('click', function () {
-        studio.system.get_folder('浏览文件夹', '请选择一个位置来保存应用').add(function (path) {
+        studio.system.open_folder('浏览文件夹', '请选择一个位置来保存应用').then(function (path) {
             dialog.querySelector('input[name=ProjectPath]').value = path;
         });
     });
@@ -233,7 +240,7 @@ studio.project.dialog_panel.create = function () {
             name: dialog.querySelector('input[name=ProjectName]').value.trim()
         }, function (data) {
             if (!data['result']) {
-                alert(data['message']);
+                console.warn(data);
                 return;
             }
             dialog.close();
@@ -252,6 +259,13 @@ studio.project.dialog_panel.create = function () {
 }
 
 studio.system = {}
+studio.callback = {}
+studio.system.open_folder = function (title) {
+    return new Promise((resolve, reject) => {
+        studio.socket.emit('message', { type: 'System', action: 'OpenFolder', params: { title: title } });
+        studio.callback["System.OpenFolder"] = resolve;
+    });
+}
 studio.system.get_folder = function (title, description) {
     var event = new studio.definition.event();
     var target_folder;

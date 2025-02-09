@@ -9,7 +9,7 @@ from json import dumps, loads
 import executor.component
 import studio.client_message
 import studio.project
-from executor.logger import Logger
+from executor.log2 import Logger
 
 app = Flask(__name__)
 app.secret_key = str(uuid4())
@@ -33,6 +33,10 @@ def connected_msg():
 def disconnect_msg():
     logger.info('socket client disconnected.')
 
+def __handle_message_background_thread(name, action, kwargs) -> None:
+    result = getattr(studio.client_message.messages[name], action)(**kwargs)
+    socket.emit('message', {'callback': f'{name}.{action}', 'result': result})
+
 @socket.on('message')
 def handle_message(data):
     logger.info(f'socket received message: {data}')
@@ -45,7 +49,7 @@ def handle_message(data):
         if type(kwargs) != dict:
             logger.warning('params 内容无效')
             return 'params 内容无效'
-    getattr(studio.client_message.messages[data['type']], data['action'])(**kwargs)
+    socket.start_background_task(__handle_message_background_thread, data['type'], data['action'], kwargs)
 
 @app.route('/')
 def index():

@@ -64,17 +64,17 @@ function mouse_in_node_top(node) {
 }
 
 function drag_to_self(drag_object, target_object, drop_line) {
-    if (!$.contains(drag_object, target_object)) return false;
+    if (!drag_object.contains(target_object)) return false;
 
     if (mouse_in_node_top(drag_object)) {
         var previous = drag_object.previousElementSibling;
         if (previous == null || previous != drop_line) {
-            $(drag_object).before(drop_line);
+            drag_object.before(drop_line);
         }
     } else {
         var next = drag_object.nextElementSibling;
         if (next == null || next != drop_line) {
-            $(drag_object).after(drop_line);
+            drag_object.after(drop_line);
         }
     }
     return true;
@@ -98,12 +98,12 @@ function drag_in_boundary(drag_mode, boundary, target_node, drop_line) {
         if (window.event.clientY < target_item.getBoundingClientRect().y + target_item.getBoundingClientRect().height / 2) {
             var previous = target_item.previousElementSibling;
             if (previous == null || previous != drop_line) {
-                $(target_item).before(drop_line);
+                target_item.before(drop_line);
             }
         } else {
             var next = target_item.nextElementSibling;
             if (next == null || next != drop_line) {
-                $(target_item).after(drop_line);
+                target_item.after(drop_line);
             }
         }
     }
@@ -509,7 +509,7 @@ studio.Composition = class extends studio.Container {
         if (this.element_boundary == null) {
             this.element_boundary = document.createElement('div');
             this.element_boundary.setAttribute('class', 'boundary');
-            $(this.element.firstChild).after(this.element_boundary);
+            this.element.firstChild.after(this.element_boundary);
         }
         var boundary_action = new studio.Section(optional, variables);
         this.element_boundary.append(boundary_action.element);
@@ -522,7 +522,7 @@ studio.Composition = class extends studio.Container {
 
         var last_action = new studio.Section(optional);
         this.element_last = last_action.element;
-        $(this.element.lastChild).before(this.element_last);
+        this.element.lastChild.before(this.element_last);
         return last_action;
     }
 }
@@ -573,12 +573,12 @@ studio.designer = new (function () {
             var renumber_node;
             if (drop_result) {
                 renumber_node = get_renumber_start_node(drop_line, target);
-                $(drop_line).after(target);
+                drop_line.after(target);
                 if (when_finish_choose) {
                     studio.designer.editor.chosen.choose(target);
                 }
             }
-            $('.editor').after(drop_line);
+            document.querySelector('.editor').after(drop_line);
             boundary = null;
             target = null;
             if (drop_result) {
@@ -588,7 +588,7 @@ studio.designer = new (function () {
     })();
     this.editor = new (function () {
         this.chosen = new (function () {
-            $chosen = this;
+            var _this = this;
             this.clear = function (click_node) {
                 var nodes = document.querySelectorAll('.editor .chosen');
                 for (var i = 0; i < nodes.length; i++) {
@@ -619,7 +619,7 @@ studio.designer = new (function () {
                 if (target_node == null || target_node.classList.contains(studio.constant.ClassName.chosen)) {
                     return;
                 }
-                $chosen.clear();
+                _this.clear();
                 target_node.classList.add(studio.constant.ClassName.chosen);
 
                 studio.designer.property.create_panel(target_node);
@@ -654,11 +654,13 @@ studio.output = new (function() {
 })();
 
 studio.ready(function () {
-    $('.editor').on('dragenter', function (e) {
+    document.querySelector('.editor').addEventListener('dragenter', function (e) {
         e.preventDefault();
-    }).on('dragover', function (e) {
+    });
+    document.querySelector('.editor').addEventListener('dragover', function (e) {
         e.preventDefault();
-    }).on('dragstart', function (e) {
+    });
+    document.querySelector('.editor').addEventListener('dragstart', function (e) {
         var currentTarget = get_element_parents_from_tag(e.target, studio.constant.TagName.article);
         if (currentTarget.classList.contains(studio.constant.ClassName.item)) {
             studio.designer.drag.start(currentTarget);
@@ -669,13 +671,14 @@ studio.ready(function () {
         } else if (currentTarget.parentNode.parentNode.classList.contains(studio.constant.ClassName.boundary)) {
             studio.designer.drag.start_boundary(currentTarget.parentNode);
         }
-    }).on('dragend', studio.designer.drag.finish);
+    });
+    document.querySelector('.editor').addEventListener('dragend', studio.designer.drag.finish);
 
-    $('.editor').on('dragover', function (e) {
+    document.querySelector('.editor').addEventListener('dragover', function (e) {
         var drop_line = document.querySelector('#drop_line');
         var currentTarget = get_element_parents_from_tag(e.target, studio.constant.TagName.article);
         if (currentTarget == null) {
-            $('.editor').append(drop_line);
+            document.querySelector('.editor').append(drop_line);
             return;
         }
         if (!studio.designer.drag.is_working(currentTarget)) return;
@@ -684,12 +687,12 @@ studio.ready(function () {
             if (mouse_in_node_top(currentTarget)) {
                 var previous = currentTarget.previousElementSibling;
                 if (previous == null || previous != drop_line) {
-                    $(currentTarget).before(drop_line);
+                    currentTarget.before(drop_line);
                 }
             } else {
                 var next = currentTarget.nextElementSibling;
                 if (next == null || next != drop_line) {
-                    $(currentTarget).after(drop_line);
+                    currentTarget.after(drop_line);
                 }
             }
         } else if (currentTarget.classList.contains(studio.constant.ClassName.footer)) {
@@ -701,14 +704,14 @@ studio.ready(function () {
             } else {
                 var next = currentTarget.parentNode.nextElementSibling;
                 if (next == null || next != drop_line) {
-                    $(currentTarget.parentNode).after(drop_line);
+                    currentTarget.parentNode.after(drop_line);
                 }
             }
         } else if (currentTarget.parentNode.classList.contains(studio.constant.ClassName.header)) {
             if (mouse_in_node_top(currentTarget)) {
                 var previous = currentTarget.parentNode.parentNode.previousElementSibling;
                 if (previous == null || previous != drop_line) {
-                    $(currentTarget.parentNode.parentNode).before(drop_line);
+                    currentTarget.parentNode.parentNode.before(drop_line);
                 }
             } else {
                 var main_node = currentTarget.nextElementSibling;
@@ -731,9 +734,10 @@ studio.ready(function () {
         }
     });
 
-    $('.editor').on('mousedown', function (e) {
+    document.querySelector('.editor').addEventListener('mousedown', function (e) {
         studio.designer.editor.chosen.clear(find_chosen_content_node(e.target));
-    }).on('click', function (e) {
+    });
+    document.querySelector('.editor').addEventListener('click', function (e) {
         if (e.target.classList.contains('i-more')) {
             var article = get_element_parents_from_tag(e.target, studio.constant.TagName.article);
             if (article.object && 'optional' in article.object.component) {

@@ -12,7 +12,7 @@ studio.ready(function () {
 });
 
 studio.menu = new (function () {
-    var $menu = this,
+    var _this = this,
         open_state = false,
         element = null;
     this.open = function (e) {
@@ -28,7 +28,7 @@ studio.menu = new (function () {
         element.append(li);
         li.addEventListener('click', function () {
             func();
-            $menu.close();
+            _this.close();
         });
         return this;
     }
@@ -50,10 +50,10 @@ studio.menu = new (function () {
         element.setAttribute('class', 'menu');
         studio.element.parentNode.append(element);
         document.body.addEventListener('mousedown', function (e) {
-            if ($.contains(element, e.target)) {
+            if (element.contains(e.target)) {
                 return;
             }
-            $menu.close();
+            _this.close();
         });
     });
 })();

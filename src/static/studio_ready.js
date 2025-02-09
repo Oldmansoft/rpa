@@ -9,7 +9,7 @@ studio.ready(function () {
     document.querySelector('.menu .i-project-open').parentNode.addEventListener('click', function () {
         var filePath = window.electronAPI.openFile();
         console.info(filePath);
-        studio.system.get_folder('打开应用', '请选择应用所在目录').add(function (path) {
+        studio.system.open_folder('打开应用', '请选择应用所在目录').then(function (path) {
             document.location = '/static/studio.htm#' + path;
         });
     });

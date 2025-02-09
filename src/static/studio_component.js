@@ -38,18 +38,31 @@ function create_component_content() {
         }
     }
 
-    $.get("/get_component", function (data) {
-        studio.data.component = data;
-        create_content_to(data, $('.studio>.other>.left'));
-        $('.studio>.other>.left .group>.branch').on('click', function () {
-            this.parentNode.classList.toggle('expand');
-        });
-        document.querySelector('.studio>.other>.left').firstChild.classList.toggle('expand');
-        $('.studio>.other>.left .leaf').on('dragstart', function () {
-            studio.designer.drag.start_choose(studio.designer.procedure.create(this.data_component).element);
-        }).on('dragend', studio.designer.drag.finish);
-        studio.events['component_loaded'].execute();
-    });
+    fetch("/get_component")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            studio.data.component = data;
+            create_content_to(data, document.querySelector('.studio>.other>.left'));
+            document.querySelectorAll('.studio>.other>.left .group>.branch').forEach((item, index) => {
+                item.addEventListener('click', function () {
+                    this.parentNode.classList.toggle('expand');
+                });
+            })
+            document.querySelector('.studio>.other>.left').firstChild.classList.toggle('expand');
+            document.querySelectorAll('.studio>.other>.left .leaf').forEach((item, index) => {
+                item.addEventListener('dragstart', function () {
+                    studio.designer.drag.start_choose(studio.designer.procedure.create(this.data_component).element);
+                });
+                item.addEventListener('dragend', studio.designer.drag.finish);
+            });
+            
+            studio.events['component_loaded'].execute();
+        })
 }
 
 studio.ready(function () {
