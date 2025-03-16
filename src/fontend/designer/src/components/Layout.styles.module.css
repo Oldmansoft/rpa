@@ -1,0 +1,37 @@
+.layout {
+    display: flex;
+    height: 100vh;
+    flex-direction: column;
+}
+.vertical {
+    flex: auto;
+    display: flex;
+}
+.horizontal {
+    flex: auto;
+    display: flex;
+    flex-direction: column;
+}
+.workspace {
+    flex: auto;
+    height: 0;
+    overflow-y: scroll;
+}
+.top {
+    display: flex;
+    flex-shrink: 0;
+    border-bottom: 1px solid #aaa;
+}
+.bottom {
+    height: 150px;
+    border-top: 1px solid #aaa;
+    display: block;
+}
+.left {
+    width: 200px;
+    border-right: 1px solid #aaa;
+}
+.right {
+    width: 300px;
+    border-left: 1px solid #aaa;
+}

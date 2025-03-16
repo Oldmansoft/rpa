@@ -12,9 +12,7 @@ from json import loads, dumps
 from struct import unpack, pack
 from inspect import getmembers, isfunction
 
-from .log2 import Logger
-
-logger = Logger("pipe", None)
+from .log2 import logger
 
 # 设置句柄继承性
 def _set_handle_inheritable(handle, inheritable):

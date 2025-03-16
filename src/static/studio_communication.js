@@ -11,6 +11,32 @@ studio.socket.on('message', function(response) {
 });
 
 studio.communication = {}
+
+try {
+    studio.communication.host = window.chrome.webview.hostObjects.webview2;
+} catch {
+    console.warn("需要主机支持");
+}
+
+studio.communication.host_proxy = function() {
+    var result = studio.communication.host;
+    for (var argument of arguments) {
+        result = result[argument];
+    }
+    
+    return [result, new Promise((resolve) => {
+        studio.callback[Array.from(arguments).join(".")] = resolve;
+    })];
+}
+studio.communication.host_call_register = function(key) {
+    return new Promise((resolve) => {
+        studio.callback[key] = resolve;
+    });
+}
+studio.communication.host_call_resolve = function(key) {
+    studio.callback[key].apply(window, Array.from(arguments).slice(1));
+}
+
 studio.communication.server = {}
 
 studio.communication.server.message = function (type, action, params, callback) {

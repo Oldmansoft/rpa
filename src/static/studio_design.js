@@ -678,7 +678,6 @@ studio.ready(function () {
         var drop_line = document.querySelector('#drop_line');
         var currentTarget = get_element_parents_from_tag(e.target, studio.constant.TagName.article);
         if (currentTarget == null) {
-            document.querySelector('.editor').append(drop_line);
             return;
         }
         if (!studio.designer.drag.is_working(currentTarget)) return;
