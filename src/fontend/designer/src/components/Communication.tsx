@@ -67,8 +67,12 @@ class Designer extends ExecutorProxy {
         return this.executor.CallCommand(this.name, this.GetProjectAppContent.name, { app_path: app_path })
     }
 
-    GetProjectFileContent(path: string, file_path: string): Promise<any> {
-        return this.executor.CallCommand(this.name, this.GetProjectFileContent.name, { path: path, file_path: file_path })
+    GetProjectJsonContent(path: string, file_path: string): Promise<any> {
+        return this.executor.CallCommand(this.name, this.GetProjectJsonContent.name, { path: path, file_path: file_path })
+    }
+
+    GetProjectTextContent(path: string, file_path: string): Promise<any> {
+        return this.executor.CallCommand(this.name, this.GetProjectTextContent.name, { path: path, file_path: file_path })
     }
 }
 

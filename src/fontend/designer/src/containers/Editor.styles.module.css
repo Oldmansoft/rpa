@@ -1,0 +1,160 @@
+.editor {
+    flex: auto;
+    height: 0;
+    overflow-y: scroll;
+}
+.tab_groups {
+    background-color: #ccc;
+}
+.tab {
+    border-right: 1px solid #aaa;
+    background-color:gray;
+}
+.tab_active {
+    border-right: 1px solid #aaa;
+    background-color: #fff;
+}
+
+.editor > kbd,
+.editor > var,
+.editor > samp {
+    display: block;
+    margin-left: 60px;
+    border-left: 1px solid #aaa;
+}
+.editor > code {
+    --AsideLeft: -15px;
+
+    position: relative;
+    display: block;
+    border-left: 1px solid #aaa;
+    margin-left: 60px;
+    margin-right: 5px;
+    padding-left: 10px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    font-size: 13px;
+    color: #333;
+    min-height: calc(100% - 1px);
+}
+.editor > code small {
+    display: block;
+    position: absolute;
+    left: 0;
+    width: 100%;
+}
+.editor > code small div {
+    position: absolute;
+    top: -1px;
+    width: 100%;
+    height: 2px;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.editor > code aside {
+    position: absolute;
+    left: var(--AsideLeft);
+    line-height: 21px;
+}
+
+.editor code > article,
+.editor main > article,
+.editor hgroup,
+.editor main {
+    padding: 4px 0 4px 10px;
+}
+
+.editor code > article > ul,
+.editor main > article > ul {
+    display: flex;
+    padding: 5px;
+    overflow: auto;
+    align-items: center;
+    border-top: 1px solid #efefef;
+    border-left: 1px solid #eee;
+    border-right: 1px solid #eee;
+    border-bottom: 1px solid #aaa;
+    border-radius: 3px;
+    background-color: #fff;
+}
+.editor code > article > ul:hover,
+.editor main > article > ul:hover {
+    background-color: #efefef;
+}
+.editor code > article.chosen > ul,
+.editor main > article.chosen > ul {
+    background-color: #f3f2f1;
+}
+.editor code > article.chosen > ul:hover,
+.editor main > article.chosen > ul:hover {
+    background-color: #e1dfdd;
+}
+.editor code > article > ul > li:nth-child(2),
+.editor main > article > ul > li:nth-child(2) {
+    flex: auto;
+}
+
+.editor article > ul > li > p {
+    color: #666;
+}
+.editor article > ul > li> p var {
+    color: blue;
+}
+.editor article > ul > li > p > var {
+    margin: 0 5px;
+}
+.editor article > ul > li > p > var:first-child {
+    margin-left: 0;
+}
+.editor article > ul > li > p > var:last-child {
+    margin-right: 0;
+}
+.editor article > ul > li > p > var.error {
+    color: red;
+}
+.editor article > ul > li > p > code {
+    margin: 0 5px;
+    font-family: 黑体;
+}
+.editor article > ul > li > p code:first-child {
+    margin-left: 0;
+}
+.editor article > ul > li > p code:last-child {
+    margin-right: 0;
+}
+
+.editor ul > li {
+    margin: 0 5px;
+}
+
+.editor hgroup > nav > section > article > ul,
+.editor hgroup > section > article > ul,
+.editor hgroup > article > ul {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px;
+    background-color: #dbe9ff;
+}
+.editor section > article > ul h4,
+.editor section > article > ul p {
+    display: inline-block;
+}
+.editor hgroup section > main {
+    border-left: 4px solid #dbe9ff;
+}
+
+.editor hgroup section > article > ul {
+    border-radius: 0 5px 5px 0;
+}
+.editor hgroup > section:first-child > article >ul {
+    border-radius: 5px 5px 5px 0;
+}
+.editor hgroup > article:last-child > ul {
+    border-radius: 0 5px 5px 5px;
+}
+.editor hgroup article > ul p {
+    margin-left: 5px;
+}
+.editor i, var {
+    font-style: normal;
+}

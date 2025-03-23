@@ -1,29 +1,31 @@
 import { useLocation, useNavigate } from "react-router"
 import Button from '../components/Button'
-import Layout, { Vertical, Horizontal, Workspace, Top, Bottom, Left, Right, Tab, TabItem } from '../components/Layout'
+import Layout, { Vertical, Horizontal, Top, Bottom, Left, Right, Tab, TabItem } from '../components/Layout'
 import { communication } from '../components/Communication'
 import TreeViewer, { TreeNode } from '../components/TreeViewer'
 import { get_designer_component_datas, get_designer_file_tree_data } from "../components/DataSource"
 import { useEffect, useRef, useState } from "react"
 import LogViewer from "../components/LogViewer"
-import Editor, { EditorRef } from "../components/Editor"
+import Editor, { EditorRef } from "../containers/Editor"
+import { project } from "../containers/Project"
+import About from './About'
 
 const Work = () => {
-    const [componentDatas, setComponetDatas] = useState<TreeNode[]>([])
-    const [treeDatas, setTreeDatas] = useState<TreeNode[]>([])
-    const [appPath, setAppPath] = useState<string>("")
     const location = useLocation()
     const navigate = useNavigate()
     const editorRef = useRef<EditorRef>(null)
+    const [componentDatas, setComponetDatas] = useState<TreeNode[]>([])
+    const [treeDatas, setTreeDatas] = useState<TreeNode[]>([])
+    const [showAbout, setShowAbout] = useState(false)
     const path = location.state["path"]
 
     useEffect(() => {
         (async () => {
-            const app = await communication.Executor.Designer.GetProjectAppContent(path)
-            setAppPath(app["path"])
-            editorRef.current?.add(app["project"]["main"])
-            setTreeDatas(await get_designer_file_tree_data(app["path"]))
-            setComponetDatas(await get_designer_component_datas())
+            const [componentDatas, componentTreeNodes] = await get_designer_component_datas()
+            await project.init(componentDatas, path)
+            editorRef.current?.add(project.getMainFile())
+            setTreeDatas(await get_designer_file_tree_data(project.getAppPath()))
+            setComponetDatas(componentTreeNodes)
         })()
     }, [path])
 
@@ -33,25 +35,37 @@ const Work = () => {
             navigate("/work", { state: { path: app_file_path } })
         }
     }
+    const handleComponentTreeClick = (_: string) => {
+        
+    }
+    const handleFileTreeClick = (fullname: string) => {
+        editorRef.current?.add(fullname)
+    }
+    const handleAboutClick = async () => {
+        setShowAbout(true)
+    }
+    const handleAboutClose = async () => {
+        setShowAbout(false)
+    }
 
     return (
         <Layout>
             <Top>
                 <Button text="打开" className="icon-[mingcute--open-door-line]" onClick={handleOpenClick} />
+                <Button text="关于" className="icon-[ix--about]" onClick={handleAboutClick} />
+                {showAbout && <About onClose={handleAboutClose}></About>}
             </Top>
             <Vertical>
-                <Left><TreeViewer source={componentDatas} dragKey="editor"></TreeViewer></Left>
+                <Left><TreeViewer source={componentDatas} dragKey="editor" onClick={handleComponentTreeClick}></TreeViewer></Left>
                 <Horizontal>
-                    <Workspace>
-                        <Editor path={appPath} ref={editorRef}></Editor>
-                    </Workspace>
+                    <Editor ref={editorRef}></Editor>
                     <Bottom>
                         <Tab>
                             <TabItem title="日志"><LogViewer></LogViewer></TabItem>
                         </Tab>
                     </Bottom>
                 </Horizontal>
-                <Right><TreeViewer source={treeDatas} dragKey="file" dropKey="file"></TreeViewer></Right>
+                <Right><TreeViewer source={treeDatas} dragKey="file" dropKey="file" onClick={handleFileTreeClick}></TreeViewer></Right>
             </Vertical>
         </Layout>
     )

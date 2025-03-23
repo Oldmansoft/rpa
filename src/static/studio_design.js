@@ -349,6 +349,7 @@ studio.Action = class {
             if (variables && id in variables) {
                 value = variables[id];
             }
+            console.log(variables, id, value)
             this.params['{' + id + '}'] = {
                 name: name,
                 type: component['params'][i]['type'],

@@ -1,9 +1,13 @@
 import React, { Children, ReactNode, useState } from "react"
 import styles from './Layout.styles.module.css'
 
-export const Top = ({ children }: { children: ReactNode }) => {
+export const Top = ({ className, children }: { className?: string, children: ReactNode }) => {
+    let mixClassName = styles.top
+    if (className) {
+        mixClassName = `${className} ${styles.top}`
+    }
     return (
-        <div className={styles.top}>
+        <div className={mixClassName}>
             {children}
         </div>
     )
@@ -81,14 +85,6 @@ export const Tab = ({ children }: { children: TabChildren }) => {
 export const TabItem = ({ title, children }: { title: string, children: ReactNode }) => {
     return (
         <div title={title}>
-            {children}
-        </div>
-    )
-}
-
-export const Workspace = ({ children }: { children: ReactNode }) => {
-    return (
-        <div className={styles.workspace}>
             {children}
         </div>
     )

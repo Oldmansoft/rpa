@@ -39,16 +39,25 @@ class Designer(CommandHandle):
             raise ValueError("app_path 不能为空")
         with open(app_path, mode="r", encoding="utf-8") as file:
             result = load(file)
-            result["path"], result["name"] = split(app_path)
+            result["path"], result["name"] = split(app_path.replace("\\", "/"))
+            result["path"] = f"{result['path']}/"
             return result
 
-    def GetProjectFileContent(self, path: str, file_path: str) -> dict:
+    def GetProjectJsonContent(self, path: str, file_path: str) -> dict:
         if path is None or path == "":
             raise ValueError("path 不能为空")
         if file_path is None or file_path == "":
             raise ValueError("file_path 不能为空")
         with open(join(path, file_path), mode="r", encoding="utf-8") as file:
             return load(file)
+    
+    def GetProjectTextContent(self, path: str, file_path: str) -> list:
+        if path is None or path == "":
+            raise ValueError("path 不能为空")
+        if file_path is None or file_path == "":
+            raise ValueError("file_path 不能为空")
+        with open(join(path, file_path), mode="r", encoding="utf-8") as file:
+            return file.readlines()
 
     def Create(self, path: str, name: str) -> dict:
         if not isdir(path):

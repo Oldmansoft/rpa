@@ -1,6 +1,5 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import styles from './Modal.styles.module.css'
 
 export interface LoadingRef {
     show(text: string): void,
@@ -23,7 +22,7 @@ export const Loading = forwardRef((props: React.ComponentProps<'dialog'>, ref: R
     }, []);
 
     return createPortal(
-        <dialog className={styles.loading} {...props} ref={dialogRef}>
+        <dialog {...props} ref={dialogRef}>
             {content}
         </dialog>,
         document.body

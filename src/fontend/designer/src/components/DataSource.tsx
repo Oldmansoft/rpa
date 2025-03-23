@@ -11,6 +11,7 @@ export const get_designer_file_tree_data = async (path: string) => {
             }
             if ("children" in data) {
                 node.icon = "icon-[mdi--folder]"
+                node.iconColor = "#ffd900"
                 node.children = get_list_data(data["children"])
             } else {
                 const ext = data["name"].split(".").pop()
@@ -50,5 +51,5 @@ export const get_designer_component_datas = async () => {
             result.push(node)
         }
     }
-    return result
+    return [datas, result]
 }

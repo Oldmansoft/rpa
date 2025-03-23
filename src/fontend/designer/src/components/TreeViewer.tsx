@@ -9,16 +9,18 @@ export interface TreeNode {
     name: string,
     draggable?: boolean,
     icon?: string,
+    iconColor?: string,
     children?: TreeNode[]
 }
 
 const margin_left = 18
 
-const TreeViewerNode = ({ node, fullName, dragKey, offset, onToggle, inExpanded }: {
+const TreeViewerNode = ({ node, fullName, dragKey, offset, onClick, onToggle, inExpanded }: {
     node: TreeNode,
     fullName: string,
     dragKey?: string,
     offset: number,
+    onClick: (fullname: string) => void,
     onToggle: (fullName: string) => void,
     inExpanded: (fullName: string) => boolean
 }) => {
@@ -46,6 +48,11 @@ const TreeViewerNode = ({ node, fullName, dragKey, offset, onToggle, inExpanded 
     }
 
     const [isDragging, setIsDragging] = useState(false)
+    const iconStyle:any = {}
+    if (node.iconColor) {
+        iconStyle["backgroundColor"] = node.iconColor
+    }
+
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
         if (!dragKey) {
             return;
@@ -59,7 +66,13 @@ const TreeViewerNode = ({ node, fullName, dragKey, offset, onToggle, inExpanded 
         setIsDragging(true)
     }
     const handleDragEnd = () => setIsDragging(false)
-    const handleClick = () => onToggle(fullName)
+    const handleClick = () => {
+        if (node.children) {
+            onToggle(fullName)
+        }else {
+            onClick(fullName)
+        }
+    }
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         const drag_object = JSON.parse(e.dataTransfer.getData("text/plain"));
         const source_path = getFolderPath(drag_object.name)
@@ -68,7 +81,7 @@ const TreeViewerNode = ({ node, fullName, dragKey, offset, onToggle, inExpanded 
             target_path = fullName
         }
         if (source_path != target_path && !folderContains(drag_object.isdir, drag_object.name, target_path)) {
-            console.info(drag_object.name, "移动到", target_path)
+            console.warn(drag_object.name, "移动到", target_path)
         }
     }
 
@@ -89,7 +102,7 @@ const TreeViewerNode = ({ node, fullName, dragKey, offset, onToggle, inExpanded 
             >
                 <span style={{ width: `${offset}px`, display: "inline-block" }}></span>
                 {is_category && (is_category_and_expanded ? (<i className="icon-[mdi--minus]"></i>) : (<i className="icon-[mdi--plus]"></i>))}
-                {node.icon && (<i className={`${node.icon}`}></i>)}
+                {node.icon && (<i className={`${node.icon}`} style={iconStyle}></i>)}
                 {node.name}
             </div>
             {
@@ -98,11 +111,12 @@ const TreeViewerNode = ({ node, fullName, dragKey, offset, onToggle, inExpanded 
                         {node.children?.map(
                             (child_node) => (
                                 <TreeViewerNode
-                                    key={child_node.name}
+                                    key={`${fullName}/${child_node.name}`}
                                     fullName={`${fullName}/${child_node.name}`}
                                     dragKey={dragKey}
                                     offset={offset + margin_left}
                                     node={child_node}
+                                    onClick={onClick}
                                     inExpanded={inExpanded}
                                     onToggle={onToggle}
                                 />
@@ -115,10 +129,11 @@ const TreeViewerNode = ({ node, fullName, dragKey, offset, onToggle, inExpanded 
     )
 }
 
-const TreeViewer = ({ source, dragKey, dropKey }: {
+const TreeViewer = ({ source, dragKey, dropKey, onClick }: {
     source: TreeNode[],
     dragKey?: string,
-    dropKey?: string
+    dropKey?: string,
+    onClick: (fullname: string) => void
 }) => {
     const [expandedNames, setExpandedNames] = useState<string[]>([]);
     const handleToggle = (fullName: string) => {
@@ -143,10 +158,11 @@ const TreeViewer = ({ source, dragKey, dropKey }: {
                 (node) => (
                     <TreeViewerNode
                         key={node.name}
-                        fullName={`/${node.name}`}
+                        fullName={node.name}
                         dragKey={dragKey}
                         offset={0}
                         node={node}
+                        onClick={onClick}
                         inExpanded={inExpanded}
                         onToggle={handleToggle}
                     />
