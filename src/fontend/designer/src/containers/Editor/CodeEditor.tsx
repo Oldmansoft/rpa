@@ -1,85 +1,33 @@
-import React, { useEffect, useState, useRef } from "react"
+import React, { useEffect, useState, useRef, DragEvent } from "react"
 import { communication } from "../../components/Communication"
 import { project } from "../Project"
 import { KeyGenerator } from "../../components/Utils"
+import { TagName, get_element_parents_from_tag, make_numbers, codeDrager, mouse_in_node_top, find_previous_tag } from "./Utils"
 
 declare const window: {
     dragKey: string
 } & Window
 
-function get_first_article_node(codeNode: HTMLElement) {
-    const nodes = codeNode.children;
-    if (!nodes || nodes.length == 0) {
-        return null;
-    }
-    let first_node = nodes[0] as HTMLElement;
-    while (first_node.tagName != "ARTICLE") {
-        if (first_node.children.length == 0) {
-            first_node = first_node.nextElementSibling as HTMLElement;
-            if (first_node == null) {
-                break;
-            }
-        } else {
-            first_node = first_node.children[0] as HTMLElement
-        }
-    }
-    return first_node;
+const is_item_article = (node: HTMLElement) => {
+    return !node.classList.contains("label")
 }
 
-function find_next_tag(node: HTMLElement, tag_name: string) {
-    var next_node = node.nextElementSibling as HTMLElement;
-    while (next_node == null || next_node.tagName != tag_name) {
-        while (next_node == null) {
-            node = node.parentNode as HTMLElement;
-            if (node.tagName == "CODE") {
-                return null;
-            }
-            next_node = node.nextElementSibling as HTMLElement;
-        }
-        while (next_node.tagName != tag_name) {
-            if (next_node.children.length == 0) {
-                next_node = next_node.nextElementSibling as HTMLElement;
-                if (next_node == null) {
-                    break;
-                }
-            } else {
-                next_node = next_node.children[0] as HTMLElement
-            }
-        }
-    }
-    return next_node;
+const is_footer_article = (node: HTMLElement) => {
+    return node.classList.contains("footer")
 }
 
-function set_node_number(node: HTMLElement, number: number) {
-    const aside = node.querySelector('aside')
-    if (aside) {
-        aside.textContent = number.toString();
-    }
+const is_header_article = (node: HTMLElement) => {
+    const parentNode = node.parentElement as HTMLElement
+    return parentNode.tagName == TagName.section && parentNode.classList.contains("header")
 }
 
-function get_current_aside_node(target: HTMLElement) {
-    if (target.tagName == "SECTION") {
-        return target.children[0] as HTMLElement;
-    }
-    return target;
+const is_boundary_article = (node: HTMLElement) => {
+    return (node.parentNode!.parentNode as HTMLElement).tagName == TagName.nav
 }
 
-function make_numbers(codeNode: HTMLElement) {
-    const firstNode = get_first_article_node(codeNode);
-    if (firstNode == null) {
-        return;
-    }
-    set_node_number(firstNode, 1)
-
-    let number = 1;
-    let node = find_next_tag(firstNode, "ARTICLE");
-    while (node != null) {
-        node = get_current_aside_node(node);
-        number++;
-        set_node_number(node, number);
-        node = find_next_tag(node, "ARTICLE");
-    }
-    codeNode.style.setProperty('--AsideLeft', '-' + (number.toString().length * 8 + 7) + 'px');
+const is_last_section_article = (node: HTMLElement) => {
+    const parentNode = node.parentElement as HTMLElement
+    return parentNode.tagName == TagName.section && !parentNode.classList.contains("header")
 }
 
 function create_format_code_node(text: string) {
@@ -165,7 +113,7 @@ const CodeEditorItem = ({ data }: { data: any }) => {
     )
 }
 
-const Action = ({ data, component }: { data: any, component: any }) => {
+const Action = ({ data, component, className }: { data: any, component: any, className?: string }) => {
     const variables = data["params"]
     const params: any = {}
     for (const i in component['params']) {
@@ -204,7 +152,7 @@ const Action = ({ data, component }: { data: any, component: any }) => {
         }
     }
     return (
-        <article>
+        <article className={className}>
             <ul>
                 <li>
                     <aside></aside>
@@ -222,7 +170,7 @@ const Action = ({ data, component }: { data: any, component: any }) => {
 const Section = ({ className, data, component }: { className?: string, data: any, component: any }) => {
     return (
         <section className={className}>
-            <Action data={data} component={component}></Action>
+            <Action data={data} component={component} className="label"></Action>
             <main>
                 {data["body"].map(
                     (item: any, index: number) => (
@@ -238,7 +186,7 @@ const Container = ({ data, component }: { data: any, component: any }) => {
     return (
         <hgroup className="container">
             <Section className="header" data={data} component={component}></Section>
-            <article>
+            <article className="label footer">
                 <ul>
                     <li><aside></aside><i className="icon-[ion--compose]"></i></li>
                     <li><h4>结束</h4></li>
@@ -250,22 +198,22 @@ const Container = ({ data, component }: { data: any, component: any }) => {
 
 const Composition = ({ data, component }: { data: any, component: any }) => {
     const boundaries: React.JSX.Element[] = []
-    let footer: React.JSX.Element | null = null
+    let last: React.JSX.Element | null = null
     const key = new KeyGenerator()
     for (const optional of data["optional"]) {
         const component_optional = find_component_optional(optional['id'], component['optional'])
         if (component_optional['category'] == 'Boundary') {
             boundaries.push(<Section key={key.next()} data={optional} component={component_optional}></Section>)
         } else {
-            footer = <Section data={optional} component={component_optional}></Section>
+            last = <Section data={optional} component={component_optional}></Section>
         }
     }
     return (
         <hgroup className="container">
             <Section className="header" data={data} component={component}></Section>
             {boundaries && <nav>{boundaries}</nav>}
-            {footer}
-            <article>
+            {last}
+            <article className="label footer">
                 <ul>
                     <li><aside></aside><i className="icon-[ion--compose]"></i></li>
                     <li><h4>结束</h4></li>
@@ -277,14 +225,17 @@ const Composition = ({ data, component }: { data: any, component: any }) => {
 
 const CodeEditor = ({ file }: { file: string }) => {
     const [content, setContent] = useState<any>(null)
-    const varRef = useRef<HTMLElement>(null)
+    const codeRef = useRef<HTMLElement>(null)
+    const lineRef = useRef<HTMLElement>(null)
 
     useEffect(() => {
         (async () => {
             const fileContent = await communication.Executor.Designer.GetProjectJsonContent(project.getAppPath(), file)
             setContent(fileContent)
-            if (varRef.current) {
-                make_numbers(varRef.current)
+            codeDrager.setDropLine(lineRef.current)
+            if (codeRef.current) {
+                make_numbers(codeRef.current)
+                codeDrager.init(codeRef.current)
             }
         })()
     }, [file])
@@ -292,6 +243,78 @@ const CodeEditor = ({ file }: { file: string }) => {
     if (!content) {
         return
     }
+
+    const handleDragEnter = (e: DragEvent) => {
+        if (window.dragKey != "editor") {
+            return
+        }
+        e.preventDefault()
+    }
+
+    const handleDragOver = (e: DragEvent) => {
+        if (window.dragKey != "editor" || !lineRef.current) {
+            return
+        }
+        e.preventDefault()
+
+        const currentTarget = get_element_parents_from_tag(e.target as HTMLElement, TagName.article);
+        if (currentTarget == null) {
+            return
+        }
+        if (!codeDrager.can_working(e, currentTarget, lineRef.current)) return
+
+        if (is_item_article(currentTarget)) {
+            if (mouse_in_node_top(e, currentTarget)) {
+                const previous = currentTarget.previousElementSibling
+                if (previous == null || previous != lineRef.current) {
+                    currentTarget.before(lineRef.current)
+                }
+            } else {
+                const next = currentTarget.nextElementSibling
+                if (next == null || next != lineRef.current) {
+                    currentTarget.after(lineRef.current)
+                }
+            }
+        } else if (is_footer_article(currentTarget)) {
+            if (mouse_in_node_top(e, currentTarget)) {
+                const mainNode = find_previous_tag(currentTarget, TagName.main)
+                if (mainNode!.children.length == 0 || mainNode!.lastElementChild != lineRef.current) {
+                    mainNode!.append(lineRef.current)
+                }
+            } else {
+                const next = (currentTarget.parentNode as HTMLElement).nextElementSibling
+                if (next == null || next != lineRef.current) {
+                    (currentTarget.parentNode as HTMLElement).after(lineRef.current)
+                }
+            }
+        } else if (is_header_article(currentTarget)) {
+            if (mouse_in_node_top(e, currentTarget)) {
+                const containerNode = currentTarget.parentNode!.parentNode as HTMLElement
+                const previous = containerNode.previousElementSibling
+                if (previous == null || previous != lineRef.current) {
+                    containerNode.before(lineRef.current)
+                }
+            } else {
+                const mainNode = currentTarget.nextElementSibling as HTMLElement
+                if (mainNode.children.length == 0 || mainNode.firstElementChild != lineRef.current) {
+                    mainNode.prepend(lineRef.current)
+                }
+            }
+        } else if (is_boundary_article(currentTarget) || is_last_section_article(currentTarget)) {
+            if (mouse_in_node_top(e, currentTarget)) {
+                const mainNode = find_previous_tag(currentTarget, TagName.main)
+                if (mainNode!.children.length == 0 || mainNode!.lastElementChild != lineRef.current) {
+                    mainNode!.append(lineRef.current)
+                }
+            } else {
+                const mainNode = currentTarget.nextElementSibling as HTMLElement
+                if (mainNode.children.length == 0 || mainNode.firstElementChild != lineRef.current) {
+                    mainNode.prepend(lineRef.current)
+                }
+            }
+        }
+    }
+
     return (
         <>
             <kbd><h5>输入参数设置</h5></kbd>
@@ -303,14 +326,14 @@ const CodeEditor = ({ file }: { file: string }) => {
                     )
                 )}
             </var>
-            <code ref={varRef}>
+            <code ref={codeRef} onDragOver={handleDragOver} onDragEnter={handleDragEnter}>
                 {content["body"].map(
                     (item: any, index: number) => (
                         <CodeEditorItem data={item} key={index}></CodeEditorItem>
                     )
                 )}
             </code>
-            <small><div></div></small>
+            <small ref={lineRef} onDragOver={(e: DragEvent) => { e.preventDefault() }} onDragEnter={(e: DragEvent) => { e.preventDefault() }}><div></div></small>
             <samp><h5>输出参数设置</h5></samp>
         </>
     )

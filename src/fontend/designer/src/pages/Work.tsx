@@ -9,6 +9,7 @@ import LogViewer from "../components/LogViewer"
 import Editor, { EditorRef } from "../containers/Editor"
 import { project } from "../containers/Project"
 import About from './About'
+import { codeDrager } from "../containers/Editor/Utils"
 
 const Work = () => {
     const location = useLocation()
@@ -38,13 +39,20 @@ const Work = () => {
     const handleComponentTreeClick = (_: string) => {
         
     }
-    const handleFileTreeClick = (fullname: string) => {
-        editorRef.current?.add(fullname)
+    const handleComponentDragStart = (fullId: string) => {
+        codeDrager.start_choose(fullId)
     }
-    const handleAboutClick = async () => {
+    const handleComponentDragEnd = () => {
+        codeDrager.finish()
+    }
+
+    const handleFileTreeClick = (fullId: string) => {
+        editorRef.current!.add(fullId)
+    }
+    const handleAboutClick = () => {
         setShowAbout(true)
     }
-    const handleAboutClose = async () => {
+    const handleAboutClose = () => {
         setShowAbout(false)
     }
 
@@ -56,7 +64,7 @@ const Work = () => {
                 {showAbout && <About onClose={handleAboutClose}></About>}
             </Top>
             <Vertical>
-                <Left><TreeViewer source={componentDatas} dragKey="editor" onClick={handleComponentTreeClick}></TreeViewer></Left>
+                <Left><TreeViewer source={componentDatas} dragKey="editor" onClick={handleComponentTreeClick} onDragStart={handleComponentDragStart} OnDragEnd={handleComponentDragEnd}></TreeViewer></Left>
                 <Horizontal>
                     <Editor ref={editorRef}></Editor>
                     <Bottom>

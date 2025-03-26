@@ -6,6 +6,7 @@ declare const window: {
 } & Window
 
 export interface TreeNode {
+    id: string,
     name: string,
     draggable?: boolean,
     icon?: string,
@@ -15,14 +16,16 @@ export interface TreeNode {
 
 const margin_left = 18
 
-const TreeViewerNode = ({ node, fullName, dragKey, offset, onClick, onToggle, inExpanded }: {
+const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDragStart, OnDragEnd, inExpanded }: {
     node: TreeNode,
-    fullName: string,
+    fullId: string,
     dragKey?: string,
     offset: number,
-    onClick: (fullname: string) => void,
-    onToggle: (fullName: string) => void,
-    inExpanded: (fullName: string) => boolean
+    onClick: (fullId: string) => void,
+    onToggle: (fullId: string) => void,
+    onDragStart?: (fullId: string) => void,
+    OnDragEnd?: () => void,
+    inExpanded: (fullId: string) => boolean
 }) => {
     function getFolderPath(path: string) {
         if (path.lastIndexOf("/") == 0) {
@@ -48,7 +51,7 @@ const TreeViewerNode = ({ node, fullName, dragKey, offset, onClick, onToggle, in
     }
 
     const [isDragging, setIsDragging] = useState(false)
-    const iconStyle:any = {}
+    const iconStyle: any = {}
     if (node.iconColor) {
         iconStyle["backgroundColor"] = node.iconColor
     }
@@ -58,27 +61,35 @@ const TreeViewerNode = ({ node, fullName, dragKey, offset, onClick, onToggle, in
             return;
         }
         e.dataTransfer.setData("text/plain", JSON.stringify({
-            name: fullName,
+            name: fullId,
             isdir: node.children != null
         }))
         e.dataTransfer.effectAllowed = "move"
         window.dragKey = dragKey
         setIsDragging(true)
+        if (onDragStart != null) {
+            onDragStart(fullId)
+        }
     }
-    const handleDragEnd = () => setIsDragging(false)
+    const handleDragEnd = () => {
+        setIsDragging(false)
+        if (OnDragEnd != null) {
+            OnDragEnd()
+        }
+    }
     const handleClick = () => {
         if (node.children) {
-            onToggle(fullName)
-        }else {
-            onClick(fullName)
+            onToggle(fullId)
+        } else {
+            onClick(fullId)
         }
     }
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         const drag_object = JSON.parse(e.dataTransfer.getData("text/plain"));
         const source_path = getFolderPath(drag_object.name)
-        let target_path = getFolderPath(fullName)
+        let target_path = getFolderPath(fullId)
         if (node.children) {
-            target_path = fullName
+            target_path = fullId
         }
         if (source_path != target_path && !folderContains(drag_object.isdir, drag_object.name, target_path)) {
             console.warn(drag_object.name, "移动到", target_path)
@@ -86,7 +97,7 @@ const TreeViewerNode = ({ node, fullName, dragKey, offset, onClick, onToggle, in
     }
 
     const is_category = node.children && node.children.length > 0
-    const is_category_and_expanded = is_category && inExpanded(fullName)
+    const is_category_and_expanded = is_category && inExpanded(fullId)
     return (
         <li>
             <div
@@ -111,12 +122,14 @@ const TreeViewerNode = ({ node, fullName, dragKey, offset, onClick, onToggle, in
                         {node.children?.map(
                             (child_node) => (
                                 <TreeViewerNode
-                                    key={`${fullName}/${child_node.name}`}
-                                    fullName={`${fullName}/${child_node.name}`}
+                                    key={`${fullId}/${child_node.id}`}
+                                    fullId={`${fullId}/${child_node.id}`}
                                     dragKey={dragKey}
                                     offset={offset + margin_left}
                                     node={child_node}
                                     onClick={onClick}
+                                    onDragStart={onDragStart}
+                                    OnDragEnd={OnDragEnd}
                                     inExpanded={inExpanded}
                                     onToggle={onToggle}
                                 />
@@ -129,22 +142,24 @@ const TreeViewerNode = ({ node, fullName, dragKey, offset, onClick, onToggle, in
     )
 }
 
-const TreeViewer = ({ source, dragKey, dropKey, onClick }: {
+const TreeViewer = ({ source, dragKey, dropKey, onClick, onDragStart, OnDragEnd }: {
     source: TreeNode[],
     dragKey?: string,
     dropKey?: string,
-    onClick: (fullname: string) => void
+    onClick: (fullId: string) => void,
+    onDragStart?: (fullId: string) => void,
+    OnDragEnd?: () => void
 }) => {
     const [expandedNames, setExpandedNames] = useState<string[]>([]);
-    const handleToggle = (fullName: string) => {
-        if (expandedNames.includes(fullName)) {
-            setExpandedNames(expandedNames.filter((name) => name !== fullName))
+    const handleToggle = (fullId: string) => {
+        if (expandedNames.includes(fullId)) {
+            setExpandedNames(expandedNames.filter((name) => name !== fullId))
         } else {
-            setExpandedNames([...expandedNames, fullName])
+            setExpandedNames([...expandedNames, fullId])
         }
     }
-    const inExpanded = (fullName: string) => {
-        return expandedNames.includes(fullName)
+    const inExpanded = (fullId: string) => {
+        return expandedNames.includes(fullId)
     }
     const handleDragOver = (e: any) => {
         if (window.dragKey == dropKey) {
@@ -157,14 +172,16 @@ const TreeViewer = ({ source, dragKey, dropKey, onClick }: {
             {source.map(
                 (node) => (
                     <TreeViewerNode
-                        key={node.name}
-                        fullName={node.name}
+                        key={node.id}
+                        fullId={node.id}
                         dragKey={dragKey}
                         offset={0}
                         node={node}
                         onClick={onClick}
                         inExpanded={inExpanded}
                         onToggle={handleToggle}
+                        onDragStart={onDragStart}
+                        OnDragEnd={OnDragEnd}
                     />
                 )
             )}

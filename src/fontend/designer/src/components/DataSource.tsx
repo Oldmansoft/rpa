@@ -6,6 +6,7 @@ export const get_designer_file_tree_data = async (path: string) => {
         const result: TreeNode[] = []
         for (const data of datas) {
             const node: TreeNode = {
+                id: data["name"],
                 name: data["name"],
                 draggable: true
             }
@@ -38,12 +39,14 @@ export const get_designer_component_datas = async () => {
     for (const data of datas) {
         if (data["category"] == "group") {
             const node: TreeNode = {
+                id: data["id"],
                 name: data["name"],
                 children: []
             }
             for (const item of data["list"]) {
                 if (item["category"] == "item") {
                     node.children?.push({
+                        id: item["id"],
                         name: item["name"]
                     })
                 }

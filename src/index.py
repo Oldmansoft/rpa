@@ -18,7 +18,7 @@ class Designer(CommandHandle):
         for class_type in classes:
             items.append(class_type().get_definition_content())
 
-        program = {"category": "group", "name": "程序设计", "list": items}
+        program = {"category": "group", "id": "Program", "name": "程序设计", "list": items}
         groups.append(program)
         return groups
 

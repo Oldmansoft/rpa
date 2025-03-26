@@ -349,7 +349,6 @@ studio.Action = class {
             if (variables && id in variables) {
                 value = variables[id];
             }
-            console.log(variables, id, value)
             this.params['{' + id + '}'] = {
                 name: name,
                 type: component['params'][i]['type'],
@@ -687,11 +686,13 @@ studio.ready(function () {
             if (mouse_in_node_top(currentTarget)) {
                 var previous = currentTarget.previousElementSibling;
                 if (previous == null || previous != drop_line) {
+                    console.info(currentTarget, "before")
                     currentTarget.before(drop_line);
                 }
             } else {
                 var next = currentTarget.nextElementSibling;
                 if (next == null || next != drop_line) {
+                    console.info(currentTarget, "after")
                     currentTarget.after(drop_line);
                 }
             }
