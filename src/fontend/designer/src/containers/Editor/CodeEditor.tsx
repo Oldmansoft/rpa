@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useRef, DragEvent } from "react"
-import { communication } from "../../components/Communication"
+import React, { useEffect, useRef, DragEvent } from "react"
 import { project } from "../Project"
-import { KeyGenerator } from "../../components/Utils"
-import { TagName, get_element_parents_from_tag, make_numbers, codeDrager, mouse_in_node_top, find_previous_tag } from "./Utils"
+import { KeyGenerator, Counter } from "../../components/Utils"
+import { TagName, CodeNodePosition, get_element_parents_from_tag, make_numbers, codeDrager, mouse_in_node_top, find_previous_tag } from "./Utils"
 
 declare const window: {
     dragKey: string
@@ -37,9 +36,9 @@ function create_format_code_node(text: string) {
 
     const key = new KeyGenerator()
     const result: React.JSX.Element[] = []
-    var last_index = 0
-    var matches = text.matchAll(/(\{.*?\})|\\n/g)
-    for (var match of matches) {
+    const matches = text.matchAll(/(\{.*?\})|\\n/g)
+    let last_index = 0
+    for (const match of matches) {
         if (match.index > last_index) {
             result.push(<span key={key.next()}>{text.substring(last_index, match.index)}</span>)
         }
@@ -75,8 +74,8 @@ function content_node_creator(key: KeyGenerator, type: string, text: string) {
     throw new TypeError(type)
 }
 
-function find_component(id: string, list: any) {
-    for (var item of list) {
+const find_component = (id: string, list: any): any => {
+    for (const item of list) {
         if (item['category'] == 'item') {
             if (item['id'] == id) {
                 return item
@@ -89,7 +88,7 @@ function find_component(id: string, list: any) {
 }
 
 function find_component_optional(id: string, list: any) {
-    for (var item of list) {
+    for (const item of list) {
         if (item['id'] == id) {
             return item
         }
@@ -100,7 +99,7 @@ const CodeEditorItem = ({ data }: { data: any }) => {
     const component = find_component(data["id"], project.getComponents())
     if (component['type'] == 'unit') {
         return (
-            <Action data={data} component={component}></Action>
+            <Action data={data} component={component} num={data["num"]} index={data["index"]} draggable={true}></Action>
         )
     }
     if (component['type'] == 'container') {
@@ -113,7 +112,7 @@ const CodeEditorItem = ({ data }: { data: any }) => {
     )
 }
 
-const Action = ({ data, component, className }: { data: any, component: any, className?: string }) => {
+const Action = ({ data, component, num, index, className, draggable }: { data: any, component: any, num?: number, index?: number, className?: string, draggable?: boolean }) => {
     const variables = data["params"]
     const params: any = {}
     for (const i in component['params']) {
@@ -152,7 +151,7 @@ const Action = ({ data, component, className }: { data: any, component: any, cla
         }
     }
     return (
-        <article className={className}>
+        <article className={className} data-num={num} data-index={index} draggable={draggable}>
             <ul>
                 <li>
                     <aside></aside>
@@ -167,11 +166,11 @@ const Action = ({ data, component, className }: { data: any, component: any, cla
     )
 }
 
-const Section = ({ className, data, component }: { className?: string, data: any, component: any }) => {
+const Section = ({ className, draggable, data, component }: { className?: string, draggable?: boolean, data: any, component: any }) => {
     return (
-        <section className={className}>
+        <section className={className} draggable={draggable}>
             <Action data={data} component={component} className="label"></Action>
-            <main>
+            <main data-num={data["num"]}>
                 {data["body"].map(
                     (item: any, index: number) => (
                         <CodeEditorItem data={item} key={index}></CodeEditorItem>
@@ -182,16 +181,22 @@ const Section = ({ className, data, component }: { className?: string, data: any
     )
 }
 
+const Footer = () => {
+    return (
+        <article className="label footer">
+            <ul>
+                <li><aside></aside><i className="icon-[ion--compose]"></i></li>
+                <li><h4>结束</h4></li>
+            </ul>
+        </article>
+    )
+}
+
 const Container = ({ data, component }: { data: any, component: any }) => {
     return (
-        <hgroup className="container">
+        <hgroup className="container" data-num={data["last-num"]} data-index={data["index"]} draggable={true}>
             <Section className="header" data={data} component={component}></Section>
-            <article className="label footer">
-                <ul>
-                    <li><aside></aside><i className="icon-[ion--compose]"></i></li>
-                    <li><h4>结束</h4></li>
-                </ul>
-            </article>
+            <Footer></Footer>
         </hgroup>
     )
 }
@@ -203,65 +208,125 @@ const Composition = ({ data, component }: { data: any, component: any }) => {
     for (const optional of data["optional"]) {
         const component_optional = find_component_optional(optional['id'], component['optional'])
         if (component_optional['category'] == 'Boundary') {
-            boundaries.push(<Section key={key.next()} data={optional} component={component_optional}></Section>)
+            boundaries.push(<Section key={key.next()} data={optional} component={component_optional} draggable={true}></Section>)
         } else {
             last = <Section data={optional} component={component_optional}></Section>
         }
     }
     return (
-        <hgroup className="container">
+        <hgroup className="container" data-num={data["last-num"]} data-index={data["index"]} draggable={true}>
             <Section className="header" data={data} component={component}></Section>
             {boundaries && <nav>{boundaries}</nav>}
             {last}
-            <article className="label footer">
-                <ul>
-                    <li><aside></aside><i className="icon-[ion--compose]"></i></li>
-                    <li><h4>结束</h4></li>
-                </ul>
-            </article>
+            <Footer></Footer>
         </hgroup>
     )
 }
 
-const CodeEditor = ({ file }: { file: string }) => {
-    const [content, setContent] = useState<any>(null)
+export const find_parent_from_datas = (datas: any[], findNum: Number): any[] | null => {
+    for (const data of datas) {
+        if ("body" in data) {
+
+            if (data["num"] == findNum) {
+                return data["body"]
+            }
+            const result = find_parent_from_datas(data["body"], findNum)
+            if (result != null) {
+                return result
+            }
+        }
+        if ("optional" in data) {
+            for (const optional of data["optional"]) {
+                if (optional["num"] == findNum) {
+                    return optional["body"]
+                }
+                const result = find_parent_from_datas(optional["body"], findNum)
+                if (result != null) {
+                    return result
+                }
+            }
+        }
+    }
+    return null
+}
+
+export const set_data_num_index = (datas: any[], counter: Counter) => {
+    let index = 0
+    for (const data of datas) {
+        data["num"] = counter.next()
+        data["index"] = index++
+        if ("body" in data) {
+            set_data_num_index(data["body"], counter)
+        }
+        if ("optional" in data) {
+            for (const optional of data["optional"]) {
+                optional["num"] = counter.next()
+                set_data_num_index(optional["body"], counter)
+            }
+        }
+        if ("body" in data || "optional" in data) {
+            data["last-num"] = counter.next()
+        }
+    }
+}
+
+const CodeEditor = ({ content, onNodeMove }: { content: any, onNodeMove: (source: CodeNodePosition, target: CodeNodePosition) => void }) => {
     const codeRef = useRef<HTMLElement>(null)
     const lineRef = useRef<HTMLElement>(null)
 
+    let enterCount = 0
+
     useEffect(() => {
         (async () => {
-            const fileContent = await communication.Executor.Designer.GetProjectJsonContent(project.getAppPath(), file)
-            setContent(fileContent)
             codeDrager.setDropLine(lineRef.current)
             if (codeRef.current) {
                 make_numbers(codeRef.current)
                 codeDrager.init(codeRef.current)
             }
         })()
-    }, [file])
+    }, [content])
 
     if (!content) {
         return
     }
 
     const handleDragEnter = (e: DragEvent) => {
+        if ((e.target as HTMLElement).tagName == TagName.aside) {
+            return
+        }
+        enterCount++
         if (window.dragKey != "editor") {
             return
         }
         e.preventDefault()
     }
 
+    const handleDragLeave = (e: DragEvent) => {
+        if ((e.target as HTMLElement).tagName == TagName.aside) {
+            return
+        }
+        if (--enterCount == 0) {
+            codeDrager.resetDropLine()
+        }
+    }
+
     const handleDragOver = (e: DragEvent) => {
         if (window.dragKey != "editor" || !lineRef.current) {
             return
         }
+        if ((e.target as HTMLElement).tagName == TagName.aside) {
+            return
+        }
         e.preventDefault()
-
-        const currentTarget = get_element_parents_from_tag(e.target as HTMLElement, TagName.article);
+        
+        const currentTarget = get_element_parents_from_tag(e.target as HTMLElement, TagName.article)
         if (currentTarget == null) {
             return
         }
-        if (!codeDrager.can_working(e, currentTarget, lineRef.current)) return
+        if (!codeDrager.can_working(e, currentTarget, lineRef.current)) {
+            return
+        }
+        
 
         if (is_item_article(currentTarget)) {
             if (mouse_in_node_top(e, currentTarget)) {
@@ -315,6 +380,34 @@ const CodeEditor = ({ file }: { file: string }) => {
         }
     }
 
+    const handleDragStart = (e: DragEvent) => {
+        window.dragKey = "editor"
+        e.dataTransfer.effectAllowed = "move"
+        const targetNode = e.target as HTMLElement
+        const tagName = targetNode.tagName
+        if ([TagName.article, TagName.hgroup].includes(tagName)) {
+            codeDrager.start(targetNode)
+        } else if (tagName == TagName.section) {
+            codeDrager.start_boundary(targetNode)
+        }
+    }
+
+    const handleDragEnd = () => {
+        const position = codeDrager.finish()
+        if (position != null) {
+            onNodeMove(position.source!, position.target)
+        }
+    }
+
+    const handleLineDragEnter = (e: DragEvent) => {
+        enterCount++
+        e.preventDefault()
+    }
+
+    const handleLineDragLeave = () => {
+        --enterCount
+    }
+
     return (
         <>
             <kbd><h5>输入参数设置</h5></kbd>
@@ -326,14 +419,14 @@ const CodeEditor = ({ file }: { file: string }) => {
                     )
                 )}
             </var>
-            <code ref={codeRef} onDragOver={handleDragOver} onDragEnter={handleDragEnter}>
+            <code ref={codeRef} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragStart={handleDragStart} onDragEnd={handleDragEnd} data-num="0">
                 {content["body"].map(
                     (item: any, index: number) => (
                         <CodeEditorItem data={item} key={index}></CodeEditorItem>
                     )
                 )}
             </code>
-            <small ref={lineRef} onDragOver={(e: DragEvent) => { e.preventDefault() }} onDragEnter={(e: DragEvent) => { e.preventDefault() }}><div></div></small>
+            <small ref={lineRef} onDragOver={(e: DragEvent) => { e.preventDefault() }} onDragEnter={handleLineDragEnter} onDragLeave={handleLineDragLeave}><div></div></small>
             <samp><h5>输出参数设置</h5></samp>
         </>
     )

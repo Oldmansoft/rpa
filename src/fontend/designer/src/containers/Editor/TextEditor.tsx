@@ -1,16 +1,20 @@
-import { useEffect, useState } from "react"
-import { communication } from "../../components/Communication"
-import { project } from "../Project"
+import { useEffect, forwardRef, useImperativeHandle } from "react"
+import { ContentEditorRef } from "./Utils"
 
-const TextEditor = ({ file } : {file: string}) => {
-    const [content, setContent] = useState<any>(null)
+const TextEditor = forwardRef(({ content }: { content: any }, ref: React.Ref<ContentEditorRef>) => {
+    useImperativeHandle(ref, () => {
+        return {
+            getContent() {
+                return content
+            }
+        }
+    }, [])
 
     useEffect(() => {
         (async () => {
-            const fileContent = await communication.Executor.Designer.GetProjectTextContent(project.getAppPath(), file)
-            setContent(fileContent)
+
         })()
-    }, [file])
+    }, [content])
 
     if (!content) {
         return
@@ -26,6 +30,6 @@ const TextEditor = ({ file } : {file: string}) => {
             )}
         </code>
     )
-}
+})
 
 export default TextEditor

@@ -21,6 +21,15 @@ class Designer(CommandHandle):
         program = {"category": "group", "id": "Program", "name": "程序设计", "list": items}
         groups.append(program)
         return groups
+    
+    def GetComponentData(self, id: str) -> dict:
+        classes = ActionComponent.__subclasses__()
+        classes.extend(ContainerComponent.__subclasses__())
+        classes.extend(CompositionComponent.__subclasses__())
+        for class_type in classes:
+            if class_type.__name__ == id:
+                return class_type().get_data_content()
+        return None
 
     def GetFileTree(self, path: str) -> list:
         if path is None or path == "":

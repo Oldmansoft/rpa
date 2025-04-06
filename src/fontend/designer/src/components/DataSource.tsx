@@ -11,7 +11,7 @@ export const get_designer_file_tree_data = async (path: string) => {
                 draggable: true
             }
             if ("children" in data) {
-                node.icon = "icon-[mdi--folder]"
+                node.icon = "icon-[entypo--folder]"
                 node.iconColor = "#ffd900"
                 node.children = get_list_data(data["children"])
             } else {

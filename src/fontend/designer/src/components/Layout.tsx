@@ -1,5 +1,6 @@
 import React, { Children, ReactNode, useState } from "react"
 import styles from './Layout.styles.module.css'
+import './Layout.css'
 
 export const Top = ({ className, children }: { className?: string, children: ReactNode }) => {
     let mixClassName = styles.top
@@ -63,7 +64,7 @@ export const Tab = ({ children }: { children: TabChildren }) => {
             <div className="tab-label">
                 {
                     Children.map(children, (child, index) => {
-                        return <label key={index} onClick={() => { setActiveIndex(index) }}>{child.props.title}</label>
+                        return <label key={index} onClick={() => { setActiveIndex(index) }} className={index == activeIndex ? "active" : ""}>{child.props.title}</label>
                     })
                 }
             </div>
@@ -82,7 +83,7 @@ export const Tab = ({ children }: { children: TabChildren }) => {
     )
 }
 
-export const TabItem = ({ title, children }: { title: string, children: ReactNode }) => {
+export const TabItem = ({ title, children }: { title: string, children?: ReactNode }) => {
     return (
         <div title={title}>
             {children}

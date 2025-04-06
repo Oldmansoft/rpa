@@ -1,3 +1,16 @@
 .tree {
     cursor: default;
 }
+
+.tree div {
+    display: flex;
+    align-items: center;
+}
+.tree div > span > i {
+    display: block;
+    float: right
+}
+.tree div > i {
+    font-size: 18px;
+    margin-right: 3px;
+}

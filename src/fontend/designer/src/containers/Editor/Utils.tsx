@@ -1,12 +1,18 @@
 import { DragEvent } from "react"
 
+export interface ContentEditorRef {
+    getContent(): any
+}
+
 export const TagName = {
     article: 'ARTICLE',
     code: 'CODE',
     main: 'MAIN',
     section: 'SECTION',
     hgroup: 'HGROUP',
-    nav: 'NAV'
+    nav: 'NAV',
+    div: 'DIV',
+    aside: 'ASIDE'
 }
 
 export const get_element_parents_from_tag = (element: HTMLElement, tag_name: string) => {
@@ -166,27 +172,9 @@ export const find_previous_tag = (node: HTMLElement, tag_name: string) => {
     return previous_node
 }
 
-function get_node_number(node: HTMLElement) {
-    return Number(node.querySelector('aside')!.textContent)
-}
-
-function get_renumber_start_node(line: HTMLElement, target: HTMLElement) {
-    var line_previous_node = find_previous_tag(line, TagName.article)
-    var target_previous_node = find_previous_tag(target, TagName.article)
-    if (target_previous_node == null || line_previous_node == null) return null
-
-    var line_previous_number = get_node_number(line_previous_node)
-    var target_previous_number = get_node_number(target_previous_node)
-    if (line_previous_number > target_previous_number) {
-        return target_previous_node
-    } else {
-        return line_previous_node
-    }
-}
-
 class CodeProperty {
     clear = function () {
-        
+
     }
     create_panel = function (_: any) {
     }
@@ -213,6 +201,32 @@ class CodeChoose {
 
 const codeChoose = new CodeChoose()
 
+export interface CodeNodePosition {
+    parentNum: number,
+    index: number
+}
+
+class CodeNodeMove {
+    source: CodeNodePosition | null
+    target: CodeNodePosition
+
+    constructor(parentNum: number, index: number) {
+        this.source = null
+        this.target = {
+            parentNum: parentNum,
+            index: index
+        }
+    }
+
+    setSource(parentNum: number, index: number): CodeNodeMove {
+        this.source = {
+            parentNum: parentNum,
+            index: index
+        }
+        return this
+    }
+}
+
 enum DragMode {
     empty,
     normal,
@@ -223,22 +237,31 @@ class CodeDrager {
     private mode: DragMode
     private coder: HTMLElement | null
     private boundary: HTMLElement | null
-    private target: HTMLElement | null
-    private choose_id: string | null
-    private when_finish_choose: boolean
+    private source_node: HTMLElement | null
+    private source_id: string | null
     private dropLine: HTMLElement | null
 
     constructor() {
         this.mode = DragMode.empty
         this.coder = null
         this.boundary = null
-        this.target = null
-        this.choose_id = null
-        this.when_finish_choose = false
+        this.source_node = null
+        this.source_id = null
         this.dropLine = null
     }
 
-    init(coder:HTMLElement) {
+    private getDataLineNum(node: Node | null) {
+        return Number((node as HTMLElement).getAttribute("data-num"))
+    }
+
+    private getDataPositionIndex(node: Node | null) {
+        if (node == null) {
+            return -1
+        }
+        return Number((node as HTMLElement).getAttribute("data-index"))
+    }
+
+    init(coder: HTMLElement) {
         this.coder = coder
     }
 
@@ -248,51 +271,51 @@ class CodeDrager {
 
     start(node: HTMLElement) {
         this.mode = DragMode.normal
-        this.target = node
-        this.when_finish_choose = false
+        this.source_node = node
     }
 
     start_choose(id: string) {
         this.mode = DragMode.normal
-        this.choose_id = id
-        this.when_finish_choose = true
+        this.source_id = id
     }
 
     start_boundary(node: HTMLElement) {
         this.mode = DragMode.boundary
         this.boundary = node.parentNode as HTMLElement
-        this.target = node
+        this.source_node = node
     }
 
     can_working(event: DragEvent, current_target: HTMLElement, drop_line: HTMLElement) {
-        if (this.choose_id) return true
-        if (this.target == null) return false
+        if (this.source_id) return true
+        if (this.source_node == null) return false
         if (drag_in_boundary(event, this.mode, this.boundary!, current_target, drop_line)) return false
-        if (drag_to_self(event, this.target, current_target, drop_line)) return false
+        if (drag_to_self(event, this.source_node, current_target, drop_line)) return false
         return true
     }
-    finish() {
-        if (this.dropLine == null) {
-            return
-        }
-        let drop_result = false
-        if (this.target != null) {
-            drop_result = this.dropLine.previousElementSibling != this.target && this.dropLine.nextElementSibling != this.target && this.dropLine.previousElementSibling!.tagName != TagName.code
-            let renumber_node
-            if (drop_result) {
-                renumber_node = get_renumber_start_node(this.dropLine, this.target!)
-                this.dropLine.after(this.target!)
-                if (this.when_finish_choose) {
-                    codeChoose.choose(this.target!)
-                }
-            }
-        }
-        document.querySelector("code")!.after(this.dropLine)
+
+    clear() {
         this.boundary = null
-        this.target = null
-        this.choose_id = null
-        if (drop_result) {
-            make_numbers(this.coder!)
+        this.source_node = null
+        this.source_id = null
+    }
+
+    finish() {
+        if (this.dropLine == null || this.dropLine.parentElement?.tagName == TagName.div) {
+            this.clear()
+            return null
+        }
+        const result = new CodeNodeMove(this.getDataLineNum(this.dropLine.parentNode), this.getDataPositionIndex(this.dropLine.previousElementSibling))
+        if (this.source_node != null) {
+            result.setSource(this.getDataLineNum(this.source_node.parentNode), this.getDataPositionIndex(this.source_node))
+        }
+        this.coder!.after(this.dropLine)
+        this.clear()
+        return result
+    }
+
+    resetDropLine() {
+        if (this.dropLine != null) {
+            this.coder!.after(this.dropLine)
         }
     }
 }

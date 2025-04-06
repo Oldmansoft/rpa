@@ -59,6 +59,10 @@ class Designer extends ExecutorProxy {
         return this.executor.CallCommand(this.name, this.GetAllComponents.name, null)
     }
 
+    GetComponentData(id: string): Promise<any> {
+        return this.executor.CallCommand(this.name, this.GetComponentData.name, { id: id })
+    }
+
     GetFileTree(path: string): Promise<any> {
         return this.executor.CallCommand(this.name, this.GetFileTree.name, { path: path })
     }

@@ -86,6 +86,13 @@ class ParameterDefinition(object):
             }
             result.append(param)
         return result
+    
+    def get_data_content(self) -> dict:
+        result = {}
+        for definition in self.value:
+            result[definition.id] = ""
+        return result
+    
 
 class SequenceComponent(Component):
     '''序列组件'''
@@ -138,6 +145,12 @@ class SequenceComponent(Component):
             'name': self.get_name(),
             'params': self.define_parameter().get_definition_content(),
             'format': self.get_format()
+        }
+    
+    def get_data_content(self) -> dict:
+        return {
+            "id": self.__class__.__name__,
+            "params": self.define_parameter().get_data_content()
         }
 
 class MultiSequenceComponent(Component):

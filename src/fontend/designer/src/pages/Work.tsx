@@ -6,9 +6,11 @@ import TreeViewer, { TreeNode } from '../components/TreeViewer'
 import { get_designer_component_datas, get_designer_file_tree_data } from "../components/DataSource"
 import { useEffect, useRef, useState } from "react"
 import LogViewer from "../components/LogViewer"
-import Editor, { EditorRef } from "../containers/Editor"
+import { set_data_num_index } from "../containers/Editor/CodeEditor"
+import Editor, { EditorRef, Format } from "../containers/Editor"
 import { project } from "../containers/Project"
 import About from './About'
+import { Counter } from "../components/Utils"
 import { codeDrager } from "../containers/Editor/Utils"
 
 const Work = () => {
@@ -24,7 +26,7 @@ const Work = () => {
         (async () => {
             const [componentDatas, componentTreeNodes] = await get_designer_component_datas()
             await project.init(componentDatas, path)
-            editorRef.current?.add(project.getMainFile())
+            handleFileTreeClick(project.getMainFile())
             setTreeDatas(await get_designer_file_tree_data(project.getAppPath()))
             setComponetDatas(componentTreeNodes)
         })()
@@ -42,12 +44,28 @@ const Work = () => {
     const handleComponentDragStart = (fullId: string) => {
         codeDrager.start_choose(fullId)
     }
-    const handleComponentDragEnd = () => {
-        codeDrager.finish()
+    const handleComponentDragEnd = async (fullId: string) => {
+        const ids = fullId.split("/")
+        const position = codeDrager.finish()
+        const component_data = await communication.Executor.Designer.GetComponentData(ids[ids.length - 1])
+        if (component_data != null && position != null) {
+            editorRef.current!.insertContent(position.target, component_data)
+        }
     }
 
-    const handleFileTreeClick = (fullId: string) => {
-        editorRef.current!.add(fullId)
+    const handleFileTreeClick = async (filePath: string) => {
+        const extName = filePath.substring(filePath.lastIndexOf(".") + 1)
+        if (extName == "scs") {
+            const fileContent = await communication.Executor.Designer.GetProjectJsonContent(project.getAppPath(), filePath)
+            set_data_num_index(fileContent["body"], new Counter())
+            editorRef.current!.open(filePath, Format.code, fileContent)
+        } else if (extName == "txt") {
+            const fileContent = await communication.Executor.Designer.GetProjectTextContent(project.getAppPath(), filePath)
+            editorRef.current!.open(filePath, Format.text, fileContent)
+        } else {
+            return
+        }
+        
     }
     const handleAboutClick = () => {
         setShowAbout(true)
@@ -64,7 +82,7 @@ const Work = () => {
                 {showAbout && <About onClose={handleAboutClose}></About>}
             </Top>
             <Vertical>
-                <Left><TreeViewer source={componentDatas} dragKey="editor" onClick={handleComponentTreeClick} onDragStart={handleComponentDragStart} OnDragEnd={handleComponentDragEnd}></TreeViewer></Left>
+                <Left><TreeViewer source={componentDatas} dragKey="editor" expand="Program" onClick={handleComponentTreeClick} onDragStart={handleComponentDragStart} OnDragEnd={handleComponentDragEnd}></TreeViewer></Left>
                 <Horizontal>
                     <Editor ref={editorRef}></Editor>
                     <Bottom>
@@ -73,7 +91,15 @@ const Work = () => {
                         </Tab>
                     </Bottom>
                 </Horizontal>
-                <Right><TreeViewer source={treeDatas} dragKey="file" dropKey="file" onClick={handleFileTreeClick}></TreeViewer></Right>
+                <Right>
+                    <Tab>
+                        <TabItem title="项目管理">
+                            <TreeViewer source={treeDatas} dragKey="file" dropKey="file" onClick={handleFileTreeClick}></TreeViewer>
+                        </TabItem>
+                        <TabItem title="属性">
+                        </TabItem>
+                    </Tab>
+                </Right>
             </Vertical>
         </Layout>
     )

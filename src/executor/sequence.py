@@ -50,6 +50,11 @@ class ContainerComponent(ActionBodyComponent, ABC):
     
     def get_type(self) -> str:
         return 'container'
+    
+    def get_data_content(self):
+        result = super().get_data_content()
+        result["body"] = []
+        return result
 
 class OptionalCategory(Enum):
     '''可选项类型'''
@@ -111,3 +116,9 @@ class CompositionComponent(ActionBodyComponent, ABC):
     @abstractmethod
     def set_optional(self, id:str, action:SequenceComponent) -> None:
         pass
+
+    def get_data_content(self):
+        result = super().get_data_content()
+        result["body"] = []
+        result["optional"] = []
+        return result
