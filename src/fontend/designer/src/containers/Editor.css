@@ -4,24 +4,37 @@
     overflow-y: scroll;
 }
 .tab_groups {
-    background-color: #ccc;
+    background-color: #aaa;
 }
 .tab {
-    border-right: 1px solid #aaa;
-    background-color:gray;
+    padding: 0 5px;
+    background-color:#ccc;
 }
 .tab_active {
-    border-right: 1px solid #aaa;
+    padding: 0 5px;
     background-color: #fff;
 }
 
-.editor > kbd,
-.editor > var,
-.editor > samp {
-    display: block;
-    margin-left: 60px;
-    border-left: 1px solid #aaa;
+.editor > code > div > h5,
+.editor > code > div > var {
+    margin-left: 10px;
 }
+
+.editor > code > div > var {
+    display: inline-block;
+    padding: 5px;
+    border-top: 1px solid #efefef;
+    border-left: 1px solid #eee;
+    border-right: 1px solid #eee;
+    border-bottom: 1px solid #aaa;
+    border-radius: 3px;
+    margin-bottom: 5px;
+}
+.editor > code > div > var:hover {
+    cursor: default;
+    background-color: #e1dfdd;
+}
+
 .editor > code {
     --AsideLeft: -15px;
 
@@ -36,13 +49,13 @@
     color: #333;
     min-height: calc(100% - 1px);
 }
-.editor > code small {
+.editor > code > main small {
     display: block;
     position: absolute;
     left: 0;
     width: 100%;
 }
-.editor > code small div {
+.editor > code > main small div {
     position: absolute;
     top: -1px;
     width: 100%;
@@ -50,21 +63,21 @@
     background-color: rgba(0, 0, 0, 0.6);
 }
 
-.editor > code aside {
+.editor > code > main aside {
     position: absolute;
     left: var(--AsideLeft);
     line-height: 21px;
 }
 
-.editor code > article,
-.editor main > article,
+.editor > code > main > article,
+.editor samp > article,
 .editor hgroup,
-.editor main {
+.editor samp {
     padding: 4px 0 4px 10px;
 }
 
-.editor code > article > ul,
-.editor main > article > ul {
+.editor > code > main > article > ul,
+.editor samp > article > ul {
     display: flex;
     padding: 5px;
     overflow: auto;
@@ -76,28 +89,31 @@
     border-radius: 3px;
     background-color: #fff;
 }
-.editor code > article > ul:hover,
-.editor main > article > ul:hover {
+.editor > code > main > article > ul:hover,
+.editor samp > article > ul:hover {
     background-color: #efefef;
 }
-.editor code > article.chosen > ul,
-.editor main > article.chosen > ul {
+.editor > code > main > article.chosen > ul,
+.editor samp > article.chosen > ul,
+.editor > code > div > var.chosen {
     background-color: #f3f2f1;
 }
-.editor code > article.chosen > ul:hover,
-.editor main > article.chosen > ul:hover {
+.editor > code > main > article.chosen > ul:hover,
+.editor samp > article.chosen > ul:hover,
+.editor > code > div > var.chosen:hover {
     background-color: #e1dfdd;
 }
-.editor code > article > ul > li:nth-child(2),
-.editor main > article > ul > li:nth-child(2) {
+.editor > code > main > article > ul > li:nth-child(2),
+.editor samp > article > ul > li:nth-child(2) {
     flex: auto;
 }
 
 .editor article > ul > li > p {
     color: #666;
 }
+.editor > code > div > var > dfn,
 .editor article > ul > li> p var {
-    color: blue;
+    color: #646cff;
 }
 .editor article > ul > li > p > var {
     margin: 0 5px;
@@ -111,14 +127,15 @@
 .editor article > ul > li > p > var.error {
     color: red;
 }
-.editor article > ul > li > p > code {
+.editor article > ul > li > p > mark {
+    background-color: initial;
     margin: 0 5px;
     font-family: 黑体;
 }
-.editor article > ul > li > p code:first-child {
+.editor article > ul > li > p > mark:first-child {
     margin-left: 0;
 }
-.editor article > ul > li > p code:last-child {
+.editor article > ul > li > p > mark:last-child {
     margin-right: 0;
 }
 
@@ -138,7 +155,8 @@
 .editor section > article > ul p {
     display: inline-block;
 }
-.editor hgroup section > main {
+.editor hgroup section > samp {
+    display: block;
     border-left: 4px solid #dbe9ff;
 }
 
@@ -151,7 +169,7 @@
 .editor hgroup > article:last-child > ul {
     border-radius: 0 5px 5px 5px;
 }
-.editor hgroup article > ul p {
+.editor hgroup section > article > ul p {
     margin-left: 5px;
 }
 .editor i, var {

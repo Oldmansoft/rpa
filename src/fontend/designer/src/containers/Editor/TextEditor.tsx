@@ -1,21 +1,4 @@
-import { useEffect, forwardRef, useImperativeHandle } from "react"
-import { ContentEditorRef } from "./Utils"
-
-const TextEditor = forwardRef(({ content }: { content: any }, ref: React.Ref<ContentEditorRef>) => {
-    useImperativeHandle(ref, () => {
-        return {
-            getContent() {
-                return content
-            }
-        }
-    }, [])
-
-    useEffect(() => {
-        (async () => {
-
-        })()
-    }, [content])
-
+const TextEditor = ({ content }: { content: any }) => {
     if (!content) {
         return
     }
@@ -30,6 +13,6 @@ const TextEditor = forwardRef(({ content }: { content: any }, ref: React.Ref<Con
             )}
         </code>
     )
-})
+}
 
 export default TextEditor

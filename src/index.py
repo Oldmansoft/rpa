@@ -68,6 +68,14 @@ class Designer(CommandHandle):
         with open(join(path, file_path), mode="r", encoding="utf-8") as file:
             return file.readlines()
 
+    def SetProjectTextContent(self, path: str, file_path: str, content: str) -> None:
+        if path is None or path == "":
+            raise ValueError("path 不能为空")
+        if file_path is None or file_path == "":
+            raise ValueError("file_path 不能为空")
+        with open(join(path, file_path), mode="w", encoding="utf-8") as file:
+            file.write(content)
+
     def Create(self, path: str, name: str) -> dict:
         if not isdir(path):
             return {"result": False, "message": f"不存在目录 {path}"}
@@ -85,7 +93,7 @@ class Designer(CommandHandle):
         return studio.project.Project.Open(path)
 
     def Run(self, path: str) -> None:
-        return studio.project.Project.Current.run(path)
+        studio.project.Project.Current.run(path)
 
 
 def on_command(command: ProcessCommand) -> tuple:

@@ -1,4 +1,4 @@
-import React, { Children, ReactNode, useState } from "react"
+import React, { Children, ReactNode, useState, forwardRef, useImperativeHandle } from "react"
 import styles from './Layout.styles.module.css'
 import './Layout.css'
 
@@ -54,10 +54,22 @@ export const Horizontal = ({ children }: { children: ReactNode }) => {
     )
 }
 
+export interface TabRef {
+    active(index: number): void
+}
+
 type TabChildren = React.ReactElement<{ title: string, children: ReactNode }> | React.ReactElement<{ title: string, children: ReactNode }>[]
 
-export const Tab = ({ children }: { children: TabChildren }) => {
+export const Tab = forwardRef(({ children }: { children: TabChildren }, ref: React.Ref<TabRef>) => {
     const [activeIndex, setActiveIndex] = useState(0)
+
+    useImperativeHandle(ref, () => {
+        return {
+            active(index: number){
+                setActiveIndex(index)
+            }
+        }
+    })
 
     return (
         <>
@@ -81,7 +93,7 @@ export const Tab = ({ children }: { children: TabChildren }) => {
             </div>
         </>
     )
-}
+})
 
 export const TabItem = ({ title, children }: { title: string, children?: ReactNode }) => {
     return (

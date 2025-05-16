@@ -1,6 +1,12 @@
 .tab-label {
-    background-color: #ccc;
+    background-color: #aaa;
 }
 .tab-label label {
+    display: inline-block;
+    padding: 0 5px;
+    background-color: #ccc;
+}
+.tab-label label.active {
+    color: inherit;
     background-color: #fff;
 }

@@ -268,10 +268,10 @@ class Builder:
     def create(self, logger: Logger, data: dict) -> Procedure:
         procedure = Procedure(logger)
         local_variables = data['local']
-        for local_variable_name in local_variables:
+        for local_variable in local_variables:
             value = FormatValue()
-            value.set(local_variables[local_variable_name], procedure)
-            procedure.define(local_variable_name, value)
+            value.set(local_variable["value"], procedure)
+            procedure.define(local_variable["name"], value)
         
         procedure.body = self.create_body(procedure, data['body'])
         return procedure

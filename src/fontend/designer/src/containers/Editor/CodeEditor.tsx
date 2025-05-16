@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, DragEvent } from "react"
 import { project } from "../Project"
 import { KeyGenerator, Counter } from "../../components/Utils"
+import { CodeChooseCategory } from "./Utils"
 import { TagName, CodeNodePosition, get_element_parents_from_tag, make_numbers, codeDrager, mouse_in_node_top, find_previous_tag } from "./Utils"
+import { IconButton } from "../../components/Button"
 
 declare const window: {
     dragKey: string
@@ -29,8 +31,18 @@ const is_last_section_article = (node: HTMLElement) => {
     return parentNode.tagName == TagName.section && !parentNode.classList.contains("header")
 }
 
+const setChosen = (node: HTMLElement) => {
+    const nodes = document.querySelectorAll('code .chosen')
+    for (let i = 0; i < nodes.length; i++) {
+        nodes[i].classList.remove("chosen")
+    }
+    if (node != null) {
+        node.classList.add("chosen")
+    }
+}
+
 function create_format_code_node(text: string) {
-    if (text == '') {
+    if (text == "") {
         return <var>[空字符串]</var>
     }
 
@@ -52,20 +64,20 @@ function create_format_code_node(text: string) {
 }
 
 function content_node_creator(key: KeyGenerator, type: string, text: string) {
-    if (type == 'Variable') {
+    if (type == "Variable") {
         text = text.trim()
-        if (text == '') {
+        if (text == "") {
             return <var key={key.next()} className="error">[请填写]</var>
         } else {
             return <var key={key.next()}>{text}</var>
         }
     }
-    if (type == 'Format') {
-        return <code key={key.next()}>{create_format_code_node(text)}</code>
+    if (type == "Format") {
+        return <mark key={key.next()}>{create_format_code_node(text)}</mark>
     }
-    if (type == 'Expression') {
+    if (type == "Expression") {
         text = text.trim()
-        if (text == '') {
+        if (text == "") {
             return <var key={key.next()} className="error">[请填写]</var>
         } else {
             return <var key={key.next()}>{text}</var>
@@ -74,57 +86,53 @@ function content_node_creator(key: KeyGenerator, type: string, text: string) {
     throw new TypeError(type)
 }
 
-const find_component = (id: string, list: any): any => {
+export const find_component = (id: string, list: any): any => {
     for (const item of list) {
-        if (item['category'] == 'item') {
-            if (item['id'] == id) {
+        if (item["category"] == "item") {
+            if (item["id"] == id) {
                 return item
             }
         } else {
-            return find_component(id, item['list'])
+            return find_component(id, item["list"])
         }
     }
     return null
 }
 
-function find_component_optional(id: string, list: any) {
-    for (const item of list) {
-        if (item['id'] == id) {
-            return item
-        }
-    }
-}
-
-const CodeEditorItem = ({ data }: { data: any }) => {
+const CodeEditorItem = ({ data, onNodeChoose }: { data: any, onNodeChoose: (num: number) => void }) => {
     const component = find_component(data["id"], project.getComponents())
-    if (component['type'] == 'unit') {
+    if (component["type"] == "unit") {
         return (
-            <Action data={data} component={component} num={data["num"]} index={data["index"]} draggable={true}></Action>
+            <Action data={data} component={component} num={data["num"]} index={data["index"]} draggable={true} onNodeChoose={onNodeChoose}></Action>
         )
     }
-    if (component['type'] == 'container') {
+    if (component["type"] == "container") {
         return (
-            <Container data={data} component={component}></Container>
+            <Container data={data} component={component} onNodeChoose={onNodeChoose}></Container>
         )
     }
     return (
-        <Composition data={data} component={component}></Composition>
+        <Composition data={data} component={component} onNodeChoose={onNodeChoose}></Composition>
     )
 }
 
-const Action = ({ data, component, num, index, className, draggable }: { data: any, component: any, num?: number, index?: number, className?: string, draggable?: boolean }) => {
+const Action = ({ data, component, num, index, className, draggable, onNodeChoose }: {
+    data: any, component: any, num?: number, index?: number, className?: string, draggable?: boolean,
+    onNodeChoose?: (num: number) => void
+}) => {
     const variables = data["params"]
     const params: any = {}
-    for (const i in component['params']) {
-        let value = ''
-        const id = component['params'][i]['id']
-        const name = component['params'][i]['name']
+    for (const i in component["params"]) {
+        let value = ""
+        const id = component["params"][i]["id"]
+        const name = component["params"][i]["name"]
         if (variables && id in variables) {
             value = variables[id]
         }
-        params['{' + id + '}'] = {
+        
+        params[`{${id}}`] = {
             name: name,
-            type: component['params'][i]['type'],
+            type: component["params"][i]["type"],
             value: value
         }
     }
@@ -150,15 +158,27 @@ const Action = ({ data, component, num, index, className, draggable }: { data: a
             description.push(<span key={key.next()}>{format.substring(last_index)}</span>)
         }
     }
+
+    const handleClick = (event: React.MouseEvent) => {
+        if (num != null && onNodeChoose) {
+            const node = (event.currentTarget as HTMLElement)
+            setChosen(node)
+            onNodeChoose(num)
+        }
+    }
+    let display = component.name
+    if (data.display) {
+        display = data.display
+    }
     return (
-        <article className={className} data-num={num} data-index={index} draggable={draggable}>
+        <article className={className} data-num={num} data-index={index} draggable={draggable} onClick={handleClick}>
             <ul>
                 <li>
                     <aside></aside>
                     <i className="icon-[ion--compose]"></i>
                 </li>
                 <li>
-                    <h4>{component.name}</h4>
+                    <h4>{display}</h4>
                     {description && <p>{description}</p>}
                 </li>
             </ul>
@@ -166,17 +186,20 @@ const Action = ({ data, component, num, index, className, draggable }: { data: a
     )
 }
 
-const Section = ({ className, draggable, data, component }: { className?: string, draggable?: boolean, data: any, component: any }) => {
+const Section = ({ className, draggable, data, component, onNodeChoose }: {
+    className?: string, draggable?: boolean, data: any, component: any,
+    onNodeChoose: (num: number) => void
+}) => {
     return (
         <section className={className} draggable={draggable}>
-            <Action data={data} component={component} className="label"></Action>
-            <main data-num={data["num"]}>
+            <Action data={data} component={component} className="label" index={data["index"]} num={data["num"]} onNodeChoose={onNodeChoose}></Action>
+            <samp data-num={data["num"]}>
                 {data["body"].map(
                     (item: any, index: number) => (
-                        <CodeEditorItem data={item} key={index}></CodeEditorItem>
+                        <CodeEditorItem data={item} key={index} onNodeChoose={onNodeChoose}></CodeEditorItem>
                     )
                 )}
-            </main>
+            </samp>
         </section>
     )
 }
@@ -192,30 +215,35 @@ const Footer = () => {
     )
 }
 
-const Container = ({ data, component }: { data: any, component: any }) => {
+const Container = ({ data, component, onNodeChoose }: {
+    data: any, component: any, onNodeChoose: (num: number) => void
+}) => {
     return (
         <hgroup className="container" data-num={data["last-num"]} data-index={data["index"]} draggable={true}>
-            <Section className="header" data={data} component={component}></Section>
+            <Section className="header" data={data} component={component} onNodeChoose={onNodeChoose}></Section>
             <Footer></Footer>
         </hgroup>
     )
 }
 
-const Composition = ({ data, component }: { data: any, component: any }) => {
+const Composition = ({ data, component, onNodeChoose }: {
+    data: any, component: any, onNodeChoose: (num: number) => void
+}) => {
     const boundaries: React.JSX.Element[] = []
     let last: React.JSX.Element | null = null
     const key = new KeyGenerator()
     for (const optional of data["optional"]) {
-        const component_optional = find_component_optional(optional['id'], component['optional'])
-        if (component_optional['category'] == 'Boundary') {
-            boundaries.push(<Section key={key.next()} data={optional} component={component_optional} draggable={true}></Section>)
+        const optional_component = (component["optional"] as any[]).find(item => item["id"] == optional["id"])
+
+        if (optional_component["category"] == "Boundary") {
+            boundaries.push(<Section key={key.next()} data={optional} component={optional_component} draggable={true} onNodeChoose={onNodeChoose}></Section>)
         } else {
-            last = <Section data={optional} component={component_optional}></Section>
+            last = <Section data={optional} component={optional_component} onNodeChoose={onNodeChoose}></Section>
         }
     }
     return (
         <hgroup className="container" data-num={data["last-num"]} data-index={data["index"]} draggable={true}>
-            <Section className="header" data={data} component={component}></Section>
+            <Section className="header" data={data} component={component} onNodeChoose={onNodeChoose}></Section>
             {boundaries && <nav>{boundaries}</nav>}
             {last}
             <Footer></Footer>
@@ -223,10 +251,35 @@ const Composition = ({ data, component }: { data: any, component: any }) => {
     )
 }
 
+export const find_node_from_data = (data: any, findNum: Number): any | null => {
+    for (const children of data["body"]) {
+        if (children["num"] == findNum){
+            return children
+        }
+        if ("body" in children) {
+            const result = find_node_from_data(children, findNum)
+            if (result != null) {
+                return result
+            }
+        }
+        if ("optional" in children) {
+            for (const optional of children["optional"]) {
+                if (optional["num"] == findNum) {
+                    return optional
+                }
+                const result = find_node_from_data(optional, findNum)
+                if (result != null) {
+                    return result
+                }
+            }
+        }
+    }
+    return null
+}
+
 export const find_parent_from_datas = (datas: any[], findNum: Number): any[] | null => {
     for (const data of datas) {
         if ("body" in data) {
-
             if (data["num"] == findNum) {
                 return data["body"]
             }
@@ -261,6 +314,7 @@ export const set_data_num_index = (datas: any[], counter: Counter) => {
         if ("optional" in data) {
             for (const optional of data["optional"]) {
                 optional["num"] = counter.next()
+                optional["parent-id"] = data["id"]
                 set_data_num_index(optional["body"], counter)
             }
         }
@@ -270,7 +324,12 @@ export const set_data_num_index = (datas: any[], counter: Counter) => {
     }
 }
 
-const CodeEditor = ({ content, onNodeMove }: { content: any, onNodeMove: (source: CodeNodePosition, target: CodeNodePosition) => void }) => {
+const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onItemAdd }: {
+    content: any,
+    onNodeMove: (source: CodeNodePosition, target: CodeNodePosition) => void,
+    onPropertiesPaneOpen: (category: CodeChooseCategory, data: any) => void,
+    onItemAdd: (category: CodeChooseCategory) => void
+}) => {
     const codeRef = useRef<HTMLElement>(null)
     const lineRef = useRef<HTMLElement>(null)
 
@@ -318,7 +377,7 @@ const CodeEditor = ({ content, onNodeMove }: { content: any, onNodeMove: (source
             return
         }
         e.preventDefault()
-        
+
         const currentTarget = get_element_parents_from_tag(e.target as HTMLElement, TagName.article)
         if (currentTarget == null) {
             return
@@ -326,7 +385,7 @@ const CodeEditor = ({ content, onNodeMove }: { content: any, onNodeMove: (source
         if (!codeDrager.can_working(e, currentTarget, lineRef.current)) {
             return
         }
-        
+
 
         if (is_item_article(currentTarget)) {
             if (mouse_in_node_top(e, currentTarget)) {
@@ -342,9 +401,9 @@ const CodeEditor = ({ content, onNodeMove }: { content: any, onNodeMove: (source
             }
         } else if (is_footer_article(currentTarget)) {
             if (mouse_in_node_top(e, currentTarget)) {
-                const mainNode = find_previous_tag(currentTarget, TagName.main)
-                if (mainNode!.children.length == 0 || mainNode!.lastElementChild != lineRef.current) {
-                    mainNode!.append(lineRef.current)
+                const sampNode = find_previous_tag(currentTarget, TagName.samp)
+                if (sampNode!.children.length == 0 || sampNode!.lastElementChild != lineRef.current) {
+                    sampNode!.append(lineRef.current)
                 }
             } else {
                 const next = (currentTarget.parentNode as HTMLElement).nextElementSibling
@@ -360,21 +419,21 @@ const CodeEditor = ({ content, onNodeMove }: { content: any, onNodeMove: (source
                     containerNode.before(lineRef.current)
                 }
             } else {
-                const mainNode = currentTarget.nextElementSibling as HTMLElement
-                if (mainNode.children.length == 0 || mainNode.firstElementChild != lineRef.current) {
-                    mainNode.prepend(lineRef.current)
+                const sampNode = currentTarget.nextElementSibling as HTMLElement
+                if (sampNode.children.length == 0 || sampNode.firstElementChild != lineRef.current) {
+                    sampNode.prepend(lineRef.current)
                 }
             }
         } else if (is_boundary_article(currentTarget) || is_last_section_article(currentTarget)) {
             if (mouse_in_node_top(e, currentTarget)) {
-                const mainNode = find_previous_tag(currentTarget, TagName.main)
-                if (mainNode!.children.length == 0 || mainNode!.lastElementChild != lineRef.current) {
-                    mainNode!.append(lineRef.current)
+                const sampNode = find_previous_tag(currentTarget, TagName.samp)
+                if (sampNode!.children.length == 0 || sampNode!.lastElementChild != lineRef.current) {
+                    sampNode!.append(lineRef.current)
                 }
             } else {
-                const mainNode = currentTarget.nextElementSibling as HTMLElement
-                if (mainNode.children.length == 0 || mainNode.firstElementChild != lineRef.current) {
-                    mainNode.prepend(lineRef.current)
+                const sampNode = currentTarget.nextElementSibling as HTMLElement
+                if (sampNode.children.length == 0 || sampNode.firstElementChild != lineRef.current) {
+                    sampNode.prepend(lineRef.current)
                 }
             }
         }
@@ -408,27 +467,85 @@ const CodeEditor = ({ content, onNodeMove }: { content: any, onNodeMove: (source
         --enterCount
     }
 
+    const handleNodeChoose = (num: number) => {
+        const data = find_node_from_data(content, num)
+        onPropertiesPaneOpen(CodeChooseCategory.Body, data)
+    }
+
+    const handleVariableChoose = (index: number, event: React.MouseEvent) => {
+        setChosen(event.currentTarget as HTMLElement)
+        const data = {
+            ...content.local[index],
+            index: index
+        }
+        onPropertiesPaneOpen(CodeChooseCategory.Variable, data)
+    }
+
+    const handleParameterInChoose = (index: number, event: React.MouseEvent) => {
+        setChosen(event.currentTarget as HTMLElement)
+        const data = {
+            ...content.parameter.in[index],
+            index: index
+        }
+        onPropertiesPaneOpen(CodeChooseCategory.ParameterIn, data)
+    }
+
+    const handleParameterOutChoose = (index: number, event: React.MouseEvent) => {
+        setChosen(event.currentTarget as HTMLElement)
+        const data = {
+            ...content.parameter.out[index],
+            index: index
+        }
+        onPropertiesPaneOpen(CodeChooseCategory.ParameterOut, data)
+    }
+
     return (
-        <>
-            <kbd><h5>输入参数设置</h5></kbd>
-            <var>
-                <h5>流程变量设置</h5>
-                {Object.keys(content.local).map(
-                    (key) => (
-                        <label key={key}>{key}</label>
-                    )
+        <code>
+            <div>
+                <h5>
+                    <span>输入参数设置</span>
+                    <IconButton onClick={() => { onItemAdd(CodeChooseCategory.ParameterIn) }} className="icon-[mdi--plus] align-middle"></IconButton>
+                </h5>
+                {content.parameter.in.map(
+                    (item: any, index: number) => (<var key={index} onClick={(event) => handleParameterInChoose(index, event)}>
+                        <dfn>{item["name"]}</dfn>
+                        <data>{item["value"]}</data>
+                    </var>)
                 )}
-            </var>
-            <code ref={codeRef} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragStart={handleDragStart} onDragEnd={handleDragEnd} data-num="0">
-                {content["body"].map(
+            </div>
+            <div>
+                <h5>
+                    <span>流程变量设置</span>
+                    <IconButton onClick={() => { onItemAdd(CodeChooseCategory.Variable) }} className="icon-[mdi--plus] align-middle"></IconButton>
+                </h5>
+                {content.local.map(
+                    (item: any, index: number) => (<var key={index} onClick={(event) => handleVariableChoose(index, event)}>
+                        <dfn>{item["name"]}</dfn>
+                        <data>{item["value"]}</data>
+                    </var>)
+                )}
+            </div>
+            <main ref={codeRef} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragStart={handleDragStart} onDragEnd={handleDragEnd} data-num="0">
+                {content.body.map(
                     (item: any, index: number) => (
-                        <CodeEditorItem data={item} key={index}></CodeEditorItem>
+                        <CodeEditorItem data={item} key={index} onNodeChoose={handleNodeChoose}></CodeEditorItem>
                     )
                 )}
-            </code>
+            </main>
             <small ref={lineRef} onDragOver={(e: DragEvent) => { e.preventDefault() }} onDragEnter={handleLineDragEnter} onDragLeave={handleLineDragLeave}><div></div></small>
-            <samp><h5>输出参数设置</h5></samp>
-        </>
+            <div>
+                <h5>
+                    <span>输出参数设置</span>
+                    <IconButton onClick={() => { onItemAdd(CodeChooseCategory.ParameterOut) }} className="icon-[mdi--plus] align-middle"></IconButton>
+                </h5>
+                {content.parameter.out.map(
+                    (item: any, index: number) => (<var key={index} onClick={(event) => handleParameterOutChoose(index, event)}>
+                        <dfn>{item["name"]}</dfn>
+                        <data>{item["value"]}</data>
+                    </var>)
+                )}
+            </div>
+        </code>
     )
 }
 

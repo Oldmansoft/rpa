@@ -1,23 +1,19 @@
 import { DragEvent } from "react"
 
-export interface ContentEditorRef {
-    getContent(): any
-}
-
 export const TagName = {
     article: 'ARTICLE',
     code: 'CODE',
     main: 'MAIN',
+    samp: 'SAMP',
     section: 'SECTION',
     hgroup: 'HGROUP',
     nav: 'NAV',
-    div: 'DIV',
     aside: 'ASIDE'
 }
 
 export const get_element_parents_from_tag = (element: HTMLElement, tag_name: string) => {
     while (element.tagName != tag_name) {
-        if (element.tagName == TagName.code) {
+        if (element.tagName == TagName.main) {
             return null
         }
         element = element.parentNode as HTMLElement;
@@ -49,7 +45,7 @@ function find_next_tag(node: HTMLElement, tag_name: string) {
     while (next_node == null || next_node.tagName != tag_name) {
         while (next_node == null) {
             node = node.parentNode as HTMLElement;
-            if (node.tagName == TagName.code) {
+            if (node.tagName == TagName.main) {
                 return null;
             }
             next_node = node.nextElementSibling as HTMLElement;
@@ -85,7 +81,7 @@ function get_current_aside_node(target: HTMLElement) {
 function find_boundary_child(node: HTMLElement, boundary: HTMLElement) {
     var child_node = node;
     while (child_node.parentNode != boundary) {
-        if (child_node.tagName == TagName.code) {
+        if (child_node.tagName == TagName.main) {
             return null
         }
         child_node = child_node.parentNode as HTMLElement
@@ -153,7 +149,7 @@ export const find_previous_tag = (node: HTMLElement, tag_name: string) => {
             if (node == null) {
                 return null
             }
-            if (node.tagName == TagName.code) {
+            if (node.tagName == TagName.main) {
                 return null
             }
             previous_node = node.previousElementSibling as HTMLElement
@@ -172,34 +168,13 @@ export const find_previous_tag = (node: HTMLElement, tag_name: string) => {
     return previous_node
 }
 
-class CodeProperty {
-    clear = function () {
-
-    }
-    create_panel = function (_: any) {
-    }
+export enum CodeChooseCategory {
+    None = 0,
+    Body = 1,
+    Variable = 2,
+    ParameterIn = 3,
+    ParameterOut = 4
 }
-
-const codeProperty = new CodeProperty()
-
-class CodeChoose {
-    clear(click_node: HTMLElement | null) {
-        const nodes = document.querySelectorAll('code .chosen')
-        for (let i = 0; i < nodes.length; i++) {
-            if (nodes[i] == click_node) {
-                return
-            }
-            nodes[i].classList.remove("chosen")
-        }
-        codeProperty.clear()
-    }
-
-    choose(_: HTMLElement) {
-
-    }
-}
-
-const codeChoose = new CodeChoose()
 
 export interface CodeNodePosition {
     parentNum: number,
@@ -300,7 +275,7 @@ class CodeDrager {
     }
 
     finish() {
-        if (this.dropLine == null || this.dropLine.parentElement?.tagName == TagName.div) {
+        if (this.dropLine == null || this.dropLine.parentElement?.tagName == TagName.code) {
             this.clear()
             return null
         }

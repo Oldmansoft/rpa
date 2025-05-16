@@ -14,7 +14,7 @@ class Project:
         self.project_path = path
         self.data = data
 
-    def run(self, file_path):
+    def run(self, file_path) -> None:
         path = join(self.project_path, file_path)
         print('运行流程', path)
         with open(path, mode='r', encoding='utf-8') as file:
@@ -23,7 +23,7 @@ class Project:
         procedure.execute()
 
     @staticmethod
-    def Open(project_path):
+    def Open(project_path) -> dict:
         if not isdir(project_path):
             return {
                 'result': False,
@@ -77,7 +77,7 @@ def create(path:str, name:str):
             'version': '1.0.0',
             'create': datetime.now().strftime('%Y-%m-%d'),
             'main': 'main.scs',
-            'parameters': {}
+            'parameter': []
         },
         'studio': {
             'version': 'dev'
@@ -88,10 +88,10 @@ def create(path:str, name:str):
 
     main_path = join(folder_path, 'Main.scs')
     fs_data = {
-        'local': {},
-        'parameters': {
-            'in': {},
-            'out': {}
+        'local': [],
+        'parameter': {
+            'in': [],
+            'out': []
         },
         'body': []
     }
