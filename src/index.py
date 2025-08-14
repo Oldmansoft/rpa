@@ -1,5 +1,5 @@
 from sys import argv
-from executor.process_pipe import ServerProcess, ProcessCommand, CommandHandle
+from executor.process_communication import ProcessServer, ServerCommandHandle
 from executor.component import ActionComponent, ContainerComponent, CompositionComponent
 from executor.log2 import logger
 from os.path import isdir, join, split
@@ -8,7 +8,7 @@ from json import load
 import studio.project
 
 
-class Designer(CommandHandle):
+class Designer(ServerCommandHandle):
     def GetAllComponents(self) -> list:
         groups = []
         items = []
@@ -96,23 +96,14 @@ class Designer(CommandHandle):
         studio.project.Project.Current.run(path)
 
 
-def on_command(command: ProcessCommand) -> tuple:
-    logger.warning("未处理命令", command.name, command.method, command.content)
-    return command.name, command.method
-
-
 def main() -> None:
-    if len(argv) < 3:
+    if len(argv) < 4:
         print("Missing pipe handle.")
         return
 
-    # 获取传递的管道句柄
-    in_read_handle = int(argv[1])
-    out_write_handle = int(argv[2])
-    process = ServerProcess()
-    process.on_command = on_command
+    process = ProcessServer()
     process.register_command_handle(Designer())
-    process.bind(in_read_handle, out_write_handle)
+    process.listen_with_argv()
 
 
 main()

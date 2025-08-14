@@ -508,7 +508,7 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onItemAdd }: {
                 </h5>
                 {content.parameter.in.map(
                     (item: any, index: number) => (<var key={index} onClick={(event) => handleParameterInChoose(index, event)}>
-                        <dfn>{item["name"]}</dfn>
+                        { item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
                         <data>{item["value"]}</data>
                     </var>)
                 )}
@@ -520,7 +520,7 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onItemAdd }: {
                 </h5>
                 {content.local.map(
                     (item: any, index: number) => (<var key={index} onClick={(event) => handleVariableChoose(index, event)}>
-                        <dfn>{item["name"]}</dfn>
+                        { item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
                         <data>{item["value"]}</data>
                     </var>)
                 )}
@@ -540,7 +540,7 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onItemAdd }: {
                 </h5>
                 {content.parameter.out.map(
                     (item: any, index: number) => (<var key={index} onClick={(event) => handleParameterOutChoose(index, event)}>
-                        <dfn>{item["name"]}</dfn>
+                        { item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
                         <data>{item["value"]}</data>
                     </var>)
                 )}

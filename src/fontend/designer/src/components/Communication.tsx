@@ -33,10 +33,13 @@ class Executor extends CommunicationProxy {
         const command = {
             name: name,
             method: method,
-            content: content
+            content: content,
+            ask: true
         }
         const command_text = JSON.stringify(command)
+        console.info(command_text)
         const return_value = await this.communication.webview2.Executor.CallCommand(command_text)
+        console.info(return_value)
         const result = JSON.parse(return_value)
         if (result["error"] != null) {
             throw new Error(result["error"])

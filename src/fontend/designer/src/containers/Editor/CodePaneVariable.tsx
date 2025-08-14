@@ -1,10 +1,16 @@
+import Input from "../../components/Input"
+
 const CodePaneVariable = ({ data, onChange }: { data: any, onChange(index: number, key: string, value: string): void }) => {
     if (!data) {
         return
     }
 
-    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        onChange(data.index, "name", event.target.value)
+    const handleNameNativeChange = (value: string) => {
+        if (value == "") {
+            return false
+        }
+        onChange(data.index, "name", value)
+        return true
     }
 
     const handleValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -15,7 +21,7 @@ const CodePaneVariable = ({ data, onChange }: { data: any, onChange(index: numbe
         <>
             <label className="property">
                 <span>名称</span>
-                <input value={data["name"]} onChange={handleNameChange} />
+                <Input value={data["name"]} onNativeChange={handleNameNativeChange} onInput={(value) => value.trim()}></Input>
             </label>
             <label className="property">
                 <span>初始值</span>

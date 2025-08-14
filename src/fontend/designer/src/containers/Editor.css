@@ -115,6 +115,9 @@
 .editor article > ul > li> p var {
     color: #646cff;
 }
+.editor > code > div > var > dfn.error {
+    color: red;
+}
 .editor article > ul > li > p > var {
     margin: 0 5px;
 }

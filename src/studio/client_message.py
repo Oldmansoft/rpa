@@ -6,7 +6,6 @@ from psutil import disk_partitions
 from tkinter import filedialog, Tk
 
 import studio.project
-from executor.process_pipe import ClientProcess
 
 def get_diskes():
     result = []

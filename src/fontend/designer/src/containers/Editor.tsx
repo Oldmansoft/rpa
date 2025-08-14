@@ -181,17 +181,17 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
         const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
         if (category == CodeChooseCategory.Variable) {
             content["local"].push({
-                "name": "var1",
+                "name": "",
                 "value": ""
             })
         } else if (category == CodeChooseCategory.ParameterIn) {
             content["parameter"]["in"].push({
-                "name": "var1",
+                "name": "",
                 "value": ""
             })
         } else if (category == CodeChooseCategory.ParameterOut) {
             content["parameter"]["out"].push({
-                "name": "var1",
+                "name": "",
                 "value": ""
             })
         }

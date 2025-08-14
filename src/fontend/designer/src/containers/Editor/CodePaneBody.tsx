@@ -76,4 +76,4 @@ const CodePaneAction = ({ data, onChange }: { data: any, onChange(num: number, k
     )
 }
 
-export default CodePaneBody
+export default CodePaneAction
