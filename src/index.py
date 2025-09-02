@@ -1,11 +1,27 @@
 from sys import argv
-from executor.process_communication import ProcessServer, ServerCommandHandle
-from executor.component import ActionComponent, ContainerComponent, CompositionComponent
+from executor.process_communication import ProcessServer, ServerCommandHandle, ProcessServerLauncherProxy
+from executor.component import ActionComponent, ContainerComponent, CompositionComponent, Output, builder
 from executor.log2 import logger
 from os.path import isdir, join, split
 from os import listdir
 from json import load
 import studio.project
+logger.set("temp")
+
+class FontendOutput(Output):
+    def __init__(self, launcher: ProcessServerLauncherProxy):
+        self.launcher = launcher
+
+    def write(self, index: int, content: str, name: str) -> None:
+        if content is None:
+            logger.info(index, name)
+            self.launcher.send("ExecutorCommandHandle", "SendMessage", {"key": "ExecuteOutput", "content": f"{index} {name}"})
+        else:
+            logger.info(index, name, content)
+            self.launcher.send("ExecutorCommandHandle", "SendMessage", {"key": "ExecuteOutput", "content": f"{index} {name} {content}"})
+    
+    def print(self, content: str) -> None:
+        self.launcher.send("ExecutorCommandHandle", "SendMessage", {"key": "TerminalOutput", "content": content})
 
 
 class Designer(ServerCommandHandle):
@@ -75,6 +91,15 @@ class Designer(ServerCommandHandle):
             raise ValueError("file_path 不能为空")
         with open(join(path, file_path), mode="w", encoding="utf-8") as file:
             file.write(content)
+    
+    def RunProjectAppTarget(self, path: str, file_path: str) -> str:
+        path = join(path, file_path)
+        self.launcher.send("ExecutorCommandHandle", "SendMessage", {"key": "TerminalOutput", "content": f"开始执行流程 {file_path}"})
+        with open(path, mode='r', encoding='utf-8') as file:
+            component_data = load(file)
+        procedure = builder.create(FontendOutput(self.launcher), component_data)
+        procedure.execute()
+        self.launcher.send("ExecutorCommandHandle", "SendMessage", {"key": "TerminalOutput", "content": "完成结束流程"})
 
     def Create(self, path: str, name: str) -> dict:
         if not isdir(path):

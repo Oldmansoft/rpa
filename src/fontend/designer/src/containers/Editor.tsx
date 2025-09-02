@@ -31,6 +31,7 @@ type TabContent = {
 export interface EditorRef {
     open(file: string, format: Format, content: any): void,
     save(projectPath: string): void,
+    run(projectPath: string): void,
     getContent(): any,
     insertContent(target: CodeNodePosition, data: any): void
     updateContent(category: UpdateContentCategory, num: number, key: string, value: string): any
@@ -65,6 +66,9 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                     editTabs[activeTabIndex].modified = false
                     setTabs(editTabs)
                 }
+            },
+            run(projectPath: string) {
+                communication.Executor.Designer.RunProjectAppTarget(projectPath, tabs[activeTabIndex].file)
             },
             getContent() {
                 return tabs[activeTabIndex].content

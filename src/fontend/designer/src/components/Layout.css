@@ -10,3 +10,8 @@
     color: inherit;
     background-color: #fff;
 }
+
+.tab-content {
+    overflow-y: auto;
+    height: calc(100% - 21px);
+}

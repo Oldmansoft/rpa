@@ -1,11 +1,18 @@
+from typing import Dict
 from datetime import datetime
-from os.path import join, exists, split, isdir, getmtime
+from os.path import join, isfile, split, splitext, isdir, getmtime
 from os import remove
 from sys import path as sys_path, argv as sys_argv
 from traceback import print_exc
 from io import StringIO
 from ctypes import windll
 from json import dumps
+from enum import Enum
+
+class ContentMode(Enum):
+    Restart = 1
+    Persistence = 2
+    DateGroup = 3
 
 _caller_folder_path = sys_path[0]
 
@@ -30,61 +37,44 @@ def print_reset_color():
 
 
 class Logger:
+    __context: Dict[str, "Logger"] = {}
+
     def __init__(
         self,
         name: str,
         filename: str = "",
         folder: str = None,
-        new_content: bool = True,
-        console_print: bool = True,
-        file_date_group: bool = False,
+        mode: ContentMode = ContentMode.Restart,
+        console_print: bool = True
     ) -> None:
         self.console_debug_color = FOREGROUND_GREY
         self.console_info_color = FOREGROUND_WATER | FOREGROUND_GREY
         self.console_warning_color = FOREGROUND_YELLOW | FOREGROUND_GREY
         self.console_error_color = FOREGROUND_RED | FOREGROUND_GREY
         self.console_fatal_color = FOREGROUND_PURPLE | FOREGROUND_GREY
-        self.__file_date_group = file_date_group
-        self.__filename = filename
-        self.__folder = folder
+        
+        self._name = name
+        self._init_file = True
+        self.set(filename, folder, mode, console_print)
+       
+    def set(
+        self,
+        filename: str = "",
+        folder: str = None,
+        mode: ContentMode = ContentMode.Restart,
+        console_print: bool = True,
+        ) -> None:
+        self._filename = filename
+        self._folder = folder
+        self._mode = mode
+        self._console_print = console_print
 
-        if self.__folder == None:
-            self.__folder = _caller_folder_path
-        if not isdir(self.__folder):
-            raise NotADirectoryError(f"不存在指定目录 {self.__folder}。")
-        if self.__filename == None:
-            self._file_path = None
-        else:
-            if self.__filename == "":
-                self.__filename = split(sys_argv[0])[1]
-            if self.__file_date_group:
-                self.__filename = f'{self.__filename}_{datetime.now().strftime("%Y-%m-%d")}'
-            self._file_path = join(self.__folder, f"{self.__filename}.log")
-        self.name = name
-
-        if new_content:
-            self.reset()
-        elif self._file_path != None:
-            if exists(self._file_path):
-                self.date = datetime.fromtimestamp(getmtime(self._file_path)).date()
-            else:
-                self.date = datetime.now().date()
-                if not self.__file_date_group:
-                    with open(self._file_path, "a", encoding="utf-8") as file:
-                        file.write(datetime.now().strftime("%Y-%m-%d"))
-                        file.write("\n")
-        self.console_print = console_print
-
-    def reset(self) -> None:
-        self.date = datetime.now().date()
-        if self._file_path == None:
-            return
-        if exists(self._file_path):
-            remove(self._file_path)
-        if not self.__file_date_group:
-            with open(self._file_path, "a", encoding="utf-8") as file:
-                file.write(datetime.now().strftime("%Y-%m-%d"))
-                file.write("\n")
+        if self._folder is None:
+            self._folder = _caller_folder_path
+        if not isdir(self._folder):
+            raise NotADirectoryError(f"不存在指定目录 {self._folder}。")
+        if self._filename == "":
+            self._filename = splitext(split(sys_argv[0])[1])[0]
 
     def __file__write_list(self, level, text) -> None:
         """文件写入列表
@@ -92,25 +82,47 @@ class Logger:
         :param level: 级别。
         :param text: 写入文件内容列表。
         """
-        if self._file_path == None:
+        if self._filename is None:
             return
-        if self.__file_date_group and self.date != datetime.now().date():
-            self.__filename = f'{self.__filename}_{datetime.now().strftime("%Y-%m-%d")}'
-            self._file_path = join(self.__folder, f"{self.__filename}.log")
+        
+        if self._init_file:
+            self._init_file = False
+            self._current_date = datetime.now().date()
+            if self._mode == ContentMode.DateGroup:
+                self._file_path = join(self._folder, f"{self._filename}_{self._current_date.strftime('%Y-%m-%d')}.log")
+            else:
+                self._file_path = join(self._folder, f"{self._filename}.log")
+
+            if isfile(self._file_path):
+                if self._mode == ContentMode.Restart:
+                    remove(self._file_path)
+                else:
+                    self._current_date = datetime.fromtimestamp(getmtime(self._file_path)).date()
+
+            if self._mode != ContentMode.DateGroup and not isfile(self._file_path):
+                with open(self._file_path, "a", encoding="utf-8") as file:
+                    file.write(" ")
+                    file.write(self._current_date.strftime("%Y-%m-%d"))
+
+        if self._current_date != datetime.now().date():
+            self._current_date = datetime.now().date()
+            if self._mode == ContentMode.DateGroup:
+                self._filename = f'{self._filename}_{self._current_date.strftime("%Y-%m-%d")}'
+                self._file_path = join(self._folder, f"{self._filename}.log")
+            else:
+                with open(self._file_path, "a", encoding="utf-8") as file:
+                    file.write("\n ")
+                    file.write(datetime.now().strftime("%Y-%m-%d"))
 
         with open(self._file_path, "a", encoding="utf-8") as file:
-            if self.date != datetime.now().date():
-                self.date = datetime.now().date()
-                file.write(datetime.now().strftime("%Y-%m-%d"))
-                file.write("\n")
-            file.write(f"{level}  ")
+            file.write("\n")
+            file.write(f"{level} ")
             file.write(datetime.now().strftime("%H:%M:%S"))
             if not type(text) == tuple:
                 text = (text,)
             for i in range(len(text)):
                 file.write(" ")
                 file.write(str(text[i]))
-            file.write("\n")
 
     def debug(self, *text: str):
         """调试级日志
@@ -119,9 +131,9 @@ class Logger:
         if text == None or len(text) == 0:
             return
 
-        if self.console_print:
+        if self._console_print:
             print_set_color(self.console_debug_color)
-            print(self.name, datetime.now().strftime("%H:%M:%S"), end=" ")
+            print(self._name, datetime.now().strftime("%H:%M:%S"), end=" ")
             print(*text)
             print_reset_color()
 
@@ -133,9 +145,9 @@ class Logger:
             return
 
         self.__file__write_list("info", text)
-        if self.console_print:
+        if self._console_print:
             print_set_color(self.console_info_color)
-            print(self.name, datetime.now().strftime("%H:%M:%S"), end=" ")
+            print(self._name, datetime.now().strftime("%H:%M:%S"), end=" ")
             print(*text)
             print_reset_color()
 
@@ -147,9 +159,9 @@ class Logger:
             return
 
         self.__file__write_list("warn", text)
-        if self.console_print:
+        if self._console_print:
             print_set_color(self.console_warning_color)
-            print(self.name, datetime.now().strftime("%H:%M:%S"), end=" ")
+            print(self._name, datetime.now().strftime("%H:%M:%S"), end=" ")
             print(*text)
             print_reset_color()
 
@@ -163,9 +175,9 @@ class Logger:
             text = file.getvalue()
 
         self.__file__write_list("error", text)
-        if self.console_print:
+        if self._console_print:
             print_set_color(self.console_error_color)
-            print(self.name, datetime.now().strftime("%H:%M:%S"), end=" ")
+            print(self._name, datetime.now().strftime("%H:%M:%S"), end=" ")
             if type(text) == tuple:
                 print(*text)
             else:
@@ -182,16 +194,29 @@ class Logger:
             text = file.getvalue()
 
         self.__file__write_list("fatal", text)
-        if self.console_print:
+        if self._console_print:
             print_set_color(self.console_fatal_color)
-            print(self.name, datetime.now().strftime("%H:%M:%S"), end=" ")
+            print(self._name, datetime.now().strftime("%H:%M:%S"), end=" ")
             if type(text) == tuple:
                 print(*text)
             else:
                 print(text)
             print_reset_color()
 
+    @staticmethod
+    def get(name: str = None) -> "Logger":
+        if name is None:
+            name = ""
+        else:
+            name = name.strip()
+
+        if name in Logger.__context:
+            return Logger.__context[name]
+        result = Logger(name, None)
+        Logger.__context[name] = result
+        return result
+
 def json_format(data: any) -> str:
     return dumps(data, ensure_ascii=False)
 
-logger = Logger("", None)
+logger = Logger.get()

@@ -106,7 +106,7 @@ def change_header(response:Response):
         response.mimetype = 'application/javascript'
     return response
 
-class SocketLogger(executor.component.Logger):
+class SocketOutput(executor.component.Ouput):
     def __init__(self, socket: SocketIO) -> None:
         self.socket = socket
     
@@ -118,6 +118,6 @@ class SocketLogger(executor.component.Logger):
     
 
 if __name__ == '__main__':
-    logger = Logger("服务端")
-    studio.project.Project.Logger = SocketLogger(socket)
+    logger = Logger.get("服务端")
+    studio.project.Project.Output = SocketOutput(socket)
     socket.run(app)

@@ -35,18 +35,17 @@ class Print(ActionComponent):
         self.set_log_display(self.content.content)
         
     def execute(self) -> None:
-        self.procedure.logger.print(self.content.get())
+        self.procedure.output.print(self.content.get())
 
 class If(CompositionComponent):
     '''条件判断'''
-
-    else_action: EmptyParametersComponent = None
-    conditions: List[ConditionalParametersComponent] = []
 
     def __init__(self) -> None:
         super().__init__()
         self.set_name('如果')
         self.set_format('{condition}')
+        self.else_action: EmptyParametersComponent = None
+        self.conditions: List[ConditionalParametersComponent] = []
 
     def define_parameter(self) -> ParameterDefinition:
         return ParameterDefinition().append('condition', '条件', ExpressionValue)
@@ -265,8 +264,8 @@ class Builder:
             result.append(component)
         return result
     
-    def create(self, logger: Logger, data: dict) -> Procedure:
-        procedure = Procedure(logger)
+    def create(self, output: Output, data: dict) -> Procedure:
+        procedure = Procedure(output)
         local_variables = data['local']
         for local_variable in local_variables:
             value = FormatValue()

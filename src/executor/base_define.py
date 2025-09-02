@@ -5,8 +5,8 @@ from abc import ABC, abstractmethod
 
 from .error import *
 
-class Logger(ABC):
-    '''终端输出'''
+class Output(ABC):
+    '''输出'''
 
     @abstractmethod
     def write(self, index: int, content: str, name: str) -> None:
@@ -16,7 +16,7 @@ class Logger(ABC):
     def print(self, content:str) -> None:
         '''打印'''
 
-class PrintLogger(Logger):
+class ConsoleOutput(Output):
     '''打印输出'''
 
     def write(self, index: int, content: str, name: str) -> None:
@@ -92,7 +92,6 @@ class ParameterDefinition(object):
         for definition in self.value:
             result[definition.id] = ""
         return result
-    
 
 class SequenceComponent(Component):
     '''序列组件'''
@@ -135,7 +134,7 @@ class SequenceComponent(Component):
         return 'unit'
 
     def log_output(self) -> None:
-        self.procedure.logger.write(self.index, self.__display_content, self.get_name())
+        self.procedure.output.write(self.index, self.__display_content, self.get_name())
     
     def get_definition_content(self) -> dict:
         return {
@@ -195,8 +194,8 @@ class StackKeyValue(object):
 class Procedure(Component):
     '''流程'''
 
-    def __init__(self, logger: Logger) -> None:
-        self.logger = logger
+    def __init__(self, output: Output) -> None:
+        self.output = output
         self.line_number: int = 0
         self.local_values: Dict[str,any] = {}
         self.stack_values = []

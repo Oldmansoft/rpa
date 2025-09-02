@@ -14,7 +14,7 @@ export interface TreeNode {
     children?: TreeNode[]
 }
 
-const margin_left = 18
+const margin_left = 14
 
 const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDragStart, OnDragEnd, inExpanded }: {
     node: TreeNode,

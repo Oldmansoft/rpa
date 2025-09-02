@@ -5,7 +5,7 @@ import { communication } from '../components/Communication'
 import TreeViewer, { TreeNode } from '../components/TreeViewer'
 import { get_designer_component_datas, get_designer_file_tree_data } from "../components/DataSource"
 import { useEffect, useRef, useState } from "react"
-import LogViewer from "../components/LogViewer"
+import LogViewer, { LogViewerRef } from "../components/LogViewer"
 import { set_data_num_index } from "../containers/Editor/CodeEditor"
 import Editor, { EditorRef, Format, UpdateContentCategory } from "../containers/Editor"
 import { project } from "../containers/Project"
@@ -25,6 +25,8 @@ const Work = () => {
     const location = useLocation()
     const navigate = useNavigate()
     const editorRef = useRef<EditorRef>(null)
+    const terminalOutputRef = useRef<LogViewerRef>(null)
+    const executeOutputRef = useRef<LogViewerRef>(null)
     const rightTabRef = useRef<TabRef>(null)
     const [componentDatas, setComponetDatas] = useState<TreeNode[]>([])
     const [treeDatas, setTreeDatas] = useState<TreeNode[]>([])
@@ -34,6 +36,13 @@ const Work = () => {
 
     useEffect(() => {
         (async () => {
+            communication.host_message_register("TerminalOutput", (content: any) => {
+                terminalOutputRef.current?.add(content)
+            })
+            communication.host_message_register("ExecuteOutput", (content: any) => {
+                console.info(content)
+                executeOutputRef.current?.add(content)
+            })
             const [componentDatas, componentTreeNodes] = await get_designer_component_datas()
             await project.init(componentDatas, path)
             handleFileTreeClick(project.getMainFile())
@@ -48,9 +57,17 @@ const Work = () => {
             navigate("/work", { state: { path: app_file_path } })
         }
     }
+
     const handleSaveClick = () => {
         editorRef.current?.save(project.getAppPath())
     }
+
+    const handleRunClick = () => {
+        terminalOutputRef.current?.reset()
+        executeOutputRef.current?.reset()
+        editorRef.current?.run(project.getAppPath())
+    }
+
     const handleComponentTreeClick = (_: string) => {
 
     }
@@ -134,6 +151,7 @@ const Work = () => {
             <Top>
                 <Button text="打开" className="icon-[mingcute--open-door-line]" onClick={handleOpenClick} />
                 <Button text="保存" className="icon-[mono-icons--save]" onClick={handleSaveClick} />
+                <Button text="运行" className="icon-[material-symbols--play-circle-outline]" onClick={handleRunClick} />
                 <Button text="关于" className="icon-[ix--about]" onClick={handleAboutClick} />
                 {showAbout && <About onClose={handleAboutClose}></About>}
             </Top>
@@ -143,7 +161,8 @@ const Work = () => {
                     <Editor onPropertiesPaneOpen={handlePropertiesPaneOpen} ref={editorRef}></Editor>
                     <Bottom>
                         <Tab>
-                            <TabItem title="日志"><LogViewer></LogViewer></TabItem>
+                            <TabItem title="终端输出"><LogViewer ref={terminalOutputRef}></LogViewer></TabItem>
+                            <TabItem title="执行输出"><LogViewer ref={executeOutputRef}></LogViewer></TabItem>
                         </Tab>
                     </Bottom>
                 </Horizontal>

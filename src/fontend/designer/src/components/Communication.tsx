@@ -29,7 +29,7 @@ class FileSystem extends CommunicationProxy {
 class Executor extends CommunicationProxy {
     Designer: Designer = new Designer(this, "Designer")
 
-    async CallCommand<T>(name: string, method: string, content: any): Promise<T> {
+    async Call<T>(name: string, method: string, content: any): Promise<T> {
         const command = {
             name: name,
             method: method,
@@ -37,14 +37,23 @@ class Executor extends CommunicationProxy {
             ask: true
         }
         const command_text = JSON.stringify(command)
-        console.info(command_text)
         const return_value = await this.communication.webview2.Executor.CallCommand(command_text)
-        console.info(return_value)
         const result = JSON.parse(return_value)
         if (result["error"] != null) {
             throw new Error(result["error"])
         }
         return result["result"]
+    }
+
+    Send(name: string, method: string, content: any): void {
+        const command = {
+            name: name,
+            method: method,
+            content: content,
+            ask: false
+        }
+        const command_text = JSON.stringify(command)
+        this.communication.webview2.Executor.CallCommand(command_text)
     }
 }
 
@@ -59,31 +68,35 @@ class ExecutorProxy {
 
 class Designer extends ExecutorProxy {
     GetAllComponents(): Promise<any> {
-        return this.executor.CallCommand(this.name, this.GetAllComponents.name, null)
+        return this.executor.Call(this.name, this.GetAllComponents.name, null)
     }
 
     GetComponentData(id: string): Promise<any> {
-        return this.executor.CallCommand(this.name, this.GetComponentData.name, { id: id })
+        return this.executor.Call(this.name, this.GetComponentData.name, { id: id })
     }
 
     GetFileTree(path: string): Promise<any> {
-        return this.executor.CallCommand(this.name, this.GetFileTree.name, { path: path })
+        return this.executor.Call(this.name, this.GetFileTree.name, { path: path })
     }
 
     GetProjectAppContent(app_path: string): Promise<any> {
-        return this.executor.CallCommand(this.name, this.GetProjectAppContent.name, { app_path: app_path })
+        return this.executor.Call(this.name, this.GetProjectAppContent.name, { app_path: app_path })
     }
 
     GetProjectJsonContent(path: string, file_path: string): Promise<any> {
-        return this.executor.CallCommand(this.name, this.GetProjectJsonContent.name, { path: path, file_path: file_path })
+        return this.executor.Call(this.name, this.GetProjectJsonContent.name, { path: path, file_path: file_path })
     }
 
     GetProjectTextContent(path: string, file_path: string): Promise<string[]> {
-        return this.executor.CallCommand(this.name, this.GetProjectTextContent.name, { path: path, file_path: file_path })
+        return this.executor.Call(this.name, this.GetProjectTextContent.name, { path: path, file_path: file_path })
     }
 
     SetProjectTextContent(path: string, file_path: string, content: string): Promise<void> {
-        return this.executor.CallCommand(this.name, this.SetProjectTextContent.name, { path: path, file_path: file_path, content: content})
+        return this.executor.Call(this.name, this.SetProjectTextContent.name, { path: path, file_path: file_path, content: content})
+    }
+
+    RunProjectAppTarget(path: string, file_path: string): void {
+        this.executor.Send(this.name, this.RunProjectAppTarget.name, { path: path, file_path: file_path })
     }
 }
 
@@ -93,38 +106,37 @@ class Communication {
     webview2: any
     FileSystem: FileSystem
     Executor: Executor
+    AsyncResultDealers: any
+    HostMessageDealer: any
 
     constructor() {
         this.webview2 = window.chrome.webview.hostObjects.webview2
-        window.communication = {}
-        window.communication.async_result = {}
-        window.communication.callback = {}
-        window.communication.host_call_result = function (key: string) {
-            window.communication.async_result[key].apply(window, Array.from(arguments).slice(1))
-        }
-        window.communication.host_callback = function (key: string, result: any) {
-            window.communication.callback[key](result)
-        }
-        window.communication_debug = this
-
         this.FileSystem = new FileSystem(this, "FileSystem")
         this.Executor = new Executor(this, "Executor")
-    }
 
-    private nothing(_: any) {
+        const asyncResultDealers: any = {}
+        this.AsyncResultDealers = asyncResultDealers
+        const hostMessageDealer: any = {}
+        this.HostMessageDealer = hostMessageDealer
+
+        window.communication = {}
+        window.communication.host_call_result = function (key: string) {
+            asyncResultDealers[key].apply(window, Array.from(arguments).slice(1))
+        }
+        window.communication.host_send_message = function(key: string, content: string) {
+            hostMessageDealer[key].apply(window, [content])
+        }
+        window.communication_debug = this
     }
 
     async_result<T>(name: string, method: string): Promise<T> {
         return new Promise((resolve) => {
-            window.communication.async_result[`${name}.${method}`] = resolve
+            this.AsyncResultDealers[`${name}.${method}`] = resolve
         })
     }
 
-    callback_regisiter(key: string, callback: Callback) {
-        window.communication.callback[key] = callback
-    }
-    callback_unregister(key: string) {
-        window.communication.callback[key] = this.nothing
+    host_message_register(key: string, callback: Callback) {
+        this.HostMessageDealer[key] = callback
     }
 }
 

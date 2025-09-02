@@ -4,22 +4,23 @@ from json import dump, load
 from datetime import datetime
 
 import executor.component
+from executor.log2 import logger
 
 class Project:
     Current = None
-    Logger: executor.component.Logger = executor.component.PrintLogger()
+    Output: executor.component.Output = executor.component.ConsoleOutput()
 
     def __init__(self, path:str, data:any) -> None:
-        print('打开项目', path)
+        logger.info('打开项目', path)
         self.project_path = path
         self.data = data
 
     def run(self, file_path) -> None:
         path = join(self.project_path, file_path)
-        print('运行流程', path)
+        logger.info('运行流程', path)
         with open(path, mode='r', encoding='utf-8') as file:
             component_data = load(file)
-        procedure = executor.component.builder.create(Project.Logger, component_data)
+        procedure = executor.component.builder.create(Project.Output, component_data)
         procedure.execute()
 
     @staticmethod
