@@ -36,12 +36,13 @@ const Work = () => {
 
     useEffect(() => {
         (async () => {
-            communication.host_message_register("TerminalOutput", (content: any) => {
-                terminalOutputRef.current?.add(content)
-            })
-            communication.host_message_register("ExecuteOutput", (content: any) => {
+            communication.host_message_register("TerminalOutput", (content: string) => {
                 console.info(content)
-                executeOutputRef.current?.add(content)
+                terminalOutputRef.current?.reload()
+            })
+            communication.host_message_register("ExecuteOutput", (content: string) => {
+                console.info(content)
+                executeOutputRef.current?.reload()
             })
             const [componentDatas, componentTreeNodes] = await get_designer_component_datas()
             await project.init(componentDatas, path)
@@ -63,8 +64,6 @@ const Work = () => {
     }
 
     const handleRunClick = () => {
-        terminalOutputRef.current?.reset()
-        executeOutputRef.current?.reset()
         editorRef.current?.run(project.getAppPath())
     }
 
@@ -161,8 +160,8 @@ const Work = () => {
                     <Editor onPropertiesPaneOpen={handlePropertiesPaneOpen} ref={editorRef}></Editor>
                     <Bottom>
                         <Tab>
-                            <TabItem title="终端输出"><LogViewer ref={terminalOutputRef}></LogViewer></TabItem>
-                            <TabItem title="执行输出"><LogViewer ref={executeOutputRef}></LogViewer></TabItem>
+                            <TabItem title="终端输出"><LogViewer category="terminal" ref={terminalOutputRef}></LogViewer></TabItem>
+                            <TabItem title="执行输出"><LogViewer category="execute" ref={executeOutputRef}></LogViewer></TabItem>
                         </Tab>
                     </Bottom>
                 </Horizontal>

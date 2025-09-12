@@ -1,21 +1,23 @@
-import { forwardRef, useImperativeHandle, useState } from "react"
+import { forwardRef, useImperativeHandle, useState, useEffect } from "react"
+import { communication } from "./Communication"
 
 export interface LogViewerRef {
-    add(content: string): void,
-    reset(): void
+    reload(): void
 }
 
-const LogViewer = forwardRef(({ }, ref: React.Ref<LogViewerRef>) => {
+const LogViewer = forwardRef(({ category } : { category: string }, ref: React.Ref<LogViewerRef>) => {
     const [contents, setContents] = useState<string[]>([])
     useImperativeHandle(ref, () => {
         return {
-            add(content: string) {
-                setContents([...contents, content])
-            },
-            reset() {
-                setContents([])
+            async reload () {
+                setContents(await communication.Executor.Designer.ReadOutput(category))
             }
         }
+    })
+    useEffect(() => {
+        (async () => {
+            setContents(await communication.Executor.Designer.ReadOutput(category))
+        })()
     })
     return (
         <>

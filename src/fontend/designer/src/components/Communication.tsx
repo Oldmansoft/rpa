@@ -98,6 +98,10 @@ class Designer extends ExecutorProxy {
     RunProjectAppTarget(path: string, file_path: string): void {
         this.executor.Send(this.name, this.RunProjectAppTarget.name, { path: path, file_path: file_path })
     }
+
+    ReadOutput(category: string): Promise<string[]> {
+        return this.executor.Call(this.name, this.ReadOutput.name, { category: category })
+    }
 }
 
 export type Callback = (result: any) => void

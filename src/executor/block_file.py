@@ -2,7 +2,7 @@ from typing import List
 from abc import ABC, abstractmethod
 from enum import Enum
 from os.path import isdir, join, isfile, getsize
-from os import SEEK_END
+from os import remove, SEEK_END
 
 class BlockMode(Enum):
     Read = 0
@@ -17,16 +17,23 @@ class BlockFile:
         self.index_file_path = join(folder_path, f"{file_name}.{self.number_length}ix")
         self.content_file_path = join(folder_path, file_name)
         self.mode = mode
-        if self.mode == BlockMode.Read:
-            self.file = Reader(self)
-        else:
-            self.file = Writer(self)
+        self.block = None
+
+    def clear(self) -> None:
+        if isfile(self.index_file_path):
+            remove(self.index_file_path)
+        if isfile(self.content_file_path):
+            remove(self.content_file_path)
 
     def __enter__(self):
-        return self.file
+        if self.mode == BlockMode.Read:
+            self.block = Reader(self)
+        else:
+            self.block = Writer(self)
+        return self.block
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.file.close()
+        self.block.close()
 
 class Block(ABC):
     def __init__(self, caller: BlockFile):

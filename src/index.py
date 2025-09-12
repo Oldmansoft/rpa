@@ -2,26 +2,39 @@ from sys import argv
 from executor.process_communication import ProcessServer, ServerCommandHandle, ProcessServerLauncherProxy
 from executor.component import ActionComponent, ContainerComponent, CompositionComponent, Output, builder
 from executor.log2 import logger
-from os.path import isdir, join, split
+from executor.block_file import BlockFile, BlockMode, Writer
+from os.path import isdir, join, split, expanduser
 from os import listdir
 from json import load
+from datetime import datetime
 import studio.project
 logger.set("temp")
 
-class FontendOutput(Output):
-    def __init__(self, launcher: ProcessServerLauncherProxy):
+class OutputFileAndNotice:
+    def __init__(self, writer: Writer, notice: str, launcher: ProcessServerLauncherProxy):
+        self.writer = writer
+        self.notice = notice
         self.launcher = launcher
+    def write(self, text: str) -> None:
+        self.writer.append(text.encode())
+        self.launcher.send("ExecutorCommandHandle", "SendMessage", {"key": self.notice, "content": str(self.writer.count())})
+
+
+class FontendOutput(Output):
+    def __init__(self, terminal_output: OutputFileAndNotice, execute_output: OutputFileAndNotice):
+        self.terminal_output = terminal_output
+        self.execute_output = execute_output
 
     def write(self, index: int, content: str, name: str) -> None:
         if content is None:
             logger.info(index, name)
-            self.launcher.send("ExecutorCommandHandle", "SendMessage", {"key": "ExecuteOutput", "content": f"{index} {name}"})
+            self.execute_output.write(f"{datetime.now().strftime('%H:%M:%S')} {index} {name}")
         else:
             logger.info(index, name, content)
-            self.launcher.send("ExecutorCommandHandle", "SendMessage", {"key": "ExecuteOutput", "content": f"{index} {name} {content}"})
+            self.execute_output.write(f"{datetime.now().strftime('%H:%M:%S')} {index} {name} {content}")
     
     def print(self, content: str) -> None:
-        self.launcher.send("ExecutorCommandHandle", "SendMessage", {"key": "TerminalOutput", "content": content})
+        self.terminal_output.write(f"{datetime.now().strftime('%H:%M:%S')} {content}")
 
 
 class Designer(ServerCommandHandle):
@@ -93,13 +106,28 @@ class Designer(ServerCommandHandle):
             file.write(content)
     
     def RunProjectAppTarget(self, path: str, file_path: str) -> str:
-        path = join(path, file_path)
-        self.launcher.send("ExecutorCommandHandle", "SendMessage", {"key": "TerminalOutput", "content": f"开始执行流程 {file_path}"})
-        with open(path, mode='r', encoding='utf-8') as file:
-            component_data = load(file)
-        procedure = builder.create(FontendOutput(self.launcher), component_data)
-        procedure.execute()
-        self.launcher.send("ExecutorCommandHandle", "SendMessage", {"key": "TerminalOutput", "content": "完成结束流程"})
+        output_execute_file = BlockFile(expanduser("~"), "execute.run", BlockMode.Write)
+        output_execute_file.clear()
+        output_terminal_file = BlockFile(expanduser("~"), "terminal.run", BlockMode.Write)
+        output_terminal_file.clear()
+
+        with output_terminal_file as output_terminal_writer:
+            terminal_output = OutputFileAndNotice(output_terminal_writer, "TerminalOutput", self.launcher)
+            terminal_output.write(f"{datetime.now().strftime('%H:%M:%S')} 开始执行流程 {file_path}")
+            with open(join(path, file_path), mode='r', encoding='utf-8') as file:
+                component_data = load(file)
+            with output_execute_file as output_execute_writer:
+                execute_output = OutputFileAndNotice(output_execute_writer, "ExecuteOutput", self.launcher)
+                procedure = builder.create(FontendOutput(terminal_output, execute_output), component_data)
+                procedure.execute()
+            terminal_output.write(f"{datetime.now().strftime('%H:%M:%S')} 完成结束流程")
+    
+    def ReadOutput(self, category: str) -> list:
+        with BlockFile(expanduser("~"), f"{category}.run", BlockMode.Read) as reader:
+            result = []
+            for item in reader.list():
+                result.append(item.decode())
+            return result
 
     def Create(self, path: str, name: str) -> dict:
         if not isdir(path):
