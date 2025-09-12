@@ -106,7 +106,7 @@ def change_header(response:Response):
         response.mimetype = 'application/javascript'
     return response
 
-class SocketOutput(executor.component.Ouput):
+class SocketOutput(executor.component.Output):
     def __init__(self, socket: SocketIO) -> None:
         self.socket = socket
     
