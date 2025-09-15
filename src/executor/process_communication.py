@@ -19,7 +19,7 @@ from traceback import print_exc
 
 from .log2 import logger
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 class PipeCreator(object):
     def __init__(self) -> None:
@@ -459,7 +459,7 @@ class ProcessLauncher(object):
             raise FileNotFoundError(code_file_path)
         return ProcessLauncherServerProxy(self, code_file_path)
 
-    def __try_command_handle(self, command: ProcessCommand) -> Tuple[str, any]:
+    def _try_command_handle(self, command: ProcessCommand) -> Tuple[str, any]:
         if not command.name in self._command_handle_objects:
             return f"ProcessLauncher 没有对象处理命令 {command.name}.{command.method}。", None
 
@@ -563,7 +563,7 @@ class ProcessLauncherServerProxy(object):
             command = ProcessCommand.parse(read_value)
             return_content = {"error": None, "result": None}
             try:
-                return_content["error"], return_content["result"] = self._launcher.__try_command_handle(command)
+                return_content["error"], return_content["result"] = self._launcher._try_command_handle(command)
             except:
                 file = StringIO()
                 print_exc(file=file)
