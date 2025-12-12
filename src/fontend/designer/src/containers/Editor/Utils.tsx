@@ -185,24 +185,29 @@ class CodeNodeMove {
     source: CodeNodePosition | null
     target: CodeNodePosition
 
-    constructor(parentNum: number, index: number) {
+    constructor() {
         this.source = null
         this.target = {
-            parentNum: parentNum,
-            index: index
+            parentNum: 0,
+            index: 0
         }
+        
     }
 
-    setSource(parentNum: number, index: number): CodeNodeMove {
+    setTarget(parentNum: number, index: number) {
+        this.target.parentNum = parentNum
+        this.target.index = index
+    }
+
+    setSource(parentNum: number, index: number) {
         this.source = {
             parentNum: parentNum,
             index: index
         }
-        return this
     }
 }
 
-enum DragMode {
+export enum DragMode {
     empty,
     normal,
     boundary
@@ -213,7 +218,7 @@ class CodeDrager {
     private coder: HTMLElement | null
     private boundary: HTMLElement | null
     private source_node: HTMLElement | null
-    private source_id: string | null
+    private tree_id: string | null
     private dropLine: HTMLElement | null
 
     constructor() {
@@ -221,7 +226,7 @@ class CodeDrager {
         this.coder = null
         this.boundary = null
         this.source_node = null
-        this.source_id = null
+        this.tree_id = null
         this.dropLine = null
     }
 
@@ -251,7 +256,7 @@ class CodeDrager {
 
     start_choose(id: string) {
         this.mode = DragMode.normal
-        this.source_id = id
+        this.tree_id = id
     }
 
     start_boundary(node: HTMLElement) {
@@ -260,8 +265,12 @@ class CodeDrager {
         this.source_node = node
     }
 
+    get_mode() {
+        return this.mode
+    }
+
     can_working(event: DragEvent, current_target: HTMLElement, drop_line: HTMLElement) {
-        if (this.source_id) return true
+        if (this.tree_id) return true
         if (this.source_node == null) return false
         if (drag_in_boundary(event, this.mode, this.boundary!, current_target, drop_line)) return false
         if (drag_to_self(event, this.source_node, current_target, drop_line)) return false
@@ -271,18 +280,27 @@ class CodeDrager {
     clear() {
         this.boundary = null
         this.source_node = null
-        this.source_id = null
+        this.tree_id = null
     }
 
     finish() {
         if (this.dropLine == null || this.dropLine.parentElement?.tagName == TagName.code) {
+            console.warn(this.dropLine, this.dropLine?.parentElement?.tagName)
             this.clear()
             return null
         }
-        const result = new CodeNodeMove(this.getDataLineNum(this.dropLine.parentNode), this.getDataPositionIndex(this.dropLine.previousElementSibling))
+        /*
+        if (this.dropLine.parentElement?.tagName == TagName.code) {
+            this.coder!.after(this.dropLine)
+            this.clear()
+            return null
+        }
+        */
+        const result = new CodeNodeMove()
         if (this.source_node != null) {
             result.setSource(this.getDataLineNum(this.source_node.parentNode), this.getDataPositionIndex(this.source_node))
         }
+        result.setTarget(this.getDataLineNum(this.dropLine.parentNode), this.getDataPositionIndex(this.dropLine.previousElementSibling))
         this.coder!.after(this.dropLine)
         this.clear()
         return result

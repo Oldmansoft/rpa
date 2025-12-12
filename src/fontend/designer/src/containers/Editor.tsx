@@ -1,7 +1,7 @@
-import { forwardRef, useImperativeHandle, useState } from "react"
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react"
 import './Editor.css'
-import CodeEditor, { set_data_num_index, find_parent_from_datas, find_node_from_data } from "./Editor/CodeEditor"
-import { CodeNodePosition, CodeChooseCategory } from "./Editor/Utils"
+import CodeEditor, { set_data_num_index, find_body_from_datas, find_node_from_data, find_optional_from_datas } from "./Editor/CodeEditor"
+import { CodeNodePosition, CodeChooseCategory, DragMode, codeDrager } from "./Editor/Utils"
 import TextEditor from "./Editor/TextEditor"
 import { IconButton } from "../components/Button"
 import { Top } from '../components/Layout'
@@ -41,6 +41,37 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
     const [activeTabIndex, setActiveTabIndex] = useState(-1)
     const [tabs, setTabs] = useState<TabContent[]>([])
 
+    useEffect(() => {
+        communication.host_message_register("menu_add", (value: string) => {
+            const json = JSON.parse(value)
+
+            const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
+            const data = find_node_from_data(content, json["composition"]);
+            (async () => {
+                const optional = await communication.Executor.Designer.GetComponentOptional(data["id"], json["id"])
+                if (json["category"] == "Last") {
+                    data["last"] = optional
+                } else {
+                    if (json["composition"] == json["num"]) {
+                        data["optional"].unshift(optional)
+                    } else {
+                        for (var i=0; i<data["optional"].length; i++) {
+                            if (data["optional"][i]["num"] == json["num"]) {
+                                data["optional"].splice(i + 1, 0, optional)
+                            }
+                        }
+                    }
+                }
+                set_data_num_index(content["body"], new Counter())
+
+                const editTabs = [...tabs]
+                editTabs[activeTabIndex].content = content
+                editTabs[activeTabIndex].modified = true
+                setTabs(editTabs)
+            })()
+        })
+    })
+
     useImperativeHandle(ref, () => {
         return {
             open(file: string, format: Format, content: any) {
@@ -78,7 +109,7 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                 if (tabs[activeTabIndex].format == Format.Code) {
                     let target_datas = content["body"]
                     if (target.parentNum > 0) {
-                        target_datas = find_parent_from_datas(content["body"], target.parentNum)
+                        target_datas = find_body_from_datas(content["body"], target.parentNum)
                     }
                     target_datas.splice(target.index + 1, 0, data)
 
@@ -153,8 +184,13 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
         }
         const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
         let source_datas = content["body"]
+        
         if (source.parentNum > 0) {
-            source_datas = find_parent_from_datas(content["body"], source.parentNum)
+            if (codeDrager.get_mode() == DragMode.boundary) {
+                source_datas = find_optional_from_datas(content["body"], source.parentNum)
+            } else {
+                source_datas = find_body_from_datas(content["body"], source.parentNum)
+            }
         }
         const data = source_datas[source.index]
 
@@ -165,7 +201,11 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
 
         let target_datas = content["body"]
         if (target.parentNum > 0) {
-            target_datas = find_parent_from_datas(content["body"], target.parentNum)
+            if (codeDrager.get_mode() == DragMode.boundary) {
+                target_datas = find_optional_from_datas(content["body"], target.parentNum)
+            }else {
+                target_datas = find_body_from_datas(content["body"], target.parentNum)
+            }
         }
         target_datas.splice(target.index + 1, 0, data)
 

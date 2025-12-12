@@ -14,6 +14,12 @@ class CommunicationProxy {
     }
 }
 
+class Browser extends CommunicationProxy {
+    SetContextMenu(json: string): void {
+        this.communication.webview2.Browser.SetContextMenu(json)
+    }
+}
+
 class FileSystem extends CommunicationProxy {
     FolderBrowserDialog(description: string): Promise<string> {
         this.communication.webview2.FileSystem.FolderBrowserDialog(description)
@@ -39,6 +45,10 @@ class Executor extends CommunicationProxy {
         const command_text = JSON.stringify(command)
         const return_value = await this.communication.webview2.Executor.CallCommand(command_text)
         const result = JSON.parse(return_value)
+        if (return_value == null) {
+            console.error(command_text)
+            return result
+        }
         if (result["error"] != null) {
             throw new Error(result["error"])
         }
@@ -75,6 +85,10 @@ class Designer extends ExecutorProxy {
         return this.executor.Call(this.name, this.GetComponentData.name, { id: id })
     }
 
+    GetComponentOptional(id: string, optional_id: string): Promise<any> {
+        return this.executor.Call(this.name, this.GetComponentOptional.name, { id: id, optional_id: optional_id })
+    }
+
     GetFileTree(path: string): Promise<any> {
         return this.executor.Call(this.name, this.GetFileTree.name, { path: path })
     }
@@ -108,6 +122,7 @@ export type Callback = (result: any) => void
 
 class Communication {
     webview2: any
+    Browser: Browser
     FileSystem: FileSystem
     Executor: Executor
     AsyncResultDealers: any
@@ -115,6 +130,7 @@ class Communication {
 
     constructor() {
         this.webview2 = window.chrome.webview.hostObjects.webview2
+        this.Browser = new Browser(this, "Browser")
         this.FileSystem = new FileSystem(this, "FileSystem")
         this.Executor = new Executor(this, "Executor")
 
@@ -140,7 +156,14 @@ class Communication {
     }
 
     host_message_register(key: string, callback: Callback) {
+        if (key in this.HostMessageDealer) {
+            delete this.HostMessageDealer[key]
+        }
         this.HostMessageDealer[key] = callback
+    }
+
+    host_callback(key: string, value: string) {
+        console.warn("host callback", key, value)
     }
 }
 

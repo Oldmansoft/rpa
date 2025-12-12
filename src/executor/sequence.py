@@ -4,6 +4,8 @@ from typing import Type
 from enum import Enum
 
 from .value import *
+from .log2 import logger
+logger.set("temp")
 
 class ActionBodyComponent(SequenceComponent, ABC):
     '''带容器动作组件'''
@@ -71,6 +73,13 @@ class Optional(object):
         self.name = name
         self.optional_component_type = optional_component_type
         self.parameter_definition = optional_component_type().define_parameter()
+    
+    def get_data_content(self) -> dict:
+        return {
+            "id": self.id,
+            "params": self.parameter_definition.get_data_content(),
+            "body": []
+        }
 
 class OptionalDefinition(object):
     '''可选项定义'''
@@ -97,6 +106,12 @@ class OptionalDefinition(object):
             item['category'] = definition.category.name
             result.append(item)
         return result
+    
+    def get_item(self, id: str) -> Optional:
+        items = self.to_dict()
+        if id in items:
+            return items[id]
+        return None
 
 class CompositionComponent(ActionBodyComponent, ABC):
     '''多语句组'''
@@ -114,7 +129,11 @@ class CompositionComponent(ActionBodyComponent, ABC):
         pass
 
     @abstractmethod
-    def set_optional(self, id:str, action:SequenceComponent) -> None:
+    def set_optional(self, action:SequenceComponent) -> None:
+        pass
+
+    @abstractmethod
+    def set_last(self, action:SequenceComponent) -> None:
         pass
 
     def get_data_content(self):

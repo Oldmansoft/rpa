@@ -61,7 +61,12 @@ class Designer(ServerCommandHandle):
         for class_type in classes:
             if class_type.__name__ == id:
                 return class_type().get_data_content()
-        return None
+
+    def GetComponentOptional(self, id: str, optional_id: str) -> dict:
+        classes = CompositionComponent.__subclasses__()
+        for class_type in classes:
+            if class_type.__name__ == id:
+                return class_type().define_optional().get_item(optional_id).get_data_content()
 
     def GetFileTree(self, path: str) -> list:
         if path is None or path == "":

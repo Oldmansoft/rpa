@@ -37,11 +37,9 @@ const Work = () => {
     useEffect(() => {
         (async () => {
             communication.host_message_register("TerminalOutput", (content: string) => {
-                console.info(content)
                 terminalOutputRef.current?.reload()
             })
             communication.host_message_register("ExecuteOutput", (content: string) => {
-                console.info(content)
                 executeOutputRef.current?.reload()
             })
             const [componentDatas, componentTreeNodes] = await get_designer_component_datas()

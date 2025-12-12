@@ -56,15 +56,15 @@ class If(CompositionComponent):
     
     def define_optional(self) -> OptionalDefinition:
         result = OptionalDefinition()
-        result.append(OptionalCategory.Boundary, 'ElseIf', '如果', ConditionalParametersComponent)
+        result.append(OptionalCategory.Boundary, 'ElseIf', '则如', ConditionalParametersComponent)
         result.append(OptionalCategory.Last, 'Else', '否则', EmptyParametersComponent)
         return result
     
-    def set_optional(self, id: str, action: SequenceComponent):
-        if id == 'Else':
-            self.else_action = action
-        elif id == 'ElseIf':
-            self.conditions.append(action)
+    def set_optional(self, action: SequenceComponent):
+        self.conditions.append(action)
+
+    def set_last(self, action):
+        self.else_action = action
 
     def execute(self) -> None:
         if self.condition.get():
@@ -250,10 +250,17 @@ class Builder:
             definitions = mgruop.define_optional().to_dict()
             if 'optional' in node:
                 for optional in node['optional']:
-                    optional_component = definitions[optional['id']].optional_component_type()
-                    optional_component.set_name(definitions[optional['id']].name)
+                    definition = definitions[optional['id']]
+                    optional_component = definition.optional_component_type()
+                    optional_component.set_name(definition.name)
                     self.set_sequence_component(optional_component, optional, procedure)
-                    mgruop.set_optional(optional['id'], optional_component)
+                    mgruop.set_optional(optional_component)
+            if 'last' in node:
+                definition = definitions[node['last']['id']]
+                else_component = definition.optional_component_type()
+                else_component.set_name(definition.name)
+                self.set_sequence_component(else_component, node['last'], procedure)
+                mgruop.set_last(else_component)
             procedure.get_line_number()
     
     def create_body(self, procedure: Procedure, nodes: List[dict]):

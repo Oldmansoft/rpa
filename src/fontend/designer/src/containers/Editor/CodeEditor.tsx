@@ -4,6 +4,7 @@ import { KeyGenerator, Counter } from "../../components/Utils"
 import { CodeChooseCategory } from "./Utils"
 import { TagName, CodeNodePosition, get_element_parents_from_tag, make_numbers, codeDrager, mouse_in_node_top, find_previous_tag } from "./Utils"
 import { IconButton } from "../../components/Button"
+import { communication } from "../../components/Communication"
 
 declare const window: {
     dragKey: string
@@ -116,9 +117,11 @@ const CodeEditorItem = ({ data, onNodeChoose }: { data: any, onNodeChoose: (num:
     )
 }
 
-const Action = ({ data, component, num, index, className, draggable, onNodeChoose }: {
-    data: any, component: any, num?: number, index?: number, className?: string, draggable?: boolean,
-    onNodeChoose?: (num: number) => void
+const Action = ({ data, component, num, index, compositionNum, className, draggable, onNodeChoose, onMouseEnter, onMouseLeave }: {
+    data: any, component: any, num?: number, index?: number, compositionNum?: number, className?: string, draggable?: boolean,
+    onNodeChoose?: (num: number) => void,
+    onMouseEnter?: (num: number, composition: number) => void,
+    onMouseLeave?: () => void,
 }) => {
     const variables = data["params"]
     const params: any = {}
@@ -159,6 +162,10 @@ const Action = ({ data, component, num, index, className, draggable, onNodeChoos
         }
     }
 
+    let display = component.name
+    if (data.display) {
+        display = data.display
+    }
     const handleClick = (event: React.MouseEvent) => {
         if (num != null && onNodeChoose) {
             const node = (event.currentTarget as HTMLElement)
@@ -166,12 +173,25 @@ const Action = ({ data, component, num, index, className, draggable, onNodeChoos
             onNodeChoose(num)
         }
     }
-    let display = component.name
-    if (data.display) {
-        display = data.display
+    const handleMouseEnter = (event: React.MouseEvent<HTMLElement>) => {
+        if (onMouseEnter) {
+            var node = get_element_parents_from_tag(event.target as HTMLElement, TagName.article)
+            const line_num = Number(node?.getAttribute("data-num"))
+            let composition_num = line_num
+            if (node?.hasAttribute("data-composition-num")) {
+                composition_num = Number(node?.getAttribute("data-composition-num"))
+            }
+            onMouseEnter(line_num, composition_num)
+        }
     }
+    const handleMouseLeave = () => {
+        if (onMouseLeave) {
+            onMouseLeave()
+        }
+    }
+
     return (
-        <article className={className} data-num={num} data-index={index} draggable={draggable} onClick={handleClick}>
+        <article className={className} data-num={num} data-index={index} data-composition-num={compositionNum} draggable={draggable} onClick={handleClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             <ul>
                 <li>
                     <aside></aside>
@@ -186,13 +206,15 @@ const Action = ({ data, component, num, index, className, draggable, onNodeChoos
     )
 }
 
-const Section = ({ className, draggable, data, component, onNodeChoose }: {
-    className?: string, draggable?: boolean, data: any, component: any,
-    onNodeChoose: (num: number) => void
+const Section = ({ className, index, draggable, data, compositionNum, component, onNodeChoose, onMouseEnter, onMouseLeave }: {
+    className?: string, index?: number, draggable?: boolean, data: any, compositionNum?: number, component: any,
+    onNodeChoose: (num: number) => void,
+    onMouseEnter?: (num: number, composition: number) => void,
+    onMouseLeave?: () => void
 }) => {
     return (
-        <section className={className} draggable={draggable}>
-            <Action data={data} component={component} className="label" index={data["index"]} num={data["num"]} onNodeChoose={onNodeChoose}></Action>
+        <section data-index={index} className={className} draggable={draggable}>
+            <Action data={data} compositionNum={compositionNum} component={component} className="label" index={data["index"]} num={data["num"]} onNodeChoose={onNodeChoose} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}></Action>
             <samp data-num={data["num"]}>
                 {data["body"].map(
                     (item: any, index: number) => (
@@ -231,20 +253,43 @@ const Composition = ({ data, component, onNodeChoose }: {
 }) => {
     const boundaries: React.JSX.Element[] = []
     let last: React.JSX.Element | null = null
-    const key = new KeyGenerator()
-    for (const optional of data["optional"]) {
-        const optional_component = (component["optional"] as any[]).find(item => item["id"] == optional["id"])
 
-        if (optional_component["category"] == "Boundary") {
-            boundaries.push(<Section key={key.next()} data={optional} component={optional_component} draggable={true} onNodeChoose={onNodeChoose}></Section>)
-        } else {
-            last = <Section data={optional} component={optional_component} onNodeChoose={onNodeChoose}></Section>
+    const handleMouseEnter = (num: number, composition: number) => {
+        var items = []
+        for (const component_optional of component["optional"]) {
+            if (last && component_optional["category"] == "Last") {
+                
+            } else {
+                const value = {
+                    id: component_optional["id"],
+                    category: component_optional["category"],
+                    composition: composition,
+                    num: num,
+                }
+                items.push({name: `添加 ${component_optional["name"]}`, key: "menu_add", value: JSON.stringify(value)})
+            }
         }
+        communication.Browser.SetContextMenu(JSON.stringify(items))
     }
+    const handleMouseLeave = () => {
+        communication.Browser.SetContextMenu("")
+    }
+
+    const key = new KeyGenerator()
+    let boundary_index = 0
+    for (const optional of data["optional"]) {
+        const component_optional = (component["optional"] as any[]).find(item => item["id"] == optional["id"])
+        boundaries.push(<Section key={key.next()} index={boundary_index++} data={optional} compositionNum={data["num"]} component={component_optional} draggable={true} onNodeChoose={onNodeChoose}  onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}></Section>)
+    }
+    if ("last" in data) {
+        const component_optional = (component["optional"] as any[]).find(item => item["id"] == data["last"]["id"])
+        last = <Section data={data["last"]} component={component_optional} onNodeChoose={onNodeChoose}></Section>
+    }
+
     return (
         <hgroup className="container" data-num={data["last-num"]} data-index={data["index"]} draggable={true}>
-            <Section className="header" data={data} component={component} onNodeChoose={onNodeChoose}></Section>
-            {boundaries && <nav>{boundaries}</nav>}
+            <Section className="header" data={data} component={component} onNodeChoose={onNodeChoose} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}></Section>
+            {boundaries && <nav data-num={data["num"]}>{boundaries}</nav>}
             {last}
             <Footer></Footer>
         </hgroup>
@@ -273,17 +318,26 @@ export const find_node_from_data = (data: any, findNum: Number): any | null => {
                 }
             }
         }
+        if ("last" in children) {
+            if (children["last"]["num"] == findNum) {
+                return children["last"]
+            }
+            const result = find_node_from_data(children["last"], findNum)
+            if (result != null) {
+                return result
+            }
+        }
     }
     return null
 }
 
-export const find_parent_from_datas = (datas: any[], findNum: Number): any[] | null => {
+export const find_body_from_datas = (datas: any[], findNum: Number): any[] | null => {
     for (const data of datas) {
         if ("body" in data) {
             if (data["num"] == findNum) {
                 return data["body"]
             }
-            const result = find_parent_from_datas(data["body"], findNum)
+            const result = find_body_from_datas(data["body"], findNum)
             if (result != null) {
                 return result
             }
@@ -293,10 +347,54 @@ export const find_parent_from_datas = (datas: any[], findNum: Number): any[] | n
                 if (optional["num"] == findNum) {
                     return optional["body"]
                 }
-                const result = find_parent_from_datas(optional["body"], findNum)
+                const result = find_body_from_datas(optional["body"], findNum)
                 if (result != null) {
                     return result
                 }
+            }
+        }
+        if ("last" in data) {
+            if (data["last"]["num"] == findNum) {
+                return data["last"]["body"]
+            }
+            const result = find_body_from_datas(data["last"]["body"], findNum)
+            if (result != null) {
+                return result
+            }
+        }
+    }
+    return null
+}
+
+export const find_optional_from_datas = (datas: any[], findNum: Number): any[] | null => {
+    for (const data of datas) {
+        if ("body" in data) {
+            if (data["num"] == findNum) {
+                return data["optional"]
+            }
+            const result = find_optional_from_datas(data["body"], findNum)
+            if (result != null) {
+                return result
+            }
+        }
+        if ("optional" in data) {
+            for (const optional of data["optional"]) {
+                if (optional["num"] == findNum) {
+                    return null
+                }
+                const result = find_optional_from_datas(optional["body"], findNum)
+                if (result != null) {
+                    return result
+                }
+            }
+        }
+        if ("last" in data) {
+            if (data["last"]["num"] == findNum) {
+                return null
+            }
+            const result = find_optional_from_datas(data["last"]["body"], findNum)
+            if (result != null) {
+                return result
             }
         }
     }
@@ -317,6 +415,11 @@ export const set_data_num_index = (datas: any[], counter: Counter) => {
                 optional["parent-id"] = data["id"]
                 set_data_num_index(optional["body"], counter)
             }
+        }
+        if ("last" in data) {
+            const last = data["last"]
+            last["num"] = counter.next()
+            set_data_num_index(last["body"], counter)
         }
         if ("body" in data || "optional" in data) {
             data["last-num"] = counter.next()
