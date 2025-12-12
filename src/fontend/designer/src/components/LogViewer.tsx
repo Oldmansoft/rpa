@@ -18,7 +18,8 @@ const LogViewer = forwardRef(({ category } : { category: string }, ref: React.Re
         (async () => {
             setContents(await communication.Executor.Designer.ReadOutput(category))
         })()
-    })
+    }, [category])
+
     return (
         <>
             {contents.map(
