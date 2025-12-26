@@ -119,6 +119,7 @@ class CompositionComponent(ActionBodyComponent, ABC):
     def get_type(self) -> str:
         return 'composition'
     
+    #TODO: 用列表定义不妥当，基本就两项：多项和尾项。可以评估下顺序项的组件。顺序项组件像模板模式。
     def get_definition_content(self) -> dict:
         result = super().get_definition_content()
         result['optional'] = self.define_optional().get_definition_content()

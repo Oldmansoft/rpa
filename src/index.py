@@ -15,6 +15,7 @@ class OutputFileAndNotice:
         self.writer = writer
         self.notice = notice
         self.launcher = launcher
+        
     def write(self, text: str) -> None:
         self.writer.append(text.encode())
         self.launcher.send("ExecutorCommandHandle", "SendMessage", {"key": self.notice, "content": str(self.writer.count())})
@@ -132,7 +133,10 @@ class Designer(ServerCommandHandle):
             with output_execute_file as output_execute_writer:
                 execute_output = OutputFileAndNotice(output_execute_writer, "ExecuteOutput", self.launcher)
                 procedure = builder.create(FontendOutput(terminal_output, execute_output), component_data)
-                procedure.execute()
+                try:
+                    procedure.execute()
+                except Exception as e:
+                    terminal_output.write(str(e))
             terminal_output.write(f"{datetime.now().strftime('%H:%M:%S')} 完成结束流程")
     
     def ReadOutput(self, category: str) -> list:
@@ -142,18 +146,18 @@ class Designer(ServerCommandHandle):
                 result.append(item.decode())
             return result
 
-    def Create(self, path: str, name: str) -> dict:
+    def CreateProject(self, path: str, name: str) -> dict:
         if not isdir(path):
             return {"result": False, "message": f"不存在目录 {path}"}
         folder_path = join(path, name)
         if isdir(folder_path):
             return {"result": False, "message": f"目录 {path} 已经存在 {name}"}
         try:
-            studio.project.create(path, name)
+            app_path = studio.project.create(path, name)
         except Exception as ex:
             return {"result": False, "message": f"创建项目发生错误 {ex}"}
 
-        return {"result": True, "path": folder_path}
+        return {"result": True, "path": app_path}
 
     def Open(self, path: str) -> dict:
         return studio.project.Project.Open(path)

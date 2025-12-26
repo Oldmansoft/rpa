@@ -106,7 +106,7 @@ class Designer extends ExecutorProxy {
     }
 
     SetProjectTextContent(path: string, file_path: string, content: string): Promise<void> {
-        return this.executor.Call(this.name, this.SetProjectTextContent.name, { path: path, file_path: file_path, content: content})
+        return this.executor.Call(this.name, this.SetProjectTextContent.name, { path: path, file_path: file_path, content: content })
     }
 
     RunProjectAppTarget(path: string, file_path: string): void {
@@ -115,6 +115,10 @@ class Designer extends ExecutorProxy {
 
     ReadOutput(category: string): Promise<string[]> {
         return this.executor.Call(this.name, this.ReadOutput.name, { category: category })
+    }
+
+    CreateProject(path: string, name: string): Promise<any> {
+        return this.executor.Call(this.name, this.CreateProject.name, { path: path, name: name })
     }
 }
 

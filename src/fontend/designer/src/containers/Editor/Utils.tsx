@@ -285,7 +285,6 @@ class CodeDrager {
 
     finish() {
         if (this.dropLine == null || this.dropLine.parentElement?.tagName == TagName.code) {
-            console.warn(this.dropLine, this.dropLine?.parentElement?.tagName)
             this.clear()
             return null
         }

@@ -49,6 +49,18 @@
     color: #333;
     min-height: calc(100% - 1px);
 }
+.editor > code > main:empty {
+    height: 100px;
+    border: 1px dashed #999;
+    position: relative;
+}
+.editor > code > main:empty::after {
+    content: "拖拽到此处";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
 .editor > code > main small {
     display: block;
     position: absolute;

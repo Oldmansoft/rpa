@@ -33,7 +33,7 @@ export interface EditorRef {
     save(projectPath: string): void,
     run(projectPath: string): void,
     getContent(): any,
-    insertContent(target: CodeNodePosition, data: any): void
+    insertContent(target: CodeNodePosition | null, data: any): void
     updateContent(category: UpdateContentCategory, num: number, key: string, value: string): any
 }
 
@@ -42,10 +42,10 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
     const [tabs, setTabs] = useState<TabContent[]>([])
 
     useEffect(() => {
-        communication.host_message_register("menu_add", (value: string) => {
+        communication.host_message_register("menu_workspace_composition_add_item", (value: string) => {
             const json = JSON.parse(value)
-
             const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
+
             const data = find_node_from_data(content, json["composition"]);
             (async () => {
                 const optional = await communication.Executor.Designer.GetComponentOptional(data["id"], json["id"])
@@ -62,13 +62,61 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                         }
                     }
                 }
-                set_data_num_index(content["body"], new Counter())
 
+                set_data_num_index(content["body"], new Counter())
                 const editTabs = [...tabs]
                 editTabs[activeTabIndex].content = content
                 editTabs[activeTabIndex].modified = true
                 setTabs(editTabs)
             })()
+        })
+        communication.host_message_register("menu_workspace_composition_remove_item", (value: string) => {
+            const json = JSON.parse(value)
+            const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
+
+            const data = find_node_from_data(content, json["num"]);
+            data["optional"].splice(json["index"], 1)
+
+            set_data_num_index(content["body"], new Counter())
+            const editTabs = [...tabs]
+            editTabs[activeTabIndex].content = content
+            editTabs[activeTabIndex].modified = true
+            setTabs(editTabs)
+
+            communication.Browser.SetContextMenu("")
+        })
+        communication.host_message_register("menu_workspace_composition_remove_last", (value: string) => {
+            const json = JSON.parse(value)
+            const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
+
+            const data = find_node_from_data(content, json["num"]);
+            delete data["last"]
+
+            set_data_num_index(content["body"], new Counter())
+            const editTabs = [...tabs]
+            editTabs[activeTabIndex].content = content
+            editTabs[activeTabIndex].modified = true
+            setTabs(editTabs)
+
+            communication.Browser.SetContextMenu("")
+        })
+        communication.host_message_register("menu_workspace_action_remove", (value: string) => {
+            const json = JSON.parse(value)
+            const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
+
+            let datas = content["body"]
+            if (json["parent"] > 0) {
+                datas = find_body_from_datas(content["body"], json["parent"])
+            }
+            datas?.splice(json["index"], 1)
+
+            set_data_num_index(content["body"], new Counter())
+            const editTabs = [...tabs]
+            editTabs[activeTabIndex].content = content
+            editTabs[activeTabIndex].modified = true
+            setTabs(editTabs)
+
+            communication.Browser.SetContextMenu("")
         })
     })
 
@@ -104,14 +152,21 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
             getContent() {
                 return tabs[activeTabIndex].content
             },
-            insertContent(target: CodeNodePosition, data: any) {
+            insertContent(target: CodeNodePosition | null, data: any) {
                 const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
                 if (tabs[activeTabIndex].format == Format.Code) {
                     let target_datas = content["body"]
-                    if (target.parentNum > 0) {
-                        target_datas = find_body_from_datas(content["body"], target.parentNum)
+                    if (target == null) {
+                        if (content["body"].length > 0) {
+                            return
+                        }
+                        content["body"].push(data)
+                    } else {
+                        if (target.parentNum > 0) {
+                            target_datas = find_body_from_datas(content["body"], target.parentNum)
+                        }
+                        target_datas.splice(target.index + 1, 0, data)
                     }
-                    target_datas.splice(target.index + 1, 0, data)
 
                     set_data_num_index(content["body"], new Counter())
                 }

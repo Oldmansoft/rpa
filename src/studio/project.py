@@ -77,7 +77,7 @@ def create(path:str, name:str):
             'name': name,
             'version': '1.0.0',
             'create': datetime.now().strftime('%Y-%m-%d'),
-            'main': 'main.scs',
+            'main': 'Main.scs',
             'parameter': []
         },
         'studio': {
@@ -98,3 +98,4 @@ def create(path:str, name:str):
     }
     with open(main_path, 'w', encoding='utf-8') as file:
         dump(fs_data, file, ensure_ascii=False)
+    return join(folder_path, "App.proj")

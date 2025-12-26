@@ -75,8 +75,12 @@ const Work = () => {
         const ids = fullId.split("/")
         const position = codeDrager.finish()
         const component_data = await communication.Executor.Designer.GetComponentData(ids[ids.length - 1])
-        if (component_data != null && position != null) {
-            editorRef.current!.insertContent(position.target, component_data)
+        if (component_data != null) {
+            if (position == null) {
+                editorRef.current!.insertContent(null, component_data)
+            } else {
+                editorRef.current!.insertContent(position.target, component_data)
+            }
         }
     }
 
