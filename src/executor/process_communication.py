@@ -2,8 +2,8 @@ from __future__ import annotations
 from typing import Callable, Tuple, Dict
 from abc import ABC
 
-from sys import __stdin__, __stdout__, argv
-from subprocess import Popen, PIPE
+from sys import argv
+from subprocess import Popen
 from datetime import datetime, timedelta
 from threading import Thread, Event
 from struct import unpack, pack
@@ -14,12 +14,24 @@ from os.path import isfile
 from os import pipe, write, read, close, O_RDONLY
 from msvcrt import get_osfhandle, open_osfhandle
 from ctypes import windll, WinError, c_void_p, c_uint
-from io import StringIO
-from traceback import print_exc
+from traceback import extract_tb
 
 from .log2 import logger
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
+
+def get_exception_trace_ignore_self(e: Exception) -> str:
+    text = []
+    stack = extract_tb(e.__traceback__)
+    for summary in stack:
+        if __file__ == summary.filename and summary.name in ["call", "__execute", "__try_command_handle", "__execute_thread", "_try_command_handle"]:
+            continue
+        text.append(f"File \"{summary.filename}\", line {summary.lineno}, in {summary.name}")
+        text.append(f"  {summary.line}")
+
+    text.append(f"{type(e).__name__}: {e}")
+    return "\n".join(text)
+
 
 class PipeCreator(object):
     def __init__(self) -> None:
@@ -175,7 +187,7 @@ _ProcessCommand_TaskReady = ProcessCommand(_inner_command_name, "task_ready")
 _ProcessCommand_TaskClose = ProcessCommand(_inner_command_name, "task_close")
 
 
-class ProcessExecutorCommandHandle(CommandHandle):
+class _ProcessExecutorCommandHandle(CommandHandle):
     def __init__(self, executor: ProcessExecutor) -> None:
         self.executor = executor
 
@@ -207,7 +219,7 @@ class ProcessExecutor(object):
         self.task_result = ProcessTaskResult(False, False, False, None, 0)
         self._command_handle_objects: Dict[str, dict] = {}
         self._event = Event()
-        self.__register_command_handle(ProcessExecutorCommandHandle(self), _inner_command_name)
+        self.__register_command_handle(_ProcessExecutorCommandHandle(self), _inner_command_name)
 
     def on_error(self, func: Callable[[str], None]) -> None:
         self._on_error = func
@@ -292,10 +304,11 @@ class ProcessExecutor(object):
         return_content = {"error": None, "result": None}
         try:
             return_content["error"], return_content["result"] = self.__try_command_handle(command)
-        except:
-            file = StringIO()
-            print_exc(file=file)
-            return_content["error"] = file.getvalue()
+        except Exception as e:
+            #file = StringIO()
+            #print_exc(file=file)
+            #return_content["error"] = file.getvalue()
+            return_content["error"] = get_exception_trace_ignore_self(e)
         
         if command.ask:
             self._communication_listener.write(dumps(return_content))
@@ -435,10 +448,11 @@ class ProcessTask(object):
 
 
 _ProcessCommand_ServerClose = ProcessCommand(_inner_command_name, "#close")
+_ProcessCommand_ServerStart = ProcessCommand(_inner_command_name, "server_start")
 _ProcessCommand_ServerError = ProcessCommand(_inner_command_name, "server_error")
 
 
-class ProcessLauncherCommandHandle(CommandHandle):
+class _ProcessLauncherCommandHandle(CommandHandle):
     def __init__(self, launcher: ProcessLauncher) -> None:
         self.launcher = launcher
 
@@ -452,12 +466,12 @@ class ProcessLauncher(object):
         self._on_error = None
         self._python_path = executor_file_path
         self._command_handle_objects: Dict[str, dict] = {}
-        self.__register_command_handle(ProcessLauncherCommandHandle(self), _inner_command_name)
+        self.__register_command_handle(_ProcessLauncherCommandHandle(self), _inner_command_name)
 
-    def connect(self, code_file_path: str) -> ProcessLauncherServerProxy:
+    def connect(self, code_file_path: str, parameters: dict = None) -> ProcessLauncherServerProxy:
         if not isfile(code_file_path):
             raise FileNotFoundError(code_file_path)
-        return ProcessLauncherServerProxy(self, code_file_path)
+        return ProcessLauncherServerProxy(self, code_file_path, parameters)
 
     def _try_command_handle(self, command: ProcessCommand) -> Tuple[str, any]:
         if not command.name in self._command_handle_objects:
@@ -511,8 +525,9 @@ class ProcessLauncher(object):
 
 
 class ProcessLauncherServerProxy(object):
-    def __init__(self, launcher: ProcessLauncher, code_file_path: str) -> None:
+    def __init__(self, launcher: ProcessLauncher, code_file_path: str, parameters: dict) -> None:
         self._launcher = launcher
+        self._start_parameters = parameters
         with PipeCreator() as sender, PipeCreator() as listener:
             sender_in_read_pipe, sender_out_write_pipe = sender.get_read_write_pipes()
             sender_out_read_handle, sender_in_write_handle = sender.get_read_write_handles()
@@ -545,8 +560,8 @@ class ProcessLauncherServerProxy(object):
         self._event.wait()
 
     def __execute_thread(self) -> None:
-        read_result, _ = self._communication_sender.read()
-        if not read_result:
+        call_result, _ = _ProcessCommand_ServerStart.create_same({"content": dumps(self._start_parameters)}).call(self._communication_sender)
+        if not call_result:
             # 目标进程退出
             self._executing_thread = False
             self._event.set()
@@ -564,10 +579,11 @@ class ProcessLauncherServerProxy(object):
             return_content = {"error": None, "result": None}
             try:
                 return_content["error"], return_content["result"] = self._launcher._try_command_handle(command)
-            except:
-                file = StringIO()
-                print_exc(file=file)
-                return_content["error"] = file.getvalue()
+            except Exception as e:
+                #file = StringIO()
+                #print_exc(file=file)
+                #return_content["error"] = file.getvalue()
+                return_content["error"] = get_exception_trace_ignore_self(e)
 
             if command.ask:
                 self._communication_listener.write(dumps(return_content))
@@ -608,10 +624,12 @@ class ProcessLauncherServerProxy(object):
 
 class ProcessServer(object):
     def __init__(self) -> None:
+        self._on_start = None
         self._command_handle_objects: Dict[str, dict] = {}
         self._communication_listener = None
         self._communication_sender = None
         self._proxy = ProcessServerLauncherProxy(self)
+        self.__register_command_handle(_ProcessServerCommandHandle(self), _inner_command_name)
 
     def listen(
         self,
@@ -648,7 +666,6 @@ class ProcessServer(object):
             raise ProcessException("argv 参数不足")
 
     def __execute(self) -> None:
-        self._communication_listener.write()
         while True:
             read_result, read_value = self._communication_listener.read()
             if not read_result:
@@ -662,10 +679,11 @@ class ProcessServer(object):
             return_content = {"error": None, "result": None}
             try:
                 return_content["error"], return_content["result"] = self.__try_command_handle(command)
-            except:
-                file = StringIO()
-                print_exc(file=file)
-                return_content["error"] = file.getvalue()
+            except Exception as e:
+                #file = StringIO()
+                #print_exc(file=file)
+                #return_content["error"] = file.getvalue()
+                return_content["error"] = get_exception_trace_ignore_self(e)
 
             if command.ask:
                 self._communication_listener.write(dumps(return_content))
@@ -691,12 +709,17 @@ class ProcessServer(object):
         return None, method(**command.content)
 
     def register_command_handle(self, handle_object: ServerCommandHandle) -> None:
+        self.__register_command_handle(handle_object)
+
+    def __register_command_handle(self, handle_object: ServerCommandHandle, class_name: str = None) -> None:
         response_class = handle_object.__class__
-        class_name = response_class.__name__
         if not isinstance(handle_object, ServerCommandHandle):
             raise TypeError(
-                f"参数类型 {class_name} 必须是 ServerCommandHandle 的子类。"
+                f"参数类型 {response_class.__name__} 必须是 ServerCommandHandle 的子类。"
             )
+    
+        if class_name is None:
+            class_name = response_class.__name__
 
         methods = {}
         for item in getmembers(response_class, predicate=isfunction):
@@ -713,6 +736,9 @@ class ProcessServer(object):
             "target": handle_object,
             "methods": methods,
         }
+
+    def on_start(self, func: Callable[[dict], None]) -> None:
+        self._on_start = func
 
 
 class ProcessServerLauncherProxy(object):
@@ -736,3 +762,15 @@ class ProcessServerLauncherProxy(object):
 class ServerCommandHandle(ABC):
     def _set_response_object(self, proxy_object: ProcessServerLauncherProxy) -> None:
         self.launcher = proxy_object
+
+
+class _ProcessServerCommandHandle(ServerCommandHandle):
+    def __init__(self, server: ProcessServer) -> None:
+        self.server = server
+
+    def server_start(self, content: str) -> None:
+        if self.server._on_start:
+            value = None
+            if not content is None:
+                value = loads(content)
+            self.server._on_start(value)

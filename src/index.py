@@ -166,12 +166,16 @@ class Designer(ServerCommandHandle):
         studio.project.Project.Current.run(path)
 
 
+def ServerOnStart(parameters: dict):
+    logger.info("server start", parameters)
+
 def main() -> None:
     if len(argv) < 4:
         print("Missing pipe handle.")
         return
 
     process = ProcessServer()
+    process.on_start(ServerOnStart)
     process.register_command_handle(Designer())
     process.listen_with_argv()
 
