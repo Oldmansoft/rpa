@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react"
 import './Editor.css'
-import CodeEditor, { set_data_num_index, find_body_from_datas, find_node_from_data, find_optional_from_datas } from "./Editor/CodeEditor"
+import CodeEditor, { set_data_num_index, find_node_from_data } from "./Editor/CodeEditor"
 import { CodeNodePosition, CodeChooseCategory, DragMode, codeDrager } from "./Editor/Utils"
 import TextEditor from "./Editor/TextEditor"
 import { IconButton } from "../components/Button"
@@ -42,14 +42,6 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
     const [tabs, setTabs] = useState<TabContent[]>([])
 
     useEffect(() => {
-        communication.host_message_register("context_menu_request", (_: string) => {
-            const items = []
-            items.push({
-                name: "测试", key: null, value: null
-            })
-            console.info(JSON.stringify(items))
-            return items
-        })
         communication.host_message_register("menu_workspace_composition_add_item", (value: string) => {
             const json = JSON.parse(value)
             const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
@@ -108,11 +100,11 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
             const json = JSON.parse(value)
             const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
 
-            let datas = content["body"]
+            let data = content
             if (json["parent"] > 0) {
-                datas = find_body_from_datas(content["body"], json["parent"])
+                data = find_node_from_data(content, json["parent"])
             }
-            datas?.splice(json["index"], 1)
+            data["body"]?.splice(json["index"], 1)
 
             set_data_num_index(content["body"], new Counter())
             const editTabs = [...tabs]
@@ -157,17 +149,17 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
             insertContent(target: CodeNodePosition | null, data: any) {
                 const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
                 if (tabs[activeTabIndex].format == Format.Code) {
-                    let target_datas = content["body"]
                     if (target == null) {
                         if (content["body"].length > 0) {
                             return
                         }
                         content["body"].push(data)
                     } else {
+                        let target_data = content
                         if (target.parentNum > 0) {
-                            target_datas = find_body_from_datas(content["body"], target.parentNum)
+                            target_data = find_node_from_data(content, target.parentNum)
                         }
-                        target_datas.splice(target.index + 1, 0, data)
+                        target_data["body"].splice(target.index + 1, 0, data)
                     }
 
                     set_data_num_index(content["body"], new Counter())
@@ -241,12 +233,12 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
         }
         const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
         let source_datas = content["body"]
-        
         if (source.parentNum > 0) {
             if (codeDrager.get_mode() == DragMode.boundary) {
-                source_datas = find_optional_from_datas(content["body"], source.parentNum)
+                source_datas = find_node_from_data(content, source.parentNum)["optional"]
             } else {
-                source_datas = find_body_from_datas(content["body"], source.parentNum)
+                console.info("source")
+                source_datas = find_node_from_data(content, source.parentNum)["body"]
             }
         }
         const data = source_datas[source.index]
@@ -259,9 +251,10 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
         let target_datas = content["body"]
         if (target.parentNum > 0) {
             if (codeDrager.get_mode() == DragMode.boundary) {
-                target_datas = find_optional_from_datas(content["body"], target.parentNum)
+                target_datas = find_node_from_data(content, target.parentNum)["optional"]
             }else {
-                target_datas = find_body_from_datas(content["body"], target.parentNum)
+                console.info("target")
+                target_datas = find_node_from_data(content, target.parentNum)["body"]
             }
         }
         target_datas.splice(target.index + 1, 0, data)

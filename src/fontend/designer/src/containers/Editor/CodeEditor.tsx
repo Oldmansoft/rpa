@@ -4,7 +4,6 @@ import { KeyGenerator, Counter } from "../../components/Utils"
 import { CodeChooseCategory } from "./Utils"
 import { TagName, CodeNodePosition, get_element_parents_from_tag, make_numbers, codeDrager, mouse_in_node_top, find_previous_tag } from "./Utils"
 import { IconButton } from "../../components/Button"
-import { communication } from "../../components/Communication"
 import { showContextMenu } from "../../components/ContextMenu"
 
 declare const window: {
@@ -383,76 +382,6 @@ export const find_node_from_data = (data: any, findNum: Number): any | null => {
                 return children["last"]
             }
             const result = find_node_from_data(children["last"], findNum)
-            if (result != null) {
-                return result
-            }
-        }
-    }
-    return null
-}
-
-export const find_body_from_datas = (datas: any[], findNum: Number): any[] | null => {
-    for (const data of datas) {
-        if ("body" in data) {
-            if (data["num"] == findNum) {
-                return data["body"]
-            }
-            const result = find_body_from_datas(data["body"], findNum)
-            if (result != null) {
-                return result
-            }
-        }
-        if ("optional" in data) {
-            for (const optional of data["optional"]) {
-                if (optional["num"] == findNum) {
-                    return optional["body"]
-                }
-                const result = find_body_from_datas(optional["body"], findNum)
-                if (result != null) {
-                    return result
-                }
-            }
-        }
-        if ("last" in data) {
-            if (data["last"]["num"] == findNum) {
-                return data["last"]["body"]
-            }
-            const result = find_body_from_datas(data["last"]["body"], findNum)
-            if (result != null) {
-                return result
-            }
-        }
-    }
-    return null
-}
-
-export const find_optional_from_datas = (datas: any[], findNum: Number): any[] | null => {
-    for (const data of datas) {
-        if ("body" in data) {
-            if (data["num"] == findNum) {
-                return data["optional"]
-            }
-            const result = find_optional_from_datas(data["body"], findNum)
-            if (result != null) {
-                return result
-            }
-        }
-        if ("optional" in data) {
-            for (const optional of data["optional"]) {
-                if (optional["num"] == findNum) {
-                    return null
-                }
-                const result = find_optional_from_datas(optional["body"], findNum)
-                if (result != null) {
-                    return result
-                }
-            }
-        }
-        if ("last" in data) {
-            if (data["last"]["num"] == findNum) {
-                return null
-            }
-            const result = find_optional_from_datas(data["last"]["body"], findNum)
             if (result != null) {
                 return result
             }
