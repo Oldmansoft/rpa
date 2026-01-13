@@ -42,6 +42,14 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
     const [tabs, setTabs] = useState<TabContent[]>([])
 
     useEffect(() => {
+        communication.host_message_register("context_menu_request", (_: string) => {
+            const items = []
+            items.push({
+                name: "测试", key: null, value: null
+            })
+            console.info(JSON.stringify(items))
+            return items
+        })
         communication.host_message_register("menu_workspace_composition_add_item", (value: string) => {
             const json = JSON.parse(value)
             const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
@@ -82,8 +90,6 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
             editTabs[activeTabIndex].content = content
             editTabs[activeTabIndex].modified = true
             setTabs(editTabs)
-
-            communication.Browser.SetContextMenu("")
         })
         communication.host_message_register("menu_workspace_composition_remove_last", (value: string) => {
             const json = JSON.parse(value)
@@ -97,8 +103,6 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
             editTabs[activeTabIndex].content = content
             editTabs[activeTabIndex].modified = true
             setTabs(editTabs)
-
-            communication.Browser.SetContextMenu("")
         })
         communication.host_message_register("menu_workspace_action_remove", (value: string) => {
             const json = JSON.parse(value)
@@ -115,8 +119,6 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
             editTabs[activeTabIndex].content = content
             editTabs[activeTabIndex].modified = true
             setTabs(editTabs)
-
-            communication.Browser.SetContextMenu("")
         })
     })
 

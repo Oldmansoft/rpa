@@ -5,9 +5,11 @@ import { CodeChooseCategory } from "./Utils"
 import { TagName, CodeNodePosition, get_element_parents_from_tag, make_numbers, codeDrager, mouse_in_node_top, find_previous_tag } from "./Utils"
 import { IconButton } from "../../components/Button"
 import { communication } from "../../components/Communication"
+import { showContextMenu } from "../../components/ContextMenu"
 
 declare const window: {
-    dragKey: string
+    dragKey: string,
+    communication: any,
 } & Window
 
 const is_item_article = (node: HTMLElement) => {
@@ -100,26 +102,27 @@ export const find_component = (id: string, list: any): any => {
     return null
 }
 
-const handleMouseLeaveClearContextMenu = () => {
-    communication.Browser.SetContextMenu("")
-}
-
 const CodeEditorItem = ({ data, parent_num, index, onNodeChoose }: { data: any, parent_num: number, index: number, onNodeChoose: (num: number) => void }) => {
-    const handleMouseEnter = (item_index: number, num: number, composition: number) => {
-        var items = [{
-            name: "删除", key: "menu_workspace_action_remove", value: JSON.stringify(
+    const handleContextMenu = (e: React.MouseEvent<HTMLElement>) => {
+        showContextMenu(e, [
             {
-                parent: parent_num,
-                index: index
+                display: "删除",
+                callback: () => {
+                    window.communication.host_send_message("menu_workspace_action_remove", JSON.stringify(
+                        {
+                            parent: parent_num,
+                            index: index
+                        }
+                    ))
+                },
             }
-        )}]
-        communication.Browser.SetContextMenu(JSON.stringify(items))
+        ])
     }
 
     const component = find_component(data["id"], project.getComponents())
     if (component["type"] == "unit") {
         return (
-            <Action data={data} component={component} num={data["num"]} index={index} draggable={true} onNodeChoose={onNodeChoose} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeaveClearContextMenu}></Action>
+            <Action data={data} component={component} num={data["num"]} index={index} draggable={true} onNodeChoose={onNodeChoose} onContextMenu={handleContextMenu}></Action>
         )
     }
     if (component["type"] == "container") {
@@ -132,11 +135,10 @@ const CodeEditorItem = ({ data, parent_num, index, onNodeChoose }: { data: any, 
     )
 }
 
-const Action = ({ data, component, num, index, compositionNum, className, draggable, onNodeChoose, onMouseEnter, onMouseLeave }: {
-    data: any, component: any, num?: number, index: number, compositionNum?: number, className?: string, draggable?: boolean,
+const Action = ({ data, component, num, index, className, draggable, onNodeChoose, onContextMenu }: {
+    data: any, component: any, num?: number, index: number, className?: string, draggable?: boolean,
     onNodeChoose?: (num: number) => void,
-    onMouseEnter?: (index: number, num: number, composition: number) => void,
-    onMouseLeave?: () => void,
+    onContextMenu?: (e: React.MouseEvent<HTMLElement>) => void
 }) => {
     const variables = data["params"]
     const params: any = {}
@@ -188,25 +190,9 @@ const Action = ({ data, component, num, index, compositionNum, className, dragga
             onNodeChoose(num)
         }
     }
-    const handleMouseEnter = (event: React.MouseEvent<HTMLElement>) => {
-        if (onMouseEnter) {
-            var node = get_element_parents_from_tag(event.target as HTMLElement, TagName.article)
-            const line_num = Number(node?.getAttribute("data-num"))
-            let composition_num = line_num
-            if (node?.hasAttribute("data-composition-num")) {
-                composition_num = Number(node?.getAttribute("data-composition-num"))
-            }
-            onMouseEnter(index, line_num, composition_num)
-        }
-    }
-    const handleMouseLeave = () => {
-        if (onMouseLeave) {
-            onMouseLeave()
-        }
-    }
 
     return (
-        <article className={className} data-num={num} data-index={index} data-composition-num={compositionNum} draggable={draggable} onClick={handleClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        <article className={className} data-num={num} data-index={index} draggable={draggable} onClick={handleClick} onContextMenu={onContextMenu}>
             <ul>
                 <li>
                     <aside></aside>
@@ -221,15 +207,14 @@ const Action = ({ data, component, num, index, compositionNum, className, dragga
     )
 }
 
-const Section = ({ className, index, draggable, data, compositionNum, component, onNodeChoose, onMouseEnter, onMouseLeave }: {
-    className?: string, index: number, draggable?: boolean, data: any, compositionNum?: number, component: any,
+const Section = ({ className, index, draggable, data, component, onNodeChoose, onContextMenu }: {
+    className?: string, index: number, draggable?: boolean, data: any, component: any,
     onNodeChoose: (num: number) => void,
-    onMouseEnter?: (index: number, num: number, composition: number) => void,
-    onMouseLeave?: () => void
+    onContextMenu?: (e: React.MouseEvent<HTMLElement>) => void
 }) => {
     return (
         <section data-index={index} className={className} draggable={draggable}>
-            <Action data={data} compositionNum={compositionNum} component={component} className="label" index={index} num={data["num"]} onNodeChoose={onNodeChoose} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}></Action>
+            <Action data={data} component={component} className="label" index={index} num={data["num"]} onNodeChoose={onNodeChoose} onContextMenu={onContextMenu}></Action>
             <samp data-num={data["num"]}>
                 {data["body"].map(
                     (item: any, item_index: number) => (
@@ -255,20 +240,25 @@ const Footer = () => {
 const Container = ({ data, component, parent_num, index, onNodeChoose }: {
     data: any, component: any, parent_num: number, index: number, onNodeChoose: (num: number) => void
 }) => {
-    const handleMouseEnter = (item_index: number, num: number, composition: number) => {
-        var items = [{
-            name: "删除", key: "menu_workspace_action_remove", value: JSON.stringify(
+    const handleContextMenu = (e: React.MouseEvent<HTMLElement>) => {
+        showContextMenu(e, [
             {
-                parent: parent_num,
-                index: index
+                display: "删除",
+                callback: () => {
+                    window.communication.host_send_message("menu_workspace_action_remove", JSON.stringify(
+                        {
+                            parent: parent_num,
+                            index: index
+                        }
+                    ))
+                },
             }
-        )}]
-        communication.Browser.SetContextMenu(JSON.stringify(items))
+        ])
     }
 
     return (
         <hgroup className="container" data-num={data["last-num"]} data-index={data["index"]} draggable={true}>
-            <Section className="header" data={data} index={data["index"]} component={component} onNodeChoose={onNodeChoose} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeaveClearContextMenu}></Section>
+            <Section className="header" data={data} index={data["index"]} component={component} onNodeChoose={onNodeChoose} onContextMenu={handleContextMenu}></Section>
             <Footer></Footer>
         </hgroup>
     )
@@ -277,70 +267,88 @@ const Container = ({ data, component, parent_num, index, onNodeChoose }: {
 const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
     data: any, component: any, parent_num: number, index: number, onNodeChoose: (num: number) => void
 }) => {
+    const compoistionNum = data["num"]
     const boundaries: React.JSX.Element[] = []
     let last: React.JSX.Element | null = null
-    //TODO: 删除多余的 item_index, num, composition
-    const handleMouseEnter = (item_index: number, num: number, composition: number) => {
-        var items = []
+    
+    const handleContextMenu = (e: React.MouseEvent<HTMLElement>) => {
+        const targetNum = Number(e.currentTarget.getAttribute("data-num"))
+        const items = []
         for (const component_optional of component["optional"]) {
             if (last && component_optional["category"] == "Last") {
-                
+                items.push({display: `添加 ${component_optional["name"]}`})
             } else {
-                items.push({name: `添加 ${component_optional["name"]}`, key: "menu_workspace_composition_add_item", value: JSON.stringify({
-                    id: component_optional["id"],
-                    category: component_optional["category"],
-                    composition: composition,
-                    num: num,
-                })})
+                items.push({display: `添加 ${component_optional["name"]}`,
+                    callback: () => {
+                        window.communication.host_send_message("menu_workspace_composition_add_item", JSON.stringify(
+                            {
+                                id: component_optional["id"],
+                                category: component_optional["category"],
+                                composition: compoistionNum,
+                                num: targetNum
+                            }
+                        ))
+                    }
+                })
             }
         }
-
-        if (composition == num) {
-            items.push({
-                name: "删除", key: "menu_workspace_action_remove", value: JSON.stringify(
-                {
-                    parent: parent_num,
-                    index: index
+        if (compoistionNum == targetNum) {
+            items.push({display: "删除",
+                callback: () => {
+                    window.communication.host_send_message("menu_workspace_action_remove", JSON.stringify(
+                        {
+                            parent: parent_num,
+                            index: index
+                        }
+                    ))
                 }
-            )})
+            })
         } else {
-            items.push({
-                name: "删除", key: "menu_workspace_composition_remove_item", value: JSON.stringify(
-                {
-                    num: composition,
-                    index: item_index
+            const currentIndex = Number(e.currentTarget.getAttribute("data-index"))
+            items.push({display: "删除",
+                callback: () => {
+                    window.communication.host_send_message("menu_workspace_composition_remove_item", JSON.stringify(
+                        {
+                            num: compoistionNum,
+                            index: currentIndex
+                        }
+                    ))
                 }
-            )})
+            })
         }
-        communication.Browser.SetContextMenu(JSON.stringify(items))
+        
+        showContextMenu(e, items)
     }
-
-    const handleLastMouseEnter = (item_index: number, num: number, composition: number) => {
-        var items = []
-        items.push({
-            name: "删除", key: "menu_workspace_composition_remove_last", value: JSON.stringify(
+    
+    const handleLastContextMenu = (e: React.MouseEvent<HTMLElement>) => {
+        showContextMenu(e, [
             {
-                num: composition,
-                index: item_index
+                display: "删除",
+                callback: () => {
+                    window.communication.host_send_message("menu_workspace_composition_remove_last", JSON.stringify(
+                        {
+                            num: data["num"]
+                        }
+                    ))
+                },
             }
-        )})
-        communication.Browser.SetContextMenu(JSON.stringify(items))
+        ])
     }
 
     const key = new KeyGenerator()
     let boundary_index = 0
     for (const optional of data["optional"]) {
         const component_optional = (component["optional"] as any[]).find(item => item["id"] == optional["id"])
-        boundaries.push(<Section key={key.next()} index={boundary_index++} data={optional} compositionNum={data["num"]} component={component_optional} draggable={true} onNodeChoose={onNodeChoose} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeaveClearContextMenu}></Section>)
+        boundaries.push(<Section key={key.next()} index={boundary_index++} data={optional} component={component_optional} draggable={true} onNodeChoose={onNodeChoose} onContextMenu={handleContextMenu}></Section>)
     }
     if ("last" in data) {
         const component_optional = (component["optional"] as any[]).find(item => item["id"] == data["last"]["id"])
-        last = <Section data={data["last"]} index={-1} component={component_optional} compositionNum={data["num"]} onNodeChoose={onNodeChoose} onMouseEnter={handleLastMouseEnter} onMouseLeave={handleMouseLeaveClearContextMenu}></Section>
+        last = <Section data={data["last"]} index={-1} component={component_optional} onNodeChoose={onNodeChoose} onContextMenu={handleLastContextMenu}></Section>
     }
 
     return (
         <hgroup className="container" data-num={data["last-num"]} data-index={index} draggable={true}>
-            <Section className="header" data={data} index={index} component={component} onNodeChoose={onNodeChoose} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeaveClearContextMenu}></Section>
+            <Section className="header" data={data} index={index} component={component} onNodeChoose={onNodeChoose} onContextMenu={handleContextMenu}></Section>
             {boundaries && <nav data-num={data["num"]}>{boundaries}</nav>}
             {last}
             <Footer></Footer>

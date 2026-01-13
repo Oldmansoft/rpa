@@ -1,0 +1,20 @@
+.context_menu {
+    position: fixed;
+}
+.popup_menu {
+    overflow: auto;
+    padding: 5px 0;
+    border-radius: 5px;
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.5);
+    background-color: #fff;
+}
+.popup_menu>div {
+    cursor: default;
+    padding: 5px 10px;
+}
+.popup_menu>div[data-valid="1"]:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+.popup_menu>div[data-valid="0"] {
+    color: #aaa;
+}

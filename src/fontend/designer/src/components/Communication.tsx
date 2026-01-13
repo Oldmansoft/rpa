@@ -15,9 +15,7 @@ class CommunicationProxy {
 }
 
 class Browser extends CommunicationProxy {
-    SetContextMenu(json: string): void {
-        this.communication.webview2.Browser.SetContextMenu(json)
-    }
+
 }
 
 class FileSystem extends CommunicationProxy {
@@ -142,7 +140,7 @@ class Communication {
         this.AsyncResultDealers = asyncResultDealers
         const hostMessageDealer: any = {}
         this.HostMessageDealer = hostMessageDealer
-
+        
         window.communication = {}
         window.communication.host_call_result = function (key: string) {
             asyncResultDealers[key].apply(window, Array.from(arguments).slice(1))
@@ -150,12 +148,18 @@ class Communication {
         window.communication.host_send_message = function(key: string, content: string) {
             hostMessageDealer[key].apply(window, [content])
         }
-        window.communication_debug = this
+        window.communication.host_call_message = function(key: string, content: string) {
+            return hostMessageDealer[key].apply(window, [content])
+        }
     }
 
     async_result<T>(name: string, method: string): Promise<T> {
         return new Promise((resolve) => {
-            this.AsyncResultDealers[`${name}.${method}`] = resolve
+            const key = `${name}.${method}`
+            if (key in this.AsyncResultDealers) {
+                delete this.AsyncResultDealers[key]
+            }
+            this.AsyncResultDealers[key] = resolve
         })
     }
 
@@ -166,8 +170,9 @@ class Communication {
         this.HostMessageDealer[key] = callback
     }
 
+    //TODO: 准备清除
     host_callback(key: string, value: string) {
-        console.warn("host callback", key, value)
+        console.error("host callback", key, value)
     }
 }
 

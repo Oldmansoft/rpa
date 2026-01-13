@@ -15,6 +15,7 @@ import { codeDrager, CodeChooseCategory } from "../containers/Editor/Utils"
 import CodePaneBody from "../containers/Editor/CodePaneBody"
 import CodePaneVariable from "../containers/Editor/CodePaneVariable"
 import CodePaneParameter from "../containers/Editor/CodePaneParameter"
+import {ContextMenu} from '../components/ContextMenu'
 
 type PropertyContent = {
     category: CodeChooseCategory,
@@ -149,6 +150,7 @@ const Work = () => {
 
     return (
         <Layout>
+            <ContextMenu></ContextMenu>
             <Top>
                 <Button text="打开" className="icon-[mingcute--open-door-line]" onClick={handleOpenClick} />
                 <Button text="保存" className="icon-[mono-icons--save]" onClick={handleSaveClick} />
