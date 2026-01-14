@@ -271,7 +271,7 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
         setTabs(editTabs)
     }
 
-    const handleCodeItemAdd = (category: CodeChooseCategory) => {
+    const handleCodeEditVariableAdd = (category: CodeChooseCategory) => {
         const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
         if (category == CodeChooseCategory.Variable) {
             content["local"].push({
@@ -289,6 +289,31 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                 "value": ""
             })
         }
+
+        const editTabs = [...tabs]
+        editTabs[activeTabIndex].content = content
+        editTabs[activeTabIndex].modified = true
+        setTabs(editTabs)
+    }
+
+    const handleCodeEditVariableMove = (category: CodeChooseCategory, source: number, target: number) => {
+        const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
+        let list
+        if (category == CodeChooseCategory.Variable) {
+            list = content["local"]
+        } else if (category == CodeChooseCategory.ParameterIn) {
+            list = content["parameter"]["in"]
+        } else {
+            list = content["parameter"]["out"]
+        }
+
+        const element = list.splice(source, 1)[0]
+        if (source > target) {
+            list.splice(target - 1, 0, element)
+        } else {
+            list.splice(target + 1, 0, element)
+        }
+
         const editTabs = [...tabs]
         editTabs[activeTabIndex].content = content
         editTabs[activeTabIndex].modified = true
@@ -354,7 +379,7 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                 )}
             </Top>
             <div className="editor">
-                {tabs.length > 0 && tabs[activeTabIndex].format == Format.Code && <CodeEditor content={tabs[activeTabIndex].content} onNodeMove={handleCodeEditorNodeMove} onPropertiesPaneOpen={handleCodeEditorNodeChoose} onItemAdd={handleCodeItemAdd}></CodeEditor>}
+                {tabs.length > 0 && tabs[activeTabIndex].format == Format.Code && <CodeEditor content={tabs[activeTabIndex].content} onNodeMove={handleCodeEditorNodeMove} onPropertiesPaneOpen={handleCodeEditorNodeChoose} onVariableAdd={handleCodeEditVariableAdd} onVariableMove={handleCodeEditVariableMove}></CodeEditor>}
                 {tabs.length > 0 && tabs[activeTabIndex].format == Format.Text && <TextEditor content={tabs[activeTabIndex].content}></TextEditor>}
             </div>
         </>

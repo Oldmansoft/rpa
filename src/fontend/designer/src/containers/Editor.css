@@ -16,11 +16,11 @@
 }
 
 .editor > code > div > h5,
-.editor > code > div > var {
+.editor > code > div > section > var {
     margin-left: 10px;
 }
 
-.editor > code > div > var {
+.editor > code > div > section > var {
     display: inline-block;
     padding: 5px;
     border-top: 1px solid #efefef;
@@ -30,7 +30,7 @@
     border-radius: 3px;
     margin-bottom: 5px;
 }
-.editor > code > div > var:hover {
+.editor > code > div > section > var:hover {
     cursor: default;
     background-color: #e1dfdd;
 }

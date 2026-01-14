@@ -148,7 +148,7 @@ const Action = ({ data, component, num, index, className, draggable, onNodeChoos
         if (variables && id in variables) {
             value = variables[id]
         }
-        
+
         params[`{${id}}`] = {
             name: name,
             type: component["params"][i]["type"],
@@ -269,15 +269,16 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
     const compoistionNum = data["num"]
     const boundaries: React.JSX.Element[] = []
     let last: React.JSX.Element | null = null
-    
+
     const handleContextMenu = (e: React.MouseEvent<HTMLElement>) => {
         const targetNum = Number(e.currentTarget.getAttribute("data-num"))
         const items = []
         for (const component_optional of component["optional"]) {
             if (last && component_optional["category"] == "Last") {
-                items.push({display: `添加 ${component_optional["name"]}`})
+                items.push({ display: `添加 ${component_optional["name"]}` })
             } else {
-                items.push({display: `添加 ${component_optional["name"]}`,
+                items.push({
+                    display: `添加 ${component_optional["name"]}`,
                     callback: () => {
                         window.communication.host_send_message("menu_workspace_composition_add_item", JSON.stringify(
                             {
@@ -292,7 +293,8 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
             }
         }
         if (compoistionNum == targetNum) {
-            items.push({display: "删除",
+            items.push({
+                display: "删除",
                 callback: () => {
                     window.communication.host_send_message("menu_workspace_action_remove", JSON.stringify(
                         {
@@ -304,7 +306,8 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
             })
         } else {
             const currentIndex = Number(e.currentTarget.getAttribute("data-index"))
-            items.push({display: "删除",
+            items.push({
+                display: "删除",
                 callback: () => {
                     window.communication.host_send_message("menu_workspace_composition_remove_item", JSON.stringify(
                         {
@@ -315,10 +318,10 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
                 }
             })
         }
-        
+
         showContextMenu(e, items)
     }
-    
+
     const handleLastContextMenu = (e: React.MouseEvent<HTMLElement>) => {
         showContextMenu(e, [
             {
@@ -357,7 +360,7 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
 
 export const find_node_from_data = (data: any, findNum: Number): any | null => {
     for (const children of data["body"]) {
-        if (children["num"] == findNum){
+        if (children["num"] == findNum) {
             return children
         }
         if ("body" in children) {
@@ -416,15 +419,17 @@ export const set_data_num_index = (datas: any[], counter: Counter) => {
     }
 }
 
-const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onItemAdd }: {
+const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onVariableAdd, onVariableMove }: {
     content: any,
     onNodeMove: (source: CodeNodePosition, target: CodeNodePosition) => void,
     onPropertiesPaneOpen: (category: CodeChooseCategory, data: any) => void,
-    onItemAdd: (category: CodeChooseCategory) => void
+    onVariableAdd: (category: CodeChooseCategory) => void,
+    onVariableMove: (category: CodeChooseCategory, source: number, target: number) => void
 }) => {
     const codeRef = useRef<HTMLElement>(null)
     const lineRef = useRef<HTMLElement>(null)
 
+    let section_drag_source: HTMLElement
     let enterCount = 0
 
     useEffect(() => {
@@ -591,31 +596,64 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onItemAdd }: {
         onPropertiesPaneOpen(CodeChooseCategory.ParameterOut, data)
     }
 
+    const handleSectionDragStart = (e: DragEvent) => {
+        window.dragKey = e.currentTarget.getAttribute("data-drag-key")!
+        e.dataTransfer.effectAllowed = "move"
+        section_drag_source = e.target as HTMLElement
+    }
+
+    const handleSectionDragOver = (e: DragEvent) => {
+        if (e.currentTarget.getAttribute("data-drag-key") == window.dragKey) {
+            e.preventDefault()
+        }
+    }
+
+    const handleSectionDrop = (e: DragEvent) => {
+        const sourceIndex = Number(section_drag_source.getAttribute("data-index"))
+        const targetIndex = Number(e.currentTarget.getAttribute("data-index"))
+        if (sourceIndex == targetIndex) {
+            return
+        }
+        if (window.dragKey == "variable") {
+            onVariableMove(CodeChooseCategory.Variable, sourceIndex, targetIndex)
+        } else if (window.dragKey == "parameter-in") {
+            onVariableMove(CodeChooseCategory.ParameterIn, sourceIndex, targetIndex)
+        } else {
+            onVariableMove(CodeChooseCategory.ParameterOut, sourceIndex, targetIndex)
+        }
+    }
+
     return (
         <code>
             <div>
                 <h5>
                     <span>输入参数设置</span>
-                    <IconButton onClick={() => { onItemAdd(CodeChooseCategory.ParameterIn) }} className="icon-[mdi--plus] align-middle"></IconButton>
+                    <IconButton onClick={() => { onVariableAdd(CodeChooseCategory.ParameterIn) }} className="icon-[mdi--plus] align-middle"></IconButton>
                 </h5>
-                {content.parameter.in.map(
-                    (item: any, index: number) => (<var key={index} onClick={(event) => handleParameterInChoose(index, event)}>
-                        { item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
-                        <data>{item["value"]}</data>
-                    </var>)
-                )}
+                <section data-drag-key="parameter-in" onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver}>
+                    {content.parameter.in.map(
+                        (item: any, index: number) => (
+                            <var key={index} data-index={index} onClick={(event) => handleParameterInChoose(index, event)} onDrop={handleSectionDrop}>
+                                {item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
+                                <data>{item["value"]}</data>
+                            </var>)
+                    )}
+                </section>
             </div>
             <div>
                 <h5>
                     <span>流程变量设置</span>
-                    <IconButton onClick={() => { onItemAdd(CodeChooseCategory.Variable) }} className="icon-[mdi--plus] align-middle"></IconButton>
+                    <IconButton onClick={() => { onVariableAdd(CodeChooseCategory.Variable) }} className="icon-[mdi--plus] align-middle"></IconButton>
                 </h5>
-                {content.local.map(
-                    (item: any, index: number) => (<var key={index} onClick={(event) => handleVariableChoose(index, event)}>
-                        { item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
-                        <data>{item["value"]}</data>
-                    </var>)
-                )}
+                <section data-drag-key="variable" onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver}>
+                    {content.local.map(
+                        (item: any, index: number) => (
+                            <var key={index} data-index={index} onClick={(event) => handleVariableChoose(index, event)} draggable="true" onDrop={handleSectionDrop}>
+                                {item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
+                                <data>{item["value"]}</data>
+                            </var>)
+                    )}
+                </section>
             </div>
             <main ref={codeRef} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragStart={handleDragStart} onDragEnd={handleDragEnd} data-num="0">
                 {content.body.map(
@@ -628,14 +666,18 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onItemAdd }: {
             <div>
                 <h5>
                     <span>输出参数设置</span>
-                    <IconButton onClick={() => { onItemAdd(CodeChooseCategory.ParameterOut) }} className="icon-[mdi--plus] align-middle"></IconButton>
+                    <IconButton onClick={() => { onVariableAdd(CodeChooseCategory.ParameterOut) }} className="icon-[mdi--plus] align-middle"></IconButton>
                 </h5>
-                {content.parameter.out.map(
-                    (item: any, index: number) => (<var key={index} onClick={(event) => handleParameterOutChoose(index, event)}>
-                        { item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
-                        <data>{item["value"]}</data>
-                    </var>)
-                )}
+                <section data-drag-key="parameter-out" onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver}>
+                    {content.parameter.out.map(
+                        (item: any, index: number) => (
+                            <var key={index} data-index={index} onClick={(event) => handleParameterOutChoose(index, event)} draggable="true" onDrop={handleSectionDrop}>
+                                {item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
+                                <data>{item["value"]}</data>
+                            </var>
+                        )
+                    )}
+                </section>
             </div>
         </code>
     )
