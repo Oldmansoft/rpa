@@ -419,12 +419,11 @@ export const set_data_num_index = (datas: any[], counter: Counter) => {
     }
 }
 
-const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onVariableAdd, onVariableMove }: {
+const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onEditorSetContent }: {
     content: any,
     onNodeMove: (source: CodeNodePosition, target: CodeNodePosition) => void,
     onPropertiesPaneOpen: (category: CodeChooseCategory, data: any) => void,
-    onVariableAdd: (category: CodeChooseCategory) => void,
-    onVariableMove: (category: CodeChooseCategory, source: number, target: number) => void
+    onEditorSetContent: (content: any) => void
 }) => {
     const codeRef = useRef<HTMLElement>(null)
     const lineRef = useRef<HTMLElement>(null)
@@ -608,19 +607,120 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onVariableAdd, 
         }
     }
 
+    const getCodeChooseCategoryFromText = (text: string) => {
+        if (text == "variable") {
+            return CodeChooseCategory.Variable
+        } else if (text == "parameter-in") {
+            return CodeChooseCategory.ParameterIn
+        } else {
+            return CodeChooseCategory.ParameterOut
+        }
+    }
+
     const handleSectionDrop = (e: DragEvent) => {
         const sourceIndex = Number(section_drag_source.getAttribute("data-index"))
         const targetIndex = Number(e.currentTarget.getAttribute("data-index"))
         if (sourceIndex == targetIndex) {
             return
         }
-        if (window.dragKey == "variable") {
-            onVariableMove(CodeChooseCategory.Variable, sourceIndex, targetIndex)
-        } else if (window.dragKey == "parameter-in") {
-            onVariableMove(CodeChooseCategory.ParameterIn, sourceIndex, targetIndex)
+        const category = getCodeChooseCategoryFromText(window.dragKey)
+        let list
+        if (category == CodeChooseCategory.Variable) {
+            list = content["local"]
+        } else if (category == CodeChooseCategory.ParameterIn) {
+            list = content["parameter"]["in"]
         } else {
-            onVariableMove(CodeChooseCategory.ParameterOut, sourceIndex, targetIndex)
+            list = content["parameter"]["out"]
         }
+
+        const element = list.splice(sourceIndex, 1)[0]
+        list.splice(targetIndex, 0, element)
+        onEditorSetContent(content)
+    }
+
+    const handleSectionVarContextMenu = (e: React.MouseEvent<HTMLElement>) => {
+        const category = getCodeChooseCategoryFromText(e.currentTarget.parentElement?.getAttribute("data-drag-key")!)
+        const index = Number(e.currentTarget.getAttribute("data-index"))
+        const items = [
+            {
+                display: "删除",
+                callback: () => {
+                    if (category == CodeChooseCategory.Variable) {
+                        content.local.splice(index, 1)
+                    } else if (category == CodeChooseCategory.ParameterIn) {
+                        content.parameter.in.splice(index, 1)
+                    } else {
+                        content.parameter.out.splice(index, 1)
+                    }
+                    onEditorSetContent(content)
+                },
+            }
+        ]
+        const texts: string[] = []
+        const targetCategories: CodeChooseCategory[] = []
+        if (category == CodeChooseCategory.ParameterIn) {
+            texts.push("变量")
+            texts.push("出参")
+            targetCategories.push(CodeChooseCategory.Variable)
+            targetCategories.push(CodeChooseCategory.ParameterOut)
+        } else if (category == CodeChooseCategory.ParameterOut) {
+            texts.push("入参")
+            texts.push("变量")
+            targetCategories.push(CodeChooseCategory.ParameterIn)
+            targetCategories.push(CodeChooseCategory.Variable)
+        } else {
+            texts.push("入参")
+            texts.push("出参")
+            targetCategories.push(CodeChooseCategory.ParameterIn)
+            targetCategories.push(CodeChooseCategory.ParameterOut)
+        }
+        for (var i = 0; i < 2; i++) {
+            items.push({
+                display: `移动到${texts[i]}`,
+                callback: ((targetCategory: CodeChooseCategory) => {
+                    return () => {
+                        let removed
+                        if (category == CodeChooseCategory.Variable) {
+                            removed = content.local.splice(index, 1)
+                        } else if (category == CodeChooseCategory.ParameterIn) {
+                            removed = content.parameter.in.splice(index, 1)
+                        } else {
+                            removed = content.parameter.out.splice(index, 1)
+                        }
+                        if (targetCategory == CodeChooseCategory.Variable) {
+                            content.local.push(removed[0])
+                        } else if (targetCategory == CodeChooseCategory.ParameterIn) {
+                            content.parameter.in.push(removed[0])
+                        } else {
+                            content.parameter.out.push(removed[0])
+                        }
+                        onEditorSetContent(content)
+                    }
+                })(targetCategories[i]),
+            })
+        }
+
+        showContextMenu(e, items)
+    }
+
+    const handleVarAdd = (category: CodeChooseCategory) => {
+        if (category == CodeChooseCategory.Variable) {
+            content["local"].push({
+                "name": "",
+                "value": ""
+            })
+        } else if (category == CodeChooseCategory.ParameterIn) {
+            content["parameter"]["in"].push({
+                "name": "",
+                "value": ""
+            })
+        } else if (category == CodeChooseCategory.ParameterOut) {
+            content["parameter"]["out"].push({
+                "name": "",
+                "value": ""
+            })
+        }
+        onEditorSetContent(content)
     }
 
     return (
@@ -628,12 +728,12 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onVariableAdd, 
             <div>
                 <h5>
                     <span>输入参数设置</span>
-                    <IconButton onClick={() => { onVariableAdd(CodeChooseCategory.ParameterIn) }} className="icon-[mdi--plus] align-middle"></IconButton>
+                    <IconButton onClick={() => { handleVarAdd(CodeChooseCategory.ParameterIn) }} className="icon-[mdi--plus] align-middle"></IconButton>
                 </h5>
                 <section data-drag-key="parameter-in" onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver}>
                     {content.parameter.in.map(
                         (item: any, index: number) => (
-                            <var key={index} data-index={index} onClick={(event) => handleParameterInChoose(index, event)} onDrop={handleSectionDrop}>
+                            <var key={index} data-index={index} onClick={(event) => handleParameterInChoose(index, event)} draggable="true" onDrop={handleSectionDrop} onContextMenu={handleSectionVarContextMenu}>
                                 {item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
                                 <data>{item["value"]}</data>
                             </var>)
@@ -643,12 +743,12 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onVariableAdd, 
             <div>
                 <h5>
                     <span>流程变量设置</span>
-                    <IconButton onClick={() => { onVariableAdd(CodeChooseCategory.Variable) }} className="icon-[mdi--plus] align-middle"></IconButton>
+                    <IconButton onClick={() => { handleVarAdd(CodeChooseCategory.Variable) }} className="icon-[mdi--plus] align-middle"></IconButton>
                 </h5>
                 <section data-drag-key="variable" onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver}>
                     {content.local.map(
                         (item: any, index: number) => (
-                            <var key={index} data-index={index} onClick={(event) => handleVariableChoose(index, event)} draggable="true" onDrop={handleSectionDrop}>
+                            <var key={index} data-index={index} onClick={(event) => handleVariableChoose(index, event)} draggable="true" onDrop={handleSectionDrop} onContextMenu={handleSectionVarContextMenu}>
                                 {item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
                                 <data>{item["value"]}</data>
                             </var>)
@@ -666,12 +766,12 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onVariableAdd, 
             <div>
                 <h5>
                     <span>输出参数设置</span>
-                    <IconButton onClick={() => { onVariableAdd(CodeChooseCategory.ParameterOut) }} className="icon-[mdi--plus] align-middle"></IconButton>
+                    <IconButton onClick={() => { handleVarAdd(CodeChooseCategory.ParameterOut) }} className="icon-[mdi--plus] align-middle"></IconButton>
                 </h5>
                 <section data-drag-key="parameter-out" onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver}>
                     {content.parameter.out.map(
                         (item: any, index: number) => (
-                            <var key={index} data-index={index} onClick={(event) => handleParameterOutChoose(index, event)} draggable="true" onDrop={handleSectionDrop}>
+                            <var key={index} data-index={index} onClick={(event) => handleParameterOutChoose(index, event)} draggable="true" onDrop={handleSectionDrop} onContextMenu={handleSectionVarContextMenu}>
                                 {item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
                                 <data>{item["value"]}</data>
                             </var>

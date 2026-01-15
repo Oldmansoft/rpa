@@ -147,7 +147,7 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                 return tabs[activeTabIndex].content
             },
             insertContent(target: CodeNodePosition | null, data: any) {
-                const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
+                const content = tabs[activeTabIndex].content
                 if (tabs[activeTabIndex].format == Format.Code) {
                     if (target == null) {
                         if (content["body"].length > 0) {
@@ -165,13 +165,10 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                     set_data_num_index(content["body"], new Counter())
                 }
 
-                const editTabs = [...tabs]
-                editTabs[activeTabIndex].content = content
-                editTabs[activeTabIndex].modified = true
-                setTabs(editTabs)
+                handleActiveTabSetContent(content)
             },
             updateContent(category: UpdateContentCategory, num: number, key: string, value: string) {
-                const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
+                const content = tabs[activeTabIndex].content
                 let data
                 if (category == UpdateContentCategory.Body) {
                     data = find_node_from_data(content, num)
@@ -191,10 +188,7 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                     data[key] = value
                 }
 
-                const editTabs = [...tabs]
-                editTabs[activeTabIndex].content = content
-                editTabs[activeTabIndex].modified = true
-                setTabs(editTabs)
+                handleActiveTabSetContent(content)
                 return data
             }
         }
@@ -231,7 +225,7 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
         if (source.parentNum == target.parentNum && source.index == target.index) {
             return
         }
-        const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
+        const content = tabs[activeTabIndex].content
         let source_datas = content["body"]
         if (source.parentNum > 0) {
             if (codeDrager.get_mode() == DragMode.boundary) {
@@ -265,57 +259,12 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
 
         set_data_num_index(content["body"], new Counter())
 
-        const editTabs = [...tabs]
-        editTabs[activeTabIndex].content = content
-        editTabs[activeTabIndex].modified = true
-        setTabs(editTabs)
+        handleActiveTabSetContent(content)
     }
 
-    const handleCodeEditVariableAdd = (category: CodeChooseCategory) => {
-        const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
-        if (category == CodeChooseCategory.Variable) {
-            content["local"].push({
-                "name": "",
-                "value": ""
-            })
-        } else if (category == CodeChooseCategory.ParameterIn) {
-            content["parameter"]["in"].push({
-                "name": "",
-                "value": ""
-            })
-        } else if (category == CodeChooseCategory.ParameterOut) {
-            content["parameter"]["out"].push({
-                "name": "",
-                "value": ""
-            })
-        }
-
+    const handleActiveTabSetContent = (content: any) => {
         const editTabs = [...tabs]
-        editTabs[activeTabIndex].content = content
-        editTabs[activeTabIndex].modified = true
-        setTabs(editTabs)
-    }
-
-    const handleCodeEditVariableMove = (category: CodeChooseCategory, source: number, target: number) => {
-        const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
-        let list
-        if (category == CodeChooseCategory.Variable) {
-            list = content["local"]
-        } else if (category == CodeChooseCategory.ParameterIn) {
-            list = content["parameter"]["in"]
-        } else {
-            list = content["parameter"]["out"]
-        }
-
-        const element = list.splice(source, 1)[0]
-        if (source > target) {
-            list.splice(target - 1, 0, element)
-        } else {
-            list.splice(target + 1, 0, element)
-        }
-
-        const editTabs = [...tabs]
-        editTabs[activeTabIndex].content = content
+        editTabs[activeTabIndex].content = JSON.parse(JSON.stringify(content))
         editTabs[activeTabIndex].modified = true
         setTabs(editTabs)
     }
@@ -379,7 +328,7 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                 )}
             </Top>
             <div className="editor">
-                {tabs.length > 0 && tabs[activeTabIndex].format == Format.Code && <CodeEditor content={tabs[activeTabIndex].content} onNodeMove={handleCodeEditorNodeMove} onPropertiesPaneOpen={handleCodeEditorNodeChoose} onVariableAdd={handleCodeEditVariableAdd} onVariableMove={handleCodeEditVariableMove}></CodeEditor>}
+                {tabs.length > 0 && tabs[activeTabIndex].format == Format.Code && <CodeEditor content={tabs[activeTabIndex].content} onNodeMove={handleCodeEditorNodeMove} onPropertiesPaneOpen={handleCodeEditorNodeChoose} onEditorSetContent={handleActiveTabSetContent}></CodeEditor>}
                 {tabs.length > 0 && tabs[activeTabIndex].format == Format.Text && <TextEditor content={tabs[activeTabIndex].content}></TextEditor>}
             </div>
         </>
