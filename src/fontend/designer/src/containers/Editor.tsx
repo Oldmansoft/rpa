@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react"
+import { forwardRef, useImperativeHandle, useState } from "react"
 import './Editor.css'
 import CodeEditor, { set_data_num_index, find_node_from_data } from "./Editor/CodeEditor"
 import { CodeNodePosition, CodeChooseCategory, DragMode, codeDrager } from "./Editor/Utils"
@@ -7,6 +7,7 @@ import { IconButton } from "../components/Button"
 import { Top } from '../components/Layout'
 import { Counter } from "../components/Utils"
 import { communication } from '../components/Communication'
+import { EditorContext, TabContentValue } from "./EditorContext"
 
 export enum Format {
     Text,
@@ -20,14 +21,6 @@ export enum UpdateContentCategory {
     ParameterOut
 }
 
-type TabContent = {
-    file: string,
-    format: Format,
-    content: any,
-    modified: boolean,
-    stamp: number
-}
-
 export interface EditorRef {
     open(file: string, format: Format, content: any): void,
     save(projectPath: string): void,
@@ -39,80 +32,7 @@ export interface EditorRef {
 
 const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (category: CodeChooseCategory, data: any) => void }, ref: React.Ref<EditorRef>) => {
     const [activeTabIndex, setActiveTabIndex] = useState(-1)
-    const [tabs, setTabs] = useState<TabContent[]>([])
-
-    useEffect(() => {
-        communication.host_message_register("menu_workspace_composition_add_item", (value: string) => {
-            const json = JSON.parse(value)
-            const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
-
-            const data = find_node_from_data(content, json["composition"]);
-            (async () => {
-                const optional = await communication.Executor.Designer.GetComponentOptional(data["id"], json["id"])
-                if (json["category"] == "Last") {
-                    data["last"] = optional
-                } else {
-                    if (json["composition"] == json["num"]) {
-                        data["optional"].unshift(optional)
-                    } else {
-                        for (var i=0; i<data["optional"].length; i++) {
-                            if (data["optional"][i]["num"] == json["num"]) {
-                                data["optional"].splice(i + 1, 0, optional)
-                            }
-                        }
-                    }
-                }
-
-                set_data_num_index(content["body"], new Counter())
-                const editTabs = [...tabs]
-                editTabs[activeTabIndex].content = content
-                editTabs[activeTabIndex].modified = true
-                setTabs(editTabs)
-            })()
-        })
-        communication.host_message_register("menu_workspace_composition_remove_item", (value: string) => {
-            const json = JSON.parse(value)
-            const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
-
-            const data = find_node_from_data(content, json["num"]);
-            data["optional"].splice(json["index"], 1)
-
-            set_data_num_index(content["body"], new Counter())
-            const editTabs = [...tabs]
-            editTabs[activeTabIndex].content = content
-            editTabs[activeTabIndex].modified = true
-            setTabs(editTabs)
-        })
-        communication.host_message_register("menu_workspace_composition_remove_last", (value: string) => {
-            const json = JSON.parse(value)
-            const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
-
-            const data = find_node_from_data(content, json["num"]);
-            delete data["last"]
-
-            set_data_num_index(content["body"], new Counter())
-            const editTabs = [...tabs]
-            editTabs[activeTabIndex].content = content
-            editTabs[activeTabIndex].modified = true
-            setTabs(editTabs)
-        })
-        communication.host_message_register("menu_workspace_action_remove", (value: string) => {
-            const json = JSON.parse(value)
-            const content = JSON.parse(JSON.stringify(tabs[activeTabIndex].content))
-
-            let data = content
-            if (json["parent"] > 0) {
-                data = find_node_from_data(content, json["parent"])
-            }
-            data["body"]?.splice(json["index"], 1)
-
-            set_data_num_index(content["body"], new Counter())
-            const editTabs = [...tabs]
-            editTabs[activeTabIndex].content = content
-            editTabs[activeTabIndex].modified = true
-            setTabs(editTabs)
-        })
-    })
+    const [tabs, setTabs] = useState<TabContentValue[]>([])
 
     useImperativeHandle(ref, () => {
         return {
@@ -165,7 +85,7 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                     set_data_num_index(content["body"], new Counter())
                 }
 
-                handleActiveTabSetContent(content)
+                activeTabSetContent(content)
             },
             updateContent(category: UpdateContentCategory, num: number, key: string, value: string) {
                 const content = tabs[activeTabIndex].content
@@ -188,7 +108,7 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                     data[key] = value
                 }
 
-                handleActiveTabSetContent(content)
+                activeTabSetContent(content)
                 return data
             }
         }
@@ -231,7 +151,6 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
             if (codeDrager.get_mode() == DragMode.boundary) {
                 source_datas = find_node_from_data(content, source.parentNum)["optional"]
             } else {
-                console.info("source")
                 source_datas = find_node_from_data(content, source.parentNum)["body"]
             }
         }
@@ -247,7 +166,6 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
             if (codeDrager.get_mode() == DragMode.boundary) {
                 target_datas = find_node_from_data(content, target.parentNum)["optional"]
             }else {
-                console.info("target")
                 target_datas = find_node_from_data(content, target.parentNum)["body"]
             }
         }
@@ -259,10 +177,10 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
 
         set_data_num_index(content["body"], new Counter())
 
-        handleActiveTabSetContent(content)
+        activeTabSetContent(content)
     }
 
-    const handleActiveTabSetContent = (content: any) => {
+    const activeTabSetContent = (content: any) => {
         const editTabs = [...tabs]
         editTabs[activeTabIndex].content = JSON.parse(JSON.stringify(content))
         editTabs[activeTabIndex].modified = true
@@ -303,8 +221,14 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
         }
     })
 
+    const tabContent = {
+        index : activeTabIndex,
+        values : tabs,
+        setContent: activeTabSetContent
+    }
+
     return (
-        <>
+        <EditorContext.Provider value={tabContent}>
             <Top className="tab_groups">
                 {tabContentParser.map(
                     (item, index) => {
@@ -328,10 +252,10 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                 )}
             </Top>
             <div className="editor">
-                {tabs.length > 0 && tabs[activeTabIndex].format == Format.Code && <CodeEditor content={tabs[activeTabIndex].content} onNodeMove={handleCodeEditorNodeMove} onPropertiesPaneOpen={handleCodeEditorNodeChoose} onEditorSetContent={handleActiveTabSetContent}></CodeEditor>}
+                {tabs.length > 0 && tabs[activeTabIndex].format == Format.Code && <CodeEditor content={tabs[activeTabIndex].content} onNodeMove={handleCodeEditorNodeMove} onPropertiesPaneOpen={handleCodeEditorNodeChoose}></CodeEditor>}
                 {tabs.length > 0 && tabs[activeTabIndex].format == Format.Text && <TextEditor content={tabs[activeTabIndex].content}></TextEditor>}
             </div>
-        </>
+        </EditorContext.Provider>
     )
 })
 

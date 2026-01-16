@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, DragEvent } from "react"
+import React, { useEffect, useRef, DragEvent, useContext } from "react"
 import { project } from "../Project"
 import { KeyGenerator, Counter } from "../../components/Utils"
 import { CodeChooseCategory } from "./Utils"
-import { TagName, CodeNodePosition, get_element_parents_from_tag, make_numbers, codeDrager, mouse_in_node_top, find_previous_tag } from "./Utils"
+import { TagName, CodeNodePosition, make_numbers, codeDrager, mouse_in_node_top, find_previous_tag } from "./Utils"
 import { IconButton } from "../../components/Button"
 import { showContextMenu } from "../../components/ContextMenu"
+import { EditorContext, TabContent } from "../EditorContext"
+import { communication } from "../../components/Communication"
 
 declare const window: {
     dragKey: string,
@@ -65,8 +67,8 @@ function create_format_code_node(text: string) {
     return result
 }
 
-function content_node_creator(key: KeyGenerator, type: string, text: string) {
-    if (type == "Variable") {
+function content_node_creator(key: KeyGenerator, typeValue: string, text: string) {
+    if (typeValue == "Variable") {
         text = text.trim()
         if (text == "") {
             return <var key={key.next()} className="error">[请填写]</var>
@@ -74,10 +76,10 @@ function content_node_creator(key: KeyGenerator, type: string, text: string) {
             return <var key={key.next()}>{text}</var>
         }
     }
-    if (type == "Format") {
+    if (typeValue == "Format") {
         return <mark key={key.next()}>{create_format_code_node(text)}</mark>
     }
-    if (type == "Expression") {
+    if (typeValue == "Expression") {
         text = text.trim()
         if (text == "") {
             return <var key={key.next()} className="error">[请填写]</var>
@@ -85,7 +87,7 @@ function content_node_creator(key: KeyGenerator, type: string, text: string) {
             return <var key={key.next()}>{text}</var>
         }
     }
-    throw new TypeError(type)
+    throw new TypeError(typeValue)
 }
 
 export const find_component = (id: string, list: any): any => {
@@ -101,18 +103,67 @@ export const find_component = (id: string, list: any): any => {
     return null
 }
 
+const editor_action_remove = (tabContent: TabContent, parent_num: number, index: number) => {
+    const content = tabContent.values[tabContent.index].content
+    let data = content
+    if (parent_num > 0) {
+        data = find_node_from_data(content, parent_num)
+    }
+    data["body"]?.splice(index, 1)
+
+    set_data_num_index(content["body"], new Counter())
+    tabContent.setContent(content)
+}
+
+const editor_composition_add_item = (tabContent: TabContent, component_optional_id: string, conponent_category: string, composition_num: number, targetNum: number) => {
+    const content = tabContent.values[tabContent.index].content
+
+    const data = find_node_from_data(content, composition_num);
+    (async () => {
+        const optional = await communication.Executor.Designer.GetComponentOptional(data["id"], component_optional_id)
+        if (conponent_category == "Last") {
+            data["last"] = optional
+        } else {
+            if (composition_num == targetNum) {
+                data["optional"].unshift(optional)
+            } else {
+                for (var i=0; i<data["optional"].length; i++) {
+                    if (data["optional"][i]["num"] == targetNum) {
+                        data["optional"].splice(i + 1, 0, optional)
+                    }
+                }
+            }
+        }
+
+        set_data_num_index(content["body"], new Counter())
+        tabContent.setContent(content)
+    })()
+}
+
+const editor_composition_remove_item = (tabContent: TabContent, composition_num: number, index: number) => {
+    const content = tabContent.values[tabContent.index].content
+    const data = find_node_from_data(content, composition_num)
+    data["optional"].splice(index, 1)
+    set_data_num_index(content["body"], new Counter())
+    tabContent.setContent(content)
+}
+
+const editor_composition_remove_last = (tabContent: TabContent, composition_num: number) => {
+    const content = tabContent.values[tabContent.index].content
+    const data = find_node_from_data(content, composition_num)
+    delete data["last"]
+    set_data_num_index(content["body"], new Counter())
+    tabContent.setContent(content)
+}
+
 const CodeEditorItem = ({ data, parent_num, index, onNodeChoose }: { data: any, parent_num: number, index: number, onNodeChoose: (num: number) => void }) => {
+    const tabContent = useContext(EditorContext)
     const handleContextMenu = (e: React.MouseEvent<HTMLElement>) => {
         showContextMenu(e, [
             {
                 display: "删除",
                 callback: () => {
-                    window.communication.host_send_message("menu_workspace_action_remove", JSON.stringify(
-                        {
-                            parent: parent_num,
-                            index: index
-                        }
-                    ))
+                    editor_action_remove(tabContent, parent_num, index)
                 },
             }
         ])
@@ -239,17 +290,13 @@ const Footer = () => {
 const Container = ({ data, component, parent_num, index, onNodeChoose }: {
     data: any, component: any, parent_num: number, index: number, onNodeChoose: (num: number) => void
 }) => {
+    const tabContent = useContext(EditorContext)
     const handleContextMenu = (e: React.MouseEvent<HTMLElement>) => {
         showContextMenu(e, [
             {
                 display: "删除",
                 callback: () => {
-                    window.communication.host_send_message("menu_workspace_action_remove", JSON.stringify(
-                        {
-                            parent: parent_num,
-                            index: index
-                        }
-                    ))
+                    editor_action_remove(tabContent, parent_num, index)
                 },
             }
         ])
@@ -266,6 +313,7 @@ const Container = ({ data, component, parent_num, index, onNodeChoose }: {
 const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
     data: any, component: any, parent_num: number, index: number, onNodeChoose: (num: number) => void
 }) => {
+    const tabContent = useContext(EditorContext)
     const compoistionNum = data["num"]
     const boundaries: React.JSX.Element[] = []
     let last: React.JSX.Element | null = null
@@ -280,14 +328,7 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
                 items.push({
                     display: `添加 ${component_optional["name"]}`,
                     callback: () => {
-                        window.communication.host_send_message("menu_workspace_composition_add_item", JSON.stringify(
-                            {
-                                id: component_optional["id"],
-                                category: component_optional["category"],
-                                composition: compoistionNum,
-                                num: targetNum
-                            }
-                        ))
+                        editor_composition_add_item(tabContent, component_optional["id"], component_optional["category"], compoistionNum, targetNum)
                     }
                 })
             }
@@ -296,12 +337,7 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
             items.push({
                 display: "删除",
                 callback: () => {
-                    window.communication.host_send_message("menu_workspace_action_remove", JSON.stringify(
-                        {
-                            parent: parent_num,
-                            index: index
-                        }
-                    ))
+                    editor_action_remove(tabContent, parent_num, index)
                 }
             })
         } else {
@@ -309,12 +345,7 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
             items.push({
                 display: "删除",
                 callback: () => {
-                    window.communication.host_send_message("menu_workspace_composition_remove_item", JSON.stringify(
-                        {
-                            num: compoistionNum,
-                            index: currentIndex
-                        }
-                    ))
+                    editor_composition_remove_item(tabContent, compoistionNum, currentIndex)
                 }
             })
         }
@@ -327,11 +358,7 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
             {
                 display: "删除",
                 callback: () => {
-                    window.communication.host_send_message("menu_workspace_composition_remove_last", JSON.stringify(
-                        {
-                            num: data["num"]
-                        }
-                    ))
+                    editor_composition_remove_last(tabContent, compoistionNum)
                 },
             }
         ])
@@ -419,12 +446,12 @@ export const set_data_num_index = (datas: any[], counter: Counter) => {
     }
 }
 
-const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onEditorSetContent }: {
+const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen }: {
     content: any,
     onNodeMove: (source: CodeNodePosition, target: CodeNodePosition) => void,
-    onPropertiesPaneOpen: (category: CodeChooseCategory, data: any) => void,
-    onEditorSetContent: (content: any) => void
+    onPropertiesPaneOpen: (category: CodeChooseCategory, data: any) => void
 }) => {
+    const tabContent = useContext(EditorContext)
     const codeRef = useRef<HTMLElement>(null)
     const lineRef = useRef<HTMLElement>(null)
 
@@ -474,7 +501,7 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onEditorSetCont
         }
         e.preventDefault()
 
-        const currentTarget = get_element_parents_from_tag(e.target as HTMLElement, TagName.article)
+        const currentTarget = (e.target as HTMLElement).closest("article")
         if (currentTarget == null) {
             return
         }
@@ -635,7 +662,7 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onEditorSetCont
 
         const element = list.splice(sourceIndex, 1)[0]
         list.splice(targetIndex, 0, element)
-        onEditorSetContent(content)
+        tabContent.setContent(content)
     }
 
     const handleSectionVarContextMenu = (e: React.MouseEvent<HTMLElement>) => {
@@ -652,7 +679,7 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onEditorSetCont
                     } else {
                         content.parameter.out.splice(index, 1)
                     }
-                    onEditorSetContent(content)
+                    tabContent.setContent(content)
                 },
             }
         ]
@@ -694,7 +721,7 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onEditorSetCont
                         } else {
                             content.parameter.out.push(removed[0])
                         }
-                        onEditorSetContent(content)
+                        tabContent.setContent(content)
                     }
                 })(targetCategories[i]),
             })
@@ -720,7 +747,7 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen, onEditorSetCont
                 "value": ""
             })
         }
-        onEditorSetContent(content)
+        tabContent.setContent(content)
     }
 
     return (

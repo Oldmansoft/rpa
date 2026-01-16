@@ -11,16 +11,6 @@ export const TagName = {
     aside: 'ASIDE'
 }
 
-export const get_element_parents_from_tag = (element: HTMLElement, tag_name: string) => {
-    while (element.tagName != tag_name) {
-        if (element.tagName == TagName.main) {
-            return null
-        }
-        element = element.parentNode as HTMLElement;
-    }
-    return element;
-}
-
 function get_first_article_node(codeNode: HTMLElement) {
     const nodes = codeNode.children;
     if (!nodes || nodes.length == 0) {
