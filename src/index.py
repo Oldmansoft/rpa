@@ -4,7 +4,7 @@ from executor.component import ActionComponent, ContainerComponent, CompositionC
 from executor.log2 import logger
 from executor.block_file import BlockFile, BlockMode, Writer
 from os.path import isdir, join, split
-from os import listdir
+from os import listdir, mkdir
 from json import load
 from datetime import datetime
 import studio.project
@@ -38,9 +38,19 @@ class FontendOutput(Output):
         self.terminal_output.write(f"{datetime.now().strftime('%H:%M:%S')} {content}")
 
 
-class Designer(ServerCommandHandle):
+class ServerContext:
     def __init__(self):
         self.app_directory = None
+    
+    def on_start(self, parameters: dict):
+        self.app_directory = join(parameters["AppDirectory"], "data")
+        if not isdir(self.app_directory):
+            mkdir(self.app_directory)
+
+
+class Designer(ServerCommandHandle):
+    def __init__(self, context: ServerContext):
+        self.context = context
 
     def GetAllComponents(self) -> list:
         groups = []
@@ -113,16 +123,11 @@ class Designer(ServerCommandHandle):
             raise ValueError("file_path 不能为空")
         with open(join(path, file_path), mode="w", encoding="utf-8") as file:
             file.write(content)
-    
-    def __get_app_directory(self) -> str:
-        if self.app_directory is None:
-            self.app_directory = self.launcher.call("ExecutorCommandHandle", "AppDirectory")
-        return self.app_directory
 
     def RunProjectAppTarget(self, path: str, file_path: str) -> str:
-        output_execute_file = BlockFile(self.__get_app_directory(), "execute.run", BlockMode.Write)
+        output_execute_file = BlockFile(self.context.app_directory, "execute.run", BlockMode.Write)
         output_execute_file.clear()
-        output_terminal_file = BlockFile(self.__get_app_directory(), "terminal.run", BlockMode.Write)
+        output_terminal_file = BlockFile(self.context.app_directory, "terminal.run", BlockMode.Write)
         output_terminal_file.clear()
 
         with output_terminal_file as output_terminal_writer:
@@ -140,7 +145,7 @@ class Designer(ServerCommandHandle):
             terminal_output.write(f"{datetime.now().strftime('%H:%M:%S')} 完成结束流程")
     
     def ReadOutput(self, category: str) -> list:
-        with BlockFile(self.__get_app_directory(), f"{category}.run", BlockMode.Read) as reader:
+        with BlockFile(self.context.app_directory, f"{category}.run", BlockMode.Read) as reader:
             result = []
             for item in reader.list():
                 result.append(item.decode())
@@ -159,24 +164,15 @@ class Designer(ServerCommandHandle):
 
         return {"result": True, "path": app_path}
 
-    def Open(self, path: str) -> dict:
-        return studio.project.Project.Open(path)
-
-    def Run(self, path: str) -> None:
-        studio.project.Project.Current.run(path)
-
-
-def ServerOnStart(parameters: dict):
-    logger.info("server start", parameters)
 
 def main() -> None:
     if len(argv) < 4:
         print("Missing pipe handle.")
         return
-
+    context = ServerContext()
     process = ProcessServer()
-    process.on_start(ServerOnStart)
-    process.register_command_handle(Designer())
+    process.on_start(context.on_start)
+    process.register_command_handle(Designer(context))
     process.listen_with_argv()
 
 
