@@ -37,6 +37,8 @@ const Work = () => {
 
     useEffect(() => {
         (async () => {
+            editorRef.current!.reset()
+            clearCodePropertyData()
             communication.host_message_register("TerminalOutput", (_: string) => {
                 terminalOutputRef.current?.reload()
             })
@@ -148,6 +150,10 @@ const Work = () => {
         }
     }
 
+    const clearCodePropertyData = () => {
+        setCodePropertyData(undefined)
+    }
+
     return (
         <Layout>
             <ContextMenu></ContextMenu>
@@ -161,7 +167,7 @@ const Work = () => {
             <Vertical>
                 <Left><TreeViewer source={componentDatas} dragKey="editor" expand="Program" onClick={handleComponentTreeClick} onDragStart={handleComponentDragStart} OnDragEnd={handleComponentDragEnd}></TreeViewer></Left>
                 <Horizontal>
-                    <Editor onPropertiesPaneOpen={handlePropertiesPaneOpen} ref={editorRef}></Editor>
+                    <Editor onPropertiesPaneOpen={handlePropertiesPaneOpen} onTabChange={clearCodePropertyData} ref={editorRef}></Editor>
                     <Bottom>
                         <Tab>
                             <TabItem title="终端输出"><LogViewer category="terminal" ref={terminalOutputRef}></LogViewer></TabItem>

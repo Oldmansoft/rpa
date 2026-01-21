@@ -35,6 +35,15 @@
     background-color: #e1dfdd;
 }
 
+.editor > code > div > section > var > dfn {
+    font-style: normal;
+    font-weight: bold;
+}
+.editor > code > div > section > var > dfn.error {
+    font-weight: normal;
+    color: red;
+}
+
 .editor > code {
     --AsideLeft: -15px;
 

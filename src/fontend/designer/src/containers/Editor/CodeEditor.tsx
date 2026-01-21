@@ -127,7 +127,7 @@ const editor_composition_add_item = (tabContent: TabContent, component_optional_
             if (composition_num == targetNum) {
                 data["optional"].unshift(optional)
             } else {
-                for (var i=0; i<data["optional"].length; i++) {
+                for (var i = 0; i < data["optional"].length; i++) {
                     if (data["optional"][i]["num"] == targetNum) {
                         data["optional"].splice(i + 1, 0, optional)
                     }
@@ -455,7 +455,7 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen }: {
     const codeRef = useRef<HTMLElement>(null)
     const lineRef = useRef<HTMLElement>(null)
 
-    let section_drag_source: HTMLElement
+    let section_drag_source: HTMLElement | null = null
     let enterCount = 0
 
     useEffect(() => {
@@ -628,6 +628,48 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen }: {
         section_drag_source = e.target as HTMLElement
     }
 
+    const handleSectionDragEnd = (e: DragEvent) => {
+        const sourceIndex = Number(section_drag_source!.getAttribute("data-index"))
+        section_drag_source = null
+
+        const sectionRect = e.currentTarget.getBoundingClientRect()
+        if (e.clientX > sectionRect.left && e.clientX < sectionRect.right && e.clientY > sectionRect.top && e.clientY < sectionRect.bottom) {
+            let position = 0
+            for (var i = 0; i < e.currentTarget.children.length; i++) {
+                if (i <= sourceIndex) {
+                    position = i
+                }
+                const nodeRect = e.currentTarget.children[i].getBoundingClientRect()
+                if (e.clientX < nodeRect.left + (nodeRect.width / 2) && e.clientY < nodeRect.bottom || e.clientY < nodeRect.top) {
+                    break
+                }
+                if (i > sourceIndex) {
+                    position = i
+                }
+            }
+
+            if (sourceIndex != position) {
+                moveVarItem(sourceIndex, position)
+            }
+        }
+    }
+
+    const moveVarItem = (sourceIndex: number, targetIndex: number) => {
+        const category = getCodeChooseCategoryFromText(window.dragKey)
+        let list
+        if (category == CodeChooseCategory.Variable) {
+            list = content["local"]
+        } else if (category == CodeChooseCategory.ParameterIn) {
+            list = content["parameter"]["in"]
+        } else {
+            list = content["parameter"]["out"]
+        }
+
+        const element = list.splice(sourceIndex, 1)[0]
+        list.splice(targetIndex, 0, element)
+        tabContent.setContent(content)
+    }
+
     const handleSectionDragOver = (e: DragEvent) => {
         if (e.currentTarget.getAttribute("data-drag-key") == window.dragKey) {
             e.preventDefault()
@@ -642,27 +684,6 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen }: {
         } else {
             return CodeChooseCategory.ParameterOut
         }
-    }
-
-    const handleSectionDrop = (e: DragEvent) => {
-        const sourceIndex = Number(section_drag_source.getAttribute("data-index"))
-        const targetIndex = Number(e.currentTarget.getAttribute("data-index"))
-        if (sourceIndex == targetIndex) {
-            return
-        }
-        const category = getCodeChooseCategoryFromText(window.dragKey)
-        let list
-        if (category == CodeChooseCategory.Variable) {
-            list = content["local"]
-        } else if (category == CodeChooseCategory.ParameterIn) {
-            list = content["parameter"]["in"]
-        } else {
-            list = content["parameter"]["out"]
-        }
-
-        const element = list.splice(sourceIndex, 1)[0]
-        list.splice(targetIndex, 0, element)
-        tabContent.setContent(content)
     }
 
     const handleSectionVarContextMenu = (e: React.MouseEvent<HTMLElement>) => {
@@ -757,12 +778,11 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen }: {
                     <span>输入参数设置</span>
                     <IconButton onClick={() => { handleVarAdd(CodeChooseCategory.ParameterIn) }} className="icon-[mdi--plus] align-middle"></IconButton>
                 </h5>
-                <section data-drag-key="parameter-in" onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver}>
+                <section data-drag-key="parameter-in" onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver} onDragEnd={handleSectionDragEnd}>
                     {content.parameter.in.map(
                         (item: any, index: number) => (
-                            <var key={index} data-index={index} onClick={(event) => handleParameterInChoose(index, event)} draggable="true" onDrop={handleSectionDrop} onContextMenu={handleSectionVarContextMenu}>
+                            <var key={index} data-index={index} onClick={(event) => handleParameterInChoose(index, event)} draggable="true" onContextMenu={handleSectionVarContextMenu}>
                                 {item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
-                                <data>{item["value"]}</data>
                             </var>)
                     )}
                 </section>
@@ -772,12 +792,11 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen }: {
                     <span>流程变量设置</span>
                     <IconButton onClick={() => { handleVarAdd(CodeChooseCategory.Variable) }} className="icon-[mdi--plus] align-middle"></IconButton>
                 </h5>
-                <section data-drag-key="variable" onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver}>
+                <section data-drag-key="variable" onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver} onDragEnd={handleSectionDragEnd}>
                     {content.local.map(
                         (item: any, index: number) => (
-                            <var key={index} data-index={index} onClick={(event) => handleVariableChoose(index, event)} draggable="true" onDrop={handleSectionDrop} onContextMenu={handleSectionVarContextMenu}>
+                            <var key={index} data-index={index} onClick={(event) => handleVariableChoose(index, event)} draggable="true" onContextMenu={handleSectionVarContextMenu}>
                                 {item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
-                                <data>{item["value"]}</data>
                             </var>)
                     )}
                 </section>
@@ -795,12 +814,11 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen }: {
                     <span>输出参数设置</span>
                     <IconButton onClick={() => { handleVarAdd(CodeChooseCategory.ParameterOut) }} className="icon-[mdi--plus] align-middle"></IconButton>
                 </h5>
-                <section data-drag-key="parameter-out" onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver}>
+                <section data-drag-key="parameter-out" onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver} onDragEnd={handleSectionDragEnd}>
                     {content.parameter.out.map(
                         (item: any, index: number) => (
-                            <var key={index} data-index={index} onClick={(event) => handleParameterOutChoose(index, event)} draggable="true" onDrop={handleSectionDrop} onContextMenu={handleSectionVarContextMenu}>
+                            <var key={index} data-index={index} onClick={(event) => handleParameterOutChoose(index, event)} draggable="true" onContextMenu={handleSectionVarContextMenu}>
                                 {item["name"] == "" ? <dfn className="error">[请填写]</dfn> : <dfn>{item["name"]}</dfn>}
-                                <data>{item["value"]}</data>
                             </var>
                         )
                     )}

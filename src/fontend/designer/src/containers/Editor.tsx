@@ -22,6 +22,7 @@ export enum UpdateContentCategory {
 }
 
 export interface EditorRef {
+    reset(): void,
     open(file: string, format: Format, content: any): void,
     save(projectPath: string): void,
     run(projectPath: string): void,
@@ -30,12 +31,15 @@ export interface EditorRef {
     updateContent(category: UpdateContentCategory, num: number, key: string, value: string): any
 }
 
-const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (category: CodeChooseCategory, data: any) => void }, ref: React.Ref<EditorRef>) => {
+const Editor = forwardRef(({ onPropertiesPaneOpen, onTabChange }: { onPropertiesPaneOpen: (category: CodeChooseCategory, data: any) => void, onTabChange: () => void }, ref: React.Ref<EditorRef>) => {
     const [activeTabIndex, setActiveTabIndex] = useState(-1)
     const [tabs, setTabs] = useState<TabContentValue[]>([])
 
     useImperativeHandle(ref, () => {
         return {
+            reset() {
+                setTabs([])
+            },
             open(file: string, format: Format, content: any) {
                 const fileIndex = tabs.findIndex(element => element.file == file)
                 if (fileIndex == -1) {
@@ -46,10 +50,10 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                         modified: false,
                         stamp: new Date().getTime()
                     }])
-                    setActiveTabIndex(tabs.length)
+                    switchActiveTabIndex(tabs.length)
                 } else {
                     tabs[fileIndex].stamp = new Date().getTime()
-                    setActiveTabIndex(fileIndex)
+                    switchActiveTabIndex(fileIndex)
                 }
             },
             async save(projectPath: string) {
@@ -114,6 +118,14 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
         }
     })
 
+    const switchActiveTabIndex = (index: number) => {
+        if (index == activeTabIndex) {
+            return
+        }
+        setActiveTabIndex(index)
+        onTabChange()
+    }
+
     const closeTab = (index: number) => {
         const editTabs = [...tabs]
         editTabs.splice(index, 1)
@@ -128,13 +140,14 @@ const Editor = forwardRef(({ onPropertiesPaneOpen }: { onPropertiesPaneOpen: (ca
                 }
             }
             setActiveTabIndex(index)
+            onTabChange()
         }
         setTabs(editTabs)
     }
 
     const handleClick = (index: number) => {
         tabs[index].stamp = new Date().getTime()
-        setActiveTabIndex(index)
+        switchActiveTabIndex(index)
     }
 
     const handleCodeEditorNodeChoose = (category: CodeChooseCategory, data: any) => {
