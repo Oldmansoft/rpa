@@ -9,7 +9,7 @@ const About = ({ onClose }: { onClose: () => void }) => {
 
     return createPortal(
         <dialog ref={dialogRef}>
-            <div>版本 0.0.0.0</div>
+            <div>Demo</div>
             <button onClick={onClose}>关闭</button>
         </dialog>,
         document.body

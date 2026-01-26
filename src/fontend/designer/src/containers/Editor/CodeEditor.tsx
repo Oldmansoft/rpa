@@ -40,6 +40,7 @@ const setChosen = (node: HTMLElement) => {
     for (let i = 0; i < nodes.length; i++) {
         nodes[i].classList.remove("chosen")
     }
+    console.info(node)
     if (node != null) {
         node.classList.add("chosen")
     }

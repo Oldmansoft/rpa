@@ -21,6 +21,7 @@
 }
 
 .editor > code > div > section > var {
+    cursor: default;
     display: inline-block;
     padding: 5px;
     border-top: 1px solid #efefef;
@@ -29,10 +30,6 @@
     border-bottom: 1px solid #aaa;
     border-radius: 3px;
     margin-bottom: 5px;
-}
-.editor > code > div > section > var:hover {
-    cursor: default;
-    background-color: #e1dfdd;
 }
 
 .editor > code > div > section > var > dfn {
@@ -98,6 +95,13 @@
 }
 
 .editor > code > main > article > ul,
+.editor > code > div > section > var,
+.editor samp > article > ul {
+    --color: #fff;
+    background-color: var(--color);
+}
+
+.editor > code > main > article > ul,
 .editor samp > article > ul {
     display: flex;
     padding: 5px;
@@ -108,21 +112,21 @@
     border-right: 1px solid #eee;
     border-bottom: 1px solid #aaa;
     border-radius: 3px;
-    background-color: #fff;
 }
 .editor > code > main > article > ul:hover,
-.editor samp > article > ul:hover {
-    background-color: #efefef;
+.editor samp > article > ul:hover,
+.editor > code > div > section > var:hover {
+    background-color:hsl(from var(--color) h s calc(l - 5));
 }
 .editor > code > main > article.chosen > ul,
 .editor samp > article.chosen > ul,
-.editor > code > div > var.chosen {
-    background-color: #f3f2f1;
+.editor > code > div > section > var.chosen {
+    background-color:hsl(from var(--color) h s calc(l - 15));
 }
 .editor > code > main > article.chosen > ul:hover,
 .editor samp > article.chosen > ul:hover,
-.editor > code > div > var.chosen:hover {
-    background-color: #e1dfdd;
+.editor > code > div > section > var.chosen:hover {
+    background-color:hsl(from var(--color) h s calc(l - 10));
 }
 .editor > code > main > article > ul > li:nth-child(2),
 .editor samp > article > ul > li:nth-child(2) {
@@ -167,21 +171,47 @@
     margin: 0 5px;
 }
 
+.editor hgroup section > samp,
+.editor hgroup > nav > section > article > ul,
+.editor hgroup > section > article > ul,
+.editor hgroup > article > ul {
+    --color: #dbe9ff
+}
+
 .editor hgroup > nav > section > article > ul,
 .editor hgroup > section > article > ul,
 .editor hgroup > article > ul {
     display: inline-flex;
     align-items: center;
     padding: 5px;
-    background-color: #dbe9ff;
+    background-color: var(--color);
 }
+
+.editor hgroup > nav > section > article > ul:hover,
+.editor hgroup > section > article > ul:hover,
+.editor hgroup > article > ul:hover {
+    background-color:hsl(from var(--color) h s calc(l - 5));
+}
+
+.editor hgroup > nav > section > article.chosen > ul,
+.editor hgroup > section > article.chosen > ul,
+.editor hgroup > article.chosen > ul {
+    background-color:hsl(from var(--color) h s calc(l - 10));
+}
+
+.editor hgroup > nav > section > article.chosen > ul:hover,
+.editor hgroup > section > article.chosen > ul:hover,
+.editor hgroup > article.chosen > ul:hover {
+    background-color:hsl(from var(--color) h s calc(l - 7));
+}
+
 .editor section > article > ul h4,
 .editor section > article > ul p {
     display: inline-block;
 }
 .editor hgroup section > samp {
     display: block;
-    border-left: 4px solid #dbe9ff;
+    border-left: 4px solid var(--color);
 }
 
 .editor hgroup section > article > ul {

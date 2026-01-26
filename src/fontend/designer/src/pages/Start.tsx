@@ -25,8 +25,10 @@ const Start = () => {
             navigate("/work", { state: { path: app_file_path } })
         }
     }
+    /*
     const handleImportClick = async () => {
     }
+    */
     const handleAboutClick = () => {
         setShowAbout(true)
     }
@@ -38,7 +40,9 @@ const Start = () => {
             <Top>
                 <Button text="创建" className="icon-[ion--compose]" onClick={handleCreateProjectClick} />
                 <Button text="打开" className="icon-[mingcute--open-door-line]" onClick={handleOpenClick} />
+                {/*
                 <Button text="导入" className="icon-[lets-icons--import-fill]" onClick={handleImportClick} />
+                */}
                 <Button text="关于" className="icon-[ix--about]" onClick={handleAboutClick} />
 
                 {showCreateProject && <CreateProject onClose={handleCreateProjectClose}></CreateProject>}
