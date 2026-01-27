@@ -44,7 +44,6 @@ class Executor extends CommunicationProxy {
         const return_value = await this.communication.webview2.Executor.CallCommand(command_text)
         const result = JSON.parse(return_value)
         if (return_value == null) {
-            console.error(command_text)
             return result
         }
         if (result["error"] != null) {
@@ -168,11 +167,6 @@ class Communication {
             delete this.HostMessageDealer[key]
         }
         this.HostMessageDealer[key] = callback
-    }
-
-    //TODO: 准备清除
-    host_callback(key: string, value: string) {
-        console.error("host callback", key, value)
     }
 }
 

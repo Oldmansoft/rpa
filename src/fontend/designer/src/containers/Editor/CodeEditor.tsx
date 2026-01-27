@@ -40,7 +40,6 @@ const setChosen = (node: HTMLElement) => {
     for (let i = 0; i < nodes.length; i++) {
         nodes[i].classList.remove("chosen")
     }
-    console.info(node)
     if (node != null) {
         node.classList.add("chosen")
     }
@@ -377,7 +376,7 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
     }
 
     return (
-        <hgroup className="container" data-num={data["last-num"]} data-index={index} draggable={true}>
+        <hgroup className="composition" data-num={data["last-num"]} data-index={index} draggable={true}>
             <Section className="header" data={data} index={index} component={component} onNodeChoose={onNodeChoose} onContextMenu={handleContextMenu}></Section>
             {boundaries && <nav data-num={data["num"]}>{boundaries}</nav>}
             {last}
@@ -439,6 +438,7 @@ export const set_data_num_index = (datas: any[], counter: Counter) => {
         if ("last" in data) {
             const last = data["last"]
             last["num"] = counter.next()
+            last["parent-id"] = data["id"]
             set_data_num_index(last["body"], counter)
         }
         if ("body" in data || "optional" in data) {

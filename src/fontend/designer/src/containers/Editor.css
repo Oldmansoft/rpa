@@ -113,18 +113,16 @@
     border-bottom: 1px solid #aaa;
     border-radius: 3px;
 }
-.editor > code > main > article > ul:hover,
-.editor samp > article > ul:hover,
+
+.editor article > ul:hover,
 .editor > code > div > section > var:hover {
     background-color:hsl(from var(--color) h s calc(l - 5));
 }
-.editor > code > main > article.chosen > ul,
-.editor samp > article.chosen > ul,
+.editor article.chosen > ul,
 .editor > code > div > section > var.chosen {
     background-color:hsl(from var(--color) h s calc(l - 15));
 }
-.editor > code > main > article.chosen > ul:hover,
-.editor samp > article.chosen > ul:hover,
+.editor article.chosen > ul:hover,
 .editor > code > div > section > var.chosen:hover {
     background-color:hsl(from var(--color) h s calc(l - 10));
 }
@@ -175,7 +173,14 @@
 .editor hgroup > nav > section > article > ul,
 .editor hgroup > section > article > ul,
 .editor hgroup > article > ul {
-    --color: #dbe9ff
+    --color: #dbe9ff;
+}
+
+.editor hgroup.container section > samp,
+.editor hgroup.container > nav > section > article > ul,
+.editor hgroup.container > section > article > ul,
+.editor hgroup.container > article > ul {
+    --color: #cff6f9;
 }
 
 .editor hgroup > nav > section > article > ul,
@@ -185,24 +190,6 @@
     align-items: center;
     padding: 5px;
     background-color: var(--color);
-}
-
-.editor hgroup > nav > section > article > ul:hover,
-.editor hgroup > section > article > ul:hover,
-.editor hgroup > article > ul:hover {
-    background-color:hsl(from var(--color) h s calc(l - 5));
-}
-
-.editor hgroup > nav > section > article.chosen > ul,
-.editor hgroup > section > article.chosen > ul,
-.editor hgroup > article.chosen > ul {
-    background-color:hsl(from var(--color) h s calc(l - 10));
-}
-
-.editor hgroup > nav > section > article.chosen > ul:hover,
-.editor hgroup > section > article.chosen > ul:hover,
-.editor hgroup > article.chosen > ul:hover {
-    background-color:hsl(from var(--color) h s calc(l - 7));
 }
 
 .editor section > article > ul h4,
