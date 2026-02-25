@@ -100,6 +100,7 @@ class SequenceComponent(Component):
         self.__display_content: str = None
         self.__name: str = None
         self.__format: str = None
+        self.__icon: str = None
 
     @abstractmethod
     def define_parameter(self) -> ParameterDefinition:
@@ -129,6 +130,12 @@ class SequenceComponent(Component):
     
     def get_format(self) -> str:
         return self.__format
+    
+    def set_icon(self, icon: str) -> None:
+        self.__icon = icon
+
+    def get_icon(self) -> str:
+        return self.__icon
 
     def get_type(self) -> str:
         return 'unit'
@@ -142,6 +149,7 @@ class SequenceComponent(Component):
             'id': self.__class__.__name__,
             'type': self.get_type(),
             'name': self.get_name(),
+            'icon': self.get_icon(),
             'params': self.define_parameter().get_definition_content(),
             'format': self.get_format()
         }

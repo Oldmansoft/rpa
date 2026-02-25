@@ -1,5 +1,8 @@
 @import 'tailwindcss';
-@plugin "@iconify/tailwind4";
+@plugin "@iconify/tailwind4" {
+  prefixes: ion;
+}
+@source inline("icon-[ion--{git-branch}]");
 
 #root {
   max-width: 1280px;

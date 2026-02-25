@@ -240,13 +240,17 @@ const Action = ({ data, component, num, index, className, draggable, onNodeChoos
             onNodeChoose(num)
         }
     }
+    let iconClassName = "icon-[bitcoin-icons--block-outline]"
+    if (component["icon"] != null) {
+        iconClassName = `icon-[${component["icon"]}]`
+    }
 
     return (
         <article className={className} data-num={num} data-index={index} draggable={draggable} onClick={handleClick} onContextMenu={onContextMenu}>
             <ul>
                 <li>
                     <aside></aside>
-                    <i className="icon-[ion--compose]"></i>
+                    <i className={iconClassName}></i>
                 </li>
                 <li>
                     <h4>{display}</h4>
@@ -280,7 +284,7 @@ const Footer = () => {
     return (
         <article className="label footer">
             <ul>
-                <li><aside></aside><i className="icon-[ion--compose]"></i></li>
+                <li><aside></aside><i className="icon-[ion--md-return-left]"></i></li>
                 <li><h4>结束</h4></li>
             </ul>
         </article>

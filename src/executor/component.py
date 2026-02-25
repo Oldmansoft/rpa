@@ -6,6 +6,7 @@ class Assign(ActionComponent):
     def __init__(self) -> None:
         super().__init__()
         self.set_name('分配变量')
+        self.set_icon('ion--compose')
         self.set_format('将{name}设置为{value}')
 
     def define_parameter(self) -> ParameterDefinition:
@@ -43,6 +44,7 @@ class If(CompositionComponent):
     def __init__(self) -> None:
         super().__init__()
         self.set_name('如果')
+        self.set_icon('ion--git-branch')
         self.set_format('{condition}')
         self.else_action: EmptyParametersComponent = None
         self.conditions: List[ConditionalParametersComponent] = []
