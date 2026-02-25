@@ -115,13 +115,13 @@ const editor_action_remove = (tabContent: TabContent, parent_num: number, index:
     tabContent.setContent(content)
 }
 
-const editor_composition_add_item = (tabContent: TabContent, component_optional_id: string, conponent_category: string, composition_num: number, targetNum: number) => {
+const editor_composition_add_item = (tabContent: TabContent, component_optional_id: string, component_category: string, composition_num: number, targetNum: number) => {
     const content = tabContent.values[tabContent.index].content
 
     const data = find_node_from_data(content, composition_num);
     (async () => {
         const optional = await communication.Executor.Designer.GetComponentOptional(data["id"], component_optional_id)
-        if (conponent_category == "Last") {
+        if (component_category == "Last") {
             data["last"] = optional
         } else {
             if (composition_num == targetNum) {
@@ -318,7 +318,7 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
     data: any, component: any, parent_num: number, index: number, onNodeChoose: (num: number) => void
 }) => {
     const tabContent = useContext(EditorContext)
-    const compoistionNum = data["num"]
+    const compositionNum = data["num"]
     const boundaries: React.JSX.Element[] = []
     let last: React.JSX.Element | null = null
 
@@ -332,12 +332,12 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
                 items.push({
                     display: `添加 ${component_optional["name"]}`,
                     callback: () => {
-                        editor_composition_add_item(tabContent, component_optional["id"], component_optional["category"], compoistionNum, targetNum)
+                        editor_composition_add_item(tabContent, component_optional["id"], component_optional["category"], compositionNum, targetNum)
                     }
                 })
             }
         }
-        if (compoistionNum == targetNum) {
+        if (compositionNum == targetNum) {
             items.push({
                 display: "删除",
                 callback: () => {
@@ -349,7 +349,7 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
             items.push({
                 display: "删除",
                 callback: () => {
-                    editor_composition_remove_item(tabContent, compoistionNum, currentIndex)
+                    editor_composition_remove_item(tabContent, compositionNum, currentIndex)
                 }
             })
         }
@@ -362,7 +362,7 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
             {
                 display: "删除",
                 callback: () => {
-                    editor_composition_remove_last(tabContent, compoistionNum)
+                    editor_composition_remove_last(tabContent, compositionNum)
                 },
             }
         ])

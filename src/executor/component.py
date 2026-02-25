@@ -247,22 +247,22 @@ class Builder:
             group.set_body(self.create_body(procedure, node['body']))
             procedure.get_line_number()
         elif component.__class__.__base__ == CompositionComponent:
-            mgruop: CompositionComponent = component
-            mgruop.set_body(self.create_body(procedure, node['body']))
-            definitions = mgruop.define_optional().to_dict()
+            mgroup: CompositionComponent = component
+            mgroup.set_body(self.create_body(procedure, node['body']))
+            definitions = mgroup.define_optional().to_dict()
             if 'optional' in node:
                 for optional in node['optional']:
                     definition = definitions[optional['id']]
                     optional_component = definition.optional_component_type()
                     optional_component.set_name(definition.name)
                     self.set_sequence_component(optional_component, optional, procedure)
-                    mgruop.set_optional(optional_component)
+                    mgroup.set_optional(optional_component)
             if 'last' in node:
                 definition = definitions[node['last']['id']]
                 else_component = definition.optional_component_type()
                 else_component.set_name(definition.name)
                 self.set_sequence_component(else_component, node['last'], procedure)
-                mgruop.set_last(else_component)
+                mgroup.set_last(else_component)
             procedure.get_line_number()
     
     def create_body(self, procedure: Procedure, nodes: List[dict]):
