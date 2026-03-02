@@ -1,4 +1,5 @@
 import Input from "../../components/Input"
+import InputExpression from "../../components/InputExpression"
 
 const CodePaneVariable = ({ data, onChange }: { data: any, onChange(index: number, key: string, value: string): void }) => {
     if (!data) {
@@ -13,8 +14,9 @@ const CodePaneVariable = ({ data, onChange }: { data: any, onChange(index: numbe
         return true
     }
 
-    const handleValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        onChange(data.index, "value", event.target.value)
+    const handleValueChange = (value: string) => {
+        onChange(data.index, "value", value)
+        return true
     }
 
     return (
@@ -25,7 +27,7 @@ const CodePaneVariable = ({ data, onChange }: { data: any, onChange(index: numbe
             </label>
             <label className="property">
                 <span>初始值</span>
-                <input value={data["value"]} onChange={handleValueChange} />
+                <InputExpression value={data["value"]} onNativeChange={handleValueChange} onInput={(value) => value.trim()}></InputExpression>
             </label>
         </>
     )

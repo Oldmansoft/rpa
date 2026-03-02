@@ -1,3 +1,5 @@
+import InputExpression from "../../components/InputExpression"
+import InputFormat from "../../components/InputFormat"
 import { project } from "../Project"
 import { find_component } from "./CodeEditor"
 import './CodePaneProperties.css'
@@ -49,15 +51,27 @@ const CodePaneAction = ({ data, onChange }: { data: any, onChange(num: number, k
     }
 
     const more: React.JSX.Element[] = []
+    console.info(data.params)
     for (const key in data.params) {
         const component_param = get_param(component.params, key)
         if (component_param == null) {
             more.push(<label className="property">不支持字段 {key}</label>)
         } else {
-            more.push(<label key={key} className="property">
-                <span>{component_param.name}</span>
-                <input placeholder={inputTypeTips.get(component_param.type)} data-type={component_param.type} value={data.params[key]} onChange={(event) => handleParameterChange(key, event)} />
-            </label>)
+            console.info(component.params)
+            let input: React.JSX.Element
+            if (component_param.type == "Expression") {
+                input = <InputExpression placeholder={inputTypeTips.get(component_param.type)} value={data.params[key]} onNativeChange={(value) => { onChange(data.num, key, value); return true; }}></InputExpression>
+            } else if (component_param.type == "Format") {
+                input = <InputFormat placeholder={inputTypeTips.get(component_param.type)} value={data.params[key]} onNativeChange={(value) => { onChange(data.num, key, value); return true; }}></InputFormat>
+            } else {
+                input = <input placeholder={inputTypeTips.get(component_param.type)} value={data.params[key]} onChange={(event) => handleParameterChange(key, event)} />
+            }
+            more.push(
+                <label key={key} className="property">
+                    <span>{component_param.name}</span>
+                    {input}
+                </label>
+            )
         }
     }
     

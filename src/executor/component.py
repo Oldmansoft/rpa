@@ -10,7 +10,7 @@ class Assign(ActionComponent):
         self.set_format('将{name}设置为{value}')
 
     def define_parameter(self) -> ParameterDefinition:
-        return ParameterDefinition().append('name', '变量', VariableValue).append('value', '值', FormatValue)
+        return ParameterDefinition().append('name', '变量', VariableValue).append('value', '值', ExpressionValue)
 
     def set_parameter(self, *args) -> None:
         self.var_name = args[0].get()
@@ -277,7 +277,7 @@ class Builder:
         procedure = Procedure(output)
         local_variables = data['local']
         for local_variable in local_variables:
-            value = FormatValue()
+            value = ExpressionValue()
             value.set(local_variable["value"], procedure)
             procedure.define(local_variable["name"], value)
         

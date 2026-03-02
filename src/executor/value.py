@@ -1,3 +1,5 @@
+from simpleeval import simple_eval
+
 from .base_define import *
 
 class StringValue(Value):
@@ -69,10 +71,9 @@ class FormatValue(Value):
         '''获取表达式的值
         :return: 表达式的对应值
         '''
-        expression = self.content.replace('\'', '\\\'')
+        expression = self.content
+        expression = expression.replace('\\', '\\\\')
+        expression = expression.replace('\r', '\\r')
         expression = expression.replace('\n', '\\n')
-        #TODO: 其它转义符
-        if is_alone_expression(expression):
-            return eval(expression[1:-1], None, self.procedure.get_all_values())
-        else:
-            return eval(f"f'{expression}'", None, self.procedure.get_all_values())
+        expression = expression.replace('\'', '\\\'')
+        return simple_eval(f"f'{expression}'", names=self.procedure.get_all_values())
