@@ -181,10 +181,12 @@ const Work = () => {
                             <TreeViewer source={treeDatas} dragKey="file" dropKey="file" onClick={handleFileTreeClick}></TreeViewer>
                         </TabItem>
                         <TabItem title="属性">
-                            {codePropertyData && codePropertyData.category == CodeChooseCategory.Body && <CodePaneBody data={codePropertyData.data} onChange={handlePropertyChange}></CodePaneBody>}
-                            {codePropertyData && codePropertyData.category == CodeChooseCategory.Variable &&  <CodePaneVariable data={codePropertyData.data} onChange={handleVariableChange}></CodePaneVariable>}
-                            {codePropertyData && codePropertyData.category == CodeChooseCategory.ParameterIn &&  <CodePaneParameter data={codePropertyData.data} direction="in" onChange={handleParameterChange}></CodePaneParameter>}
-                            {codePropertyData && codePropertyData.category == CodeChooseCategory.ParameterOut &&  <CodePaneParameter data={codePropertyData.data} direction="out" onChange={handleParameterChange}></CodePaneParameter>}
+                            <div className="code-pane-properties">
+                                {codePropertyData && codePropertyData.category == CodeChooseCategory.Body && <CodePaneBody data={codePropertyData.data} onChange={handlePropertyChange}></CodePaneBody>}
+                                {codePropertyData && codePropertyData.category == CodeChooseCategory.Variable &&  <CodePaneVariable data={codePropertyData.data} onChange={handleVariableChange}></CodePaneVariable>}
+                                {codePropertyData && codePropertyData.category == CodeChooseCategory.ParameterIn &&  <CodePaneParameter data={codePropertyData.data} direction="in" onChange={handleParameterChange}></CodePaneParameter>}
+                                {codePropertyData && codePropertyData.category == CodeChooseCategory.ParameterOut &&  <CodePaneParameter data={codePropertyData.data} direction="out" onChange={handleParameterChange}></CodePaneParameter>}
+                            </div>
                         </TabItem>
                     </Tab>
                 </Right>

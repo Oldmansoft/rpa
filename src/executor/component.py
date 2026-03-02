@@ -275,8 +275,11 @@ class Builder:
     
     def create(self, output: Output, data: dict) -> Procedure:
         procedure = Procedure(output)
-        local_variables = data['local']
-        for local_variable in local_variables:
+        for in_parameter in data['parameter']['in']:
+            value = ExpressionValue()
+            value.set(in_parameter["value"], procedure)
+            procedure.define(in_parameter["name"], value)
+        for local_variable in data['local']:
             value = ExpressionValue()
             value.set(local_variable["value"], procedure)
             procedure.define(local_variable["name"], value)

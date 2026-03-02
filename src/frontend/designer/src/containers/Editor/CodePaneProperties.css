@@ -1,3 +1,40 @@
+.code-pane-properties {
+    padding: 10px 12px;
+    box-sizing: border-box;
+}
+
 label.property {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    min-height: 28px;
+}
+
+label.property > span {
+    flex-shrink: 0;
+    min-width: 56px;
+    text-align: right;
+    font-size: 13px;
+}
+
+label.property input,
+label.property > *:not(span) {
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+label.property input {
+    padding: 4px 8px;
+    border: 1px solid var(--vscode-input-border, #ccc);
+    border-radius: 4px;
+    background-color: var(--vscode-input-background, #fff);
+    color: var(--vscode-input-foreground);
+    font-size: 13px;
+}
+
+label.property input:focus {
+    outline: none;
+    border-color: var(--vscode-focusBorder, #0078d4);
 }
