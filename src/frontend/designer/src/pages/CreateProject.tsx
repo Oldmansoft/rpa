@@ -11,7 +11,7 @@ const CreateProject = ({onClose}: {onClose: () => void}) => {
 
     useEffect(() => {
         dialogRef.current?.showModal()
-    })
+    }, [])
 
     const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setName(event.target.value)

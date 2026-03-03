@@ -22,7 +22,7 @@ function get_param(params: any[], id: string) {
 
 const CodePaneAction = ({ data, onChange }: { data: any, onChange(num: number, key: string, value: string): void }) => {
     if (!data) {
-        return
+        return null
     }
     let component: any
     if ("parent-id" in data) {
@@ -35,11 +35,11 @@ const CodePaneAction = ({ data, onChange }: { data: any, onChange(num: number, k
         component = (component["optional"] as any[]).find(item => item["id"] == data["id"])
     } else {
         component = find_component(data["id"], project.getComponents())
-    }
-    if (!component) {
-        return (
-            <>不支持组件{data["id"]}</>
-        )
+        if (!component) {
+            return (
+                <>不支持组件{data["id"]}</>
+            )
+        }
     }
 
     const handleParameterChange = (key: string, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,13 +51,11 @@ const CodePaneAction = ({ data, onChange }: { data: any, onChange(num: number, k
     }
 
     const more: React.JSX.Element[] = []
-    console.info(data.params)
     for (const key in data.params) {
         const component_param = get_param(component.params, key)
         if (component_param == null) {
             more.push(<label className="property">不支持字段 {key}</label>)
         } else {
-            console.info(component.params)
             let input: React.JSX.Element
             if (component_param.type == "Expression") {
                 input = <InputExpression placeholder={inputTypeTips.get(component_param.type)} value={data.params[key]} onNativeChange={(value) => { onChange(data.num, key, value); return true; }}></InputExpression>

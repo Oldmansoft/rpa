@@ -7,12 +7,7 @@ import { IconButton } from "../components/Button"
 import { Top } from '../components/Layout'
 import { Counter } from "../components/Utils"
 import { communication } from '../components/Communication'
-import { EditorContext, TabContentValue } from "./EditorContext"
-
-export enum Format {
-    Text,
-    Code
-}
+import { EditorContext, Format, TabContentValue } from "./EditorContext"
 
 export enum UpdateContentCategory {
     Body,

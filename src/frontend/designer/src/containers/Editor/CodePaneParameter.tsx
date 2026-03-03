@@ -3,7 +3,7 @@ import InputExpression from "../../components/InputExpression"
 
 const CodePaneParameter = ({ data, direction, onChange }: {
     data: any,
-    direction: "in" | "out"
+    direction: "in" | "out",
     onChange(direction: "in" | "out", index: number, key: string, value: string): void
 }) => {
     if (!data) {

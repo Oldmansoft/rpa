@@ -278,13 +278,6 @@ class CodeDrager {
             this.clear()
             return null
         }
-        /*
-        if (this.dropLine.parentElement?.tagName == TagName.code) {
-            this.coder!.after(this.dropLine)
-            this.clear()
-            return null
-        }
-        */
         const result = new CodeNodeMove()
         if (this.source_node != null) {
             result.setSource(this.getDataLineNum(this.source_node.parentNode), this.getDataPositionIndex(this.source_node))

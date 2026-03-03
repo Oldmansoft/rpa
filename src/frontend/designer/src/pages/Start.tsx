@@ -25,10 +25,6 @@ const Start = () => {
             navigate("/work", { state: { path: app_file_path } })
         }
     }
-    /*
-    const handleImportClick = async () => {
-    }
-    */
     const handleAboutClick = () => {
         setShowAbout(true)
     }

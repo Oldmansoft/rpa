@@ -48,42 +48,9 @@ export const DialogAlert = forwardRef((props: React.ComponentProps<'dialog'>, re
     return createPortal(
         <dialog {...props} ref={dialogRef}>
             {content}
-        </dialog>,
-        document.body
-    )
-})
-
-export interface DialogCreateProjectRef {
-    show(): void
-}
-
-export const DialogCreateProject = forwardRef((props: React.ComponentProps<'dialog'>, ref: React.Ref<DialogCreateProjectRef>) => {
-    const dialogRef = useRef<HTMLDialogElement>(null)
-    const inputNameRef = useRef<HTMLInputElement>(null)
-    const inputPathRef = useRef<HTMLInputElement>(null)
-
-    useImperativeHandle(ref, () => {
-        return {
-            show() {
-                dialogRef.current!.showModal()
-            }
-        };
-    }, []);
-
-    const buttonClickHandle = () => {
-
-    }
-    return createPortal(
-        <dialog {...props} ref={dialogRef}>
-            <h1>新建应用<i className="font i-close"></i></h1>
-            <section>
-                <label><span>应用名称</span><input ref={inputNameRef} /></label>
-                <label><span>应用位置</span><input ref={inputPathRef} /><button onClick={buttonClickHandle}>...</button></label>
-                <div className="buttons">
-                    <button disabled>确定</button>
-                    <button onClick={ () => { dialogRef.current!.close() } }>取消</button>
-                </div>
-            </section>
+            <div>
+                <button onClick={() => dialogRef.current!.close()}>确定</button>
+            </div>
         </dialog>,
         document.body
     )

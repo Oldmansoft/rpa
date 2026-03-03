@@ -3,11 +3,12 @@ import Button from '../components/Button'
 import Layout, { Vertical, Horizontal, Top, Bottom, Left, Right, Tab, TabItem, TabRef } from '../components/Layout'
 import { communication } from '../components/Communication'
 import TreeViewer, { TreeNode } from '../components/TreeViewer'
-import { get_designer_component_datas, get_designer_file_tree_data } from "../components/DataSource"
+import { get_designer_components_raw_and_tree, get_designer_file_tree_data } from "../components/DataSource"
 import { useEffect, useRef, useState } from "react"
 import LogViewer, { LogViewerRef } from "../components/LogViewer"
 import { set_data_num_index } from "../containers/Editor/CodeEditor"
-import Editor, { EditorRef, Format, UpdateContentCategory } from "../containers/Editor"
+import {Format} from "../containers/EditorContext"
+import Editor, { EditorRef, UpdateContentCategory } from "../containers/Editor"
 import { project } from "../containers/Project"
 import About from './About'
 import { Counter } from "../components/Utils"
@@ -49,7 +50,7 @@ const Work = () => {
             communication.host_message_register("ExecuteOutput", (_: string) => {
                 executeOutputRef.current?.reload()
             })
-            const [componentDatas, componentTreeNodes] = await get_designer_component_datas()
+            const [componentDatas, componentTreeNodes] = await get_designer_components_raw_and_tree()
             await project.init(componentDatas, path)
             handleFileTreeClick(project.getMainFile())
             setTreeDatas(await get_designer_file_tree_data(project.getAppPath()))

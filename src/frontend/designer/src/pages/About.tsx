@@ -5,7 +5,7 @@ const About = ({ onClose }: { onClose: () => void }) => {
     const dialogRef = useRef<HTMLDialogElement>(null)
     useEffect(() => {
         dialogRef.current?.showModal()
-    })
+    }, [])
 
     return createPortal(
         <dialog ref={dialogRef}>

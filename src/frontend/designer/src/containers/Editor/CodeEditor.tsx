@@ -389,7 +389,7 @@ const Composition = ({ data, component, parent_num, index, onNodeChoose }: {
     )
 }
 
-export const find_node_from_data = (data: any, findNum: Number): any | null => {
+export const find_node_from_data = (data: any, findNum: number): any | null => {
     for (const children of data["body"]) {
         if (children["num"] == findNum) {
             return children

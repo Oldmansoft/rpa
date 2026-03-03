@@ -33,7 +33,7 @@ export const get_designer_file_tree_data = async (path: string) => {
     return get_list_data(datas)
 }
 
-export const get_designer_component_datas = async () => {
+export const get_designer_components_raw_and_tree = async () => {
     const datas = await communication.Executor.Designer.GetAllComponents()
     const result: TreeNode[] = []
     for (const data of datas) {
