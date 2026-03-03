@@ -93,11 +93,10 @@ function content_node_creator(key: KeyGenerator, typeValue: string, text: string
 export const find_component = (id: string, list: any): any => {
     for (const item of list) {
         if (item["category"] == "item") {
-            if (item["id"] == id) {
-                return item
-            }
-        } else {
-            return find_component(id, item["list"])
+            if (item["id"] == id) return item
+        } else if (item["list"]) {
+            const found = find_component(id, item["list"])
+            if (found) return found
         }
     }
     return null
@@ -452,6 +451,41 @@ export const set_data_num_index = (datas: any[], counter: Counter) => {
     }
 }
 
+const VAR_ITEM_EMPTY = { name: "", value: "" }
+
+function getVarListByCategory(content: any, category: CodeChooseCategory): any[] {
+    if (category == CodeChooseCategory.Variable) return content["local"]
+    if (category == CodeChooseCategory.ParameterIn) return content["parameter"]["in"]
+    return content["parameter"]["out"]
+}
+
+const DRAG_KEY_TO_CATEGORY: Record<string, CodeChooseCategory> = {
+    "variable": CodeChooseCategory.Variable,
+    "parameter-in": CodeChooseCategory.ParameterIn,
+    "parameter-out": CodeChooseCategory.ParameterOut,
+}
+
+const MOVE_TARGETS: { category: CodeChooseCategory; label: string }[][] = [
+    [
+        { category: CodeChooseCategory.ParameterIn, label: "入参" },
+        { category: CodeChooseCategory.ParameterOut, label: "出参" },
+    ],
+    [
+        { category: CodeChooseCategory.Variable, label: "变量" },
+        { category: CodeChooseCategory.ParameterOut, label: "出参" },
+    ],
+    [
+        { category: CodeChooseCategory.ParameterIn, label: "入参" },
+        { category: CodeChooseCategory.Variable, label: "变量" },
+    ],
+]
+
+function getMoveTargetsForCategory(category: CodeChooseCategory): { category: CodeChooseCategory; label: string }[] {
+    if (category == CodeChooseCategory.ParameterIn) return MOVE_TARGETS[0]
+    if (category == CodeChooseCategory.ParameterOut) return MOVE_TARGETS[1]
+    return MOVE_TARGETS[2]
+}
+
 const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen }: {
     content: any,
     onNodeMove: (source: CodeNodePosition, target: CodeNodePosition) => void,
@@ -660,17 +694,12 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen }: {
         }
     }
 
-    const moveVarItem = (sourceIndex: number, targetIndex: number) => {
-        const category = getCodeChooseCategoryFromText(window.dragKey)
-        let list
-        if (category == CodeChooseCategory.Variable) {
-            list = content["local"]
-        } else if (category == CodeChooseCategory.ParameterIn) {
-            list = content["parameter"]["in"]
-        } else {
-            list = content["parameter"]["out"]
-        }
+    const getCategoryFromDragKey = (dragKey: string): CodeChooseCategory =>
+        DRAG_KEY_TO_CATEGORY[dragKey] ?? CodeChooseCategory.ParameterOut
 
+    const moveVarItem = (sourceIndex: number, targetIndex: number) => {
+        const category = getCategoryFromDragKey(window.dragKey)
+        const list = getVarListByCategory(content, category)
         const element = list.splice(sourceIndex, 1)[0]
         list.splice(targetIndex, 0, element)
         tabContent.setContent(content)
@@ -682,98 +711,39 @@ const CodeEditor = ({ content, onNodeMove, onPropertiesPaneOpen }: {
         }
     }
 
-    const getCodeChooseCategoryFromText = (text: string) => {
-        if (text == "variable") {
-            return CodeChooseCategory.Variable
-        } else if (text == "parameter-in") {
-            return CodeChooseCategory.ParameterIn
-        } else {
-            return CodeChooseCategory.ParameterOut
-        }
-    }
-
     const handleSectionVarContextMenu = (e: React.MouseEvent<HTMLElement>) => {
-        const category = getCodeChooseCategoryFromText(e.currentTarget.parentElement?.getAttribute("data-drag-key")!)
+        const dragKey = e.currentTarget.parentElement?.getAttribute("data-drag-key") ?? "parameter-out"
+        const category = getCategoryFromDragKey(dragKey)
         const index = Number(e.currentTarget.getAttribute("data-index"))
+        const list = getVarListByCategory(content, category)
+
         const items = [
             {
                 display: "删除",
                 callback: () => {
-                    if (category == CodeChooseCategory.Variable) {
-                        content.local.splice(index, 1)
-                    } else if (category == CodeChooseCategory.ParameterIn) {
-                        content.parameter.in.splice(index, 1)
-                    } else {
-                        content.parameter.out.splice(index, 1)
-                    }
+                    list.splice(index, 1)
                     tabContent.setContent(content)
                 },
-            }
+            },
         ]
-        const texts: string[] = []
-        const targetCategories: CodeChooseCategory[] = []
-        if (category == CodeChooseCategory.ParameterIn) {
-            texts.push("变量")
-            texts.push("出参")
-            targetCategories.push(CodeChooseCategory.Variable)
-            targetCategories.push(CodeChooseCategory.ParameterOut)
-        } else if (category == CodeChooseCategory.ParameterOut) {
-            texts.push("入参")
-            texts.push("变量")
-            targetCategories.push(CodeChooseCategory.ParameterIn)
-            targetCategories.push(CodeChooseCategory.Variable)
-        } else {
-            texts.push("入参")
-            texts.push("出参")
-            targetCategories.push(CodeChooseCategory.ParameterIn)
-            targetCategories.push(CodeChooseCategory.ParameterOut)
-        }
-        for (var i = 0; i < 2; i++) {
+        const targets = getMoveTargetsForCategory(category)
+        for (let i = 0; i < targets.length; i++) {
+            const targetCategory = targets[i].category
+            const targetLabel = targets[i].label
             items.push({
-                display: `移动到${texts[i]}`,
-                callback: ((targetCategory: CodeChooseCategory) => {
-                    return () => {
-                        let removed
-                        if (category == CodeChooseCategory.Variable) {
-                            removed = content.local.splice(index, 1)
-                        } else if (category == CodeChooseCategory.ParameterIn) {
-                            removed = content.parameter.in.splice(index, 1)
-                        } else {
-                            removed = content.parameter.out.splice(index, 1)
-                        }
-                        if (targetCategory == CodeChooseCategory.Variable) {
-                            content.local.push(removed[0])
-                        } else if (targetCategory == CodeChooseCategory.ParameterIn) {
-                            content.parameter.in.push(removed[0])
-                        } else {
-                            content.parameter.out.push(removed[0])
-                        }
-                        tabContent.setContent(content)
-                    }
-                })(targetCategories[i]),
+                display: `移动到${targetLabel}`,
+                callback: () => {
+                    const removed = list.splice(index, 1)
+                    getVarListByCategory(content, targetCategory).push(removed[0])
+                    tabContent.setContent(content)
+                },
             })
         }
-
         showContextMenu(e, items)
     }
 
     const handleVarAdd = (category: CodeChooseCategory) => {
-        if (category == CodeChooseCategory.Variable) {
-            content["local"].push({
-                "name": "",
-                "value": ""
-            })
-        } else if (category == CodeChooseCategory.ParameterIn) {
-            content["parameter"]["in"].push({
-                "name": "",
-                "value": ""
-            })
-        } else if (category == CodeChooseCategory.ParameterOut) {
-            content["parameter"]["out"].push({
-                "name": "",
-                "value": ""
-            })
-        }
+        getVarListByCategory(content, category).push({ ...VAR_ITEM_EMPTY })
         tabContent.setContent(content)
     }
 
