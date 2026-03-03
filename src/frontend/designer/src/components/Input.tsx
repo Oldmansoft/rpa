@@ -1,17 +1,19 @@
 import { useState, useRef, useCallback, useEffect } from "react"
 
-const Input = ({ onNativeChange, onInput, value, className }: {
-        onNativeChange?: (value: string) => boolean,
-        onInput?: (value: string) => string,
-        value: string,
-        className?: string
-}) => {
+export interface InputProps {
+    value: string
+    onNativeChange?: (value: string) => boolean
+    onInput?: (value: string) => string
+    className?: string
+}
+
+const Input = ({ onNativeChange, onInput, value, className }: InputProps) => {
     const [innerValue, setInnerValue] = useState(value)
     const prevValueRef = useRef(value)
     const elementRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
-        if (value != innerValue) {
+        if (value !== innerValue) {
             setInnerValue(value)
         }
     }, [value])
@@ -32,7 +34,7 @@ const Input = ({ onNativeChange, onInput, value, className }: {
                 setInnerValue(prevValueRef.current)
             }
         }
-    }, [innerValue, onNativeChange]);
+    }, [innerValue, onNativeChange])
 
     const handleBlur = useCallback(() => {
         triggerChangeIfNeeded()
@@ -45,7 +47,16 @@ const Input = ({ onNativeChange, onInput, value, className }: {
     }, [innerValue, onNativeChange])
 
     return (
-        <input ref={elementRef} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} onKeyDown={handleKeyDown} value={innerValue} className={className}></input>
+        <input
+            ref={elementRef}
+            type="text"
+            value={innerValue}
+            className={className}
+            onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+        />
     )
 }
 

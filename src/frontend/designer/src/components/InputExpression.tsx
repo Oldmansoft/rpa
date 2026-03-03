@@ -1,7 +1,7 @@
-import { useState, useRef, useCallback, useEffect } from "react"
+import { useState, useRef, useCallback, useEffect, useMemo } from "react"
 import { python } from "@codemirror/lang-python"
-import { EditorView, keymap } from "@codemirror/view";
-import { tags as t } from "@lezer/highlight";
+import { EditorView, keymap } from "@codemirror/view"
+import { tags as t } from "@lezer/highlight"
 import { createTheme } from "@uiw/codemirror-themes"
 import {
     autocompletion,
@@ -38,45 +38,42 @@ const expressionTheme = createTheme({
     ],
 })
 
-const variables = [
-    "user_name",
-    "user_age",
-    "order_total",
-    "today",
-]
+const DEFAULT_VARIABLES = ["user_name", "user_age", "order_total", "today"]
 
-const InputExpression = ({ onNativeChange, onInput, value, placeholder, className }: {
-    onNativeChange?: (value: string) => boolean,
-    onInput?: (value: string) => string,
-    value: string,
-    placeholder?: string,
+export interface InputExpressionProps {
+    value: string
+    onNativeChange?: (value: string) => boolean
+    onInput?: (value: string) => string
+    placeholder?: string
     className?: string
-}) => {
+    /** 自动补全变量名列表，不传则使用默认列表 */
+    variables?: string[]
+}
+
+const InputExpression = ({ onNativeChange, onInput, value, placeholder, className, variables = DEFAULT_VARIABLES }: InputExpressionProps) => {
     const [innerValue, setInnerValue] = useState(value)
     const prevValueRef = useRef(value)
-    const onEnterRef = useRef<() => void>(() => { })
-    const focusRef = useRef<() => void>(() => { })
-    const blurRef = useRef<() => void>(() => { })
+    const onEnterRef = useRef<() => void>(() => {})
+    const focusRef = useRef<() => void>(() => {})
+    const blurRef = useRef<() => void>(() => {})
 
     useEffect(() => {
-        if (value != innerValue) {
+        if (value !== innerValue) {
             setInnerValue(value)
         }
     }, [value])
 
-    const variableCompletions: CompletionSource = (context: CompletionContext) => {
+    const variableCompletions: CompletionSource = useCallback((context: CompletionContext) => {
         const word = context.matchBefore(/\w*/)
         if (!word) return null
-
         const completions: Completion[] = variables.map((v) => ({
             label: v,
             type: "variable",
             detail: "变量",
             boost: 99
         }))
-
         return completeFromList(completions)(context)
-    }
+    }, [variables])
 
     const triggerChangeIfNeeded = useCallback(() => {
         if (prevValueRef.current !== innerValue) {
@@ -97,38 +94,25 @@ const InputExpression = ({ onNativeChange, onInput, value, placeholder, classNam
         focusRef.current = () => { prevValueRef.current = innerValue }
     }, [innerValue])
 
-    const disableEnter = Prec.highest(
-        keymap.of([
-            {
-                key: "Enter",
-                run: () => {
-                    onEnterRef.current?.()
-                    return true
-                },
-            },
-        ])
-    )
-
-    const noNewlineFilter = EditorState.transactionFilter.of((tr: Transaction): readonly TransactionSpec[] => {
-        if (!tr.docChanged) return [tr]
-
-        const newText = tr.newDoc.toString();
-        if (!newText.includes("\n")) return [tr]
-
-        const cleanedText = newText.replace(/\n/g, " ");
-
-        return [{
-            changes: { from: 0, to: tr.startState.doc.length, insert: cleanedText },
-        }];
-    });
-
-
-    const extensions = [
+    const extensions = useMemo(() => {
+        const disableEnter = Prec.highest(
+            keymap.of([
+                { key: "Enter", run: () => { onEnterRef.current?.(); return true } },
+            ])
+        )
+        const noNewlineFilter = EditorState.transactionFilter.of((tr: Transaction): readonly TransactionSpec[] => {
+            if (!tr.docChanged) return [tr]
+            const newText = tr.newDoc.toString()
+            if (!newText.includes("\n")) return [tr]
+            const cleanedText = newText.replace(/\n/g, " ")
+            return [{ changes: { from: 0, to: tr.startState.doc.length, insert: cleanedText } }]
+        })
+        return [
         disableEnter,
         EditorView.domEventHandlers({
-        focus: () => focusRef.current?.(),
-        blur: () => blurRef.current?.(),
-    }),
+            focus: () => focusRef.current?.(),
+            blur: () => blurRef.current?.(),
+        }),
         python(),
         expressionTheme,
         autocompletion({
@@ -136,9 +120,7 @@ const InputExpression = ({ onNativeChange, onInput, value, placeholder, classNam
             defaultKeymap: true,
             maxRenderedOptions: 12
         }),
-        EditorState.languageData.of(() => [
-            { autocomplete: variableCompletions }
-        ]),
+        EditorState.languageData.of(() => [{ autocomplete: variableCompletions }]),
         noNewlineFilter,
         EditorView.theme({
             ".cm-scroller": {
@@ -149,34 +131,42 @@ const InputExpression = ({ onNativeChange, onInput, value, placeholder, classNam
             ".cm-scroller::-webkit-scrollbar": { display: "none" },
             ".cm-content": { whiteSpace: "pre" }
         }),
-    ]
-    const basicSetup = {
+        ]
+    }, [variableCompletions])
+
+    const basicSetup = useMemo(() => ({
         lineNumbers: false,
         foldGutter: false,
         highlightActiveLine: false,
         highlightActiveLineGutter: false,
         allowMultipleSelections: false,
         indentWithTab: false
-    }
+    }), [])
 
-    const handleChange = (content: string) => {
+    const handleChange = useCallback((content: string) => {
         setInnerValue(onInput ? onInput(content) : content)
-    }
+    }, [onInput])
+
+    const boxStyle = useMemo(() => ({
+        border: "1px solid #cbd5e1",
+        borderRadius: "6px",
+        overflow: "hidden" as const,
+        background: "#ffffff",
+        boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+    }), [])
 
     return (
-        <div
-            className={className}
-            style={{
-                border: "1px solid #cbd5e1",
-                borderRadius: "6px",
-                overflow: "hidden",
-                background: "#ffffff",
-                boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-            }}
-        >
-            <CodeMirror value={innerValue} placeholder={placeholder} onChange={handleChange} extensions={extensions} basicSetup={basicSetup} width="100%" indentWithTab={false}></CodeMirror>
+        <div className={className} style={boxStyle}>
+            <CodeMirror
+                value={innerValue}
+                placeholder={placeholder}
+                onChange={handleChange}
+                extensions={extensions}
+                basicSetup={basicSetup}
+                width="100%"
+                indentWithTab={false}
+            />
         </div>
-
     )
 }
 

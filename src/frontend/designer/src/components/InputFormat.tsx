@@ -48,24 +48,26 @@ const fstringStream = StreamLanguage.define({
     startState: () => ({ inExpr: false }),
 })
 
+export interface InputFormatProps {
+    value: string
+    onInput?: (value: string) => string
+    onNativeChange?: (value: string) => boolean
+    placeholder?: string
+    className?: string
+}
+
 const InputFormat = ({
     value,
     onInput,
     onNativeChange,
     placeholder,
     className,
-}: {
-    value: string
-    onInput?: (value: string) => string
-    onNativeChange?: (value: string) => boolean
-    placeholder?: string
-    className?: string
-}) => {
+}: InputFormatProps) => {
     const [innerValue, setInnerValue] = useState(value)
     const prevValueRef = useRef(value)
-    const onEnterRef = useRef<() => void>(() => { })
-    const focusRef = useRef<() => void>(() => { })
-    const blurRef = useRef<() => void>(() => { })
+    const onEnterRef = useRef<() => void>(() => {})
+    const focusRef = useRef<() => void>(() => {})
+    const blurRef = useRef<() => void>(() => {})
 
     useEffect(() => {
         if (value !== innerValue) {
@@ -122,17 +124,16 @@ const InputFormat = ({
         [onInput]
     )
 
+    const boxStyle = useMemo(() => ({
+        border: "1px solid #cbd5e1",
+        borderRadius: "6px",
+        overflow: "hidden" as const,
+        background: "#ffffff",
+        boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+    }), [])
+
     return (
-        <div
-            className={className}
-            style={{
-                border: "1px solid #cbd5e1",
-                borderRadius: "6px",
-                overflow: "hidden",
-                background: "#ffffff",
-                boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-            }}
-        >
+        <div className={className} style={boxStyle}>
             <CodeMirror
                 value={innerValue}
                 placeholder={placeholder}
