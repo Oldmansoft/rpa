@@ -81,7 +81,7 @@ const CodePaneAction = ({ data, onChange }: { data: any, onChange(num: number, k
     return (
         <>
             <label className="property">
-                <span>显示</span>
+                <span>显示文字</span>
                 <input placeholder={component['name']} value={data.display} onChange={handleNameChange} />
             </label>
             {more}

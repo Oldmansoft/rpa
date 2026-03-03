@@ -26,7 +26,7 @@ class ConditionalParametersComponent(ActionBodyComponent):
         self.set_format('{condition}')
 
     def define_parameter(self) -> ParameterDefinition:
-        return ParameterDefinition().append('condition', '条件', ExpressionValue)
+        return ParameterDefinition().append('condition', '判断条件', ExpressionValue)
 
     def set_parameter(self, *args) -> None:
         self.expression:ExpressionValue = args[0]

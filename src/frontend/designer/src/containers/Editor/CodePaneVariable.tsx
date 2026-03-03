@@ -22,7 +22,7 @@ const CodePaneVariable = ({ data, onChange }: { data: any, onChange(index: numbe
     return (
         <>
             <label className="property">
-                <span>名称</span>
+                <span>变量名称</span>
                 <Input value={data["name"]} onNativeChange={handleNameNativeChange} onInput={(value) => value.trim()}></Input>
             </label>
             <label className="property">

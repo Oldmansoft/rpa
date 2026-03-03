@@ -26,7 +26,7 @@ const CodePaneParameter = ({ data, direction, onChange }: {
     return (
         <>
             <label className="property">
-                <span>名称</span>
+                <span>参数名称</span>
                 <Input value={data["name"]} onNativeChange={handleNameNativeChange} onInput={(value) => value.trim()}></Input>
             </label>
             <label className="property">

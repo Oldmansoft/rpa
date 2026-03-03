@@ -10,7 +10,7 @@ class Assign(ActionComponent):
         self.set_format('将{name}设置为{value}')
 
     def define_parameter(self) -> ParameterDefinition:
-        return ParameterDefinition().append('name', '变量', VariableValue).append('value', '值', ExpressionValue)
+        return ParameterDefinition().append('name', '变量名称', VariableValue).append('value', '赋值内容', ExpressionValue)
 
     def set_parameter(self, *args) -> None:
         self.var_name = args[0].get()
@@ -29,7 +29,7 @@ class Print(ActionComponent):
         self.set_format('{content}')
 
     def define_parameter(self) -> ParameterDefinition:
-        return ParameterDefinition().append('content', '内容', FormatValue)
+        return ParameterDefinition().append('content', '打印内容', FormatValue)
 
     def set_parameter(self, *args) -> None:
         self.content: Value = args[0]
@@ -50,7 +50,7 @@ class If(CompositionComponent):
         self.conditions: List[ConditionalParametersComponent] = []
 
     def define_parameter(self) -> ParameterDefinition:
-        return ParameterDefinition().append('condition', '条件', ExpressionValue)
+        return ParameterDefinition().append('condition', '条件判断', ExpressionValue)
 
     def set_parameter(self, *args) -> None:
         self.condition: ExpressionValue = args[0]
@@ -92,7 +92,7 @@ class While(ContainerComponent):
         self.set_format('{condition}')
 
     def define_parameter(self) -> ParameterDefinition:
-        return ParameterDefinition().append('condition', '条件', ExpressionValue)
+        return ParameterDefinition().append('condition', '条件判断', ExpressionValue)
     
     def set_parameter(self, *args) -> None:
         self.condition: ExpressionValue = args[0]
@@ -117,7 +117,7 @@ class For(ContainerComponent):
         self.set_format('{item} in {collection}')
 
     def define_parameter(self) -> ParameterDefinition:
-        return ParameterDefinition().append('item', '项', VariableValue).append('collection', '集合', ExpressionValue)
+        return ParameterDefinition().append('item', '单项名称', VariableValue).append('collection', '遍历集合', ExpressionValue)
     
     def set_parameter(self, *args) -> None:
         self.item: VariableValue = args[0]
