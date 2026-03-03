@@ -16,7 +16,7 @@ export interface TreeNode {
 
 const margin_left = 14
 
-const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDragStart, OnDragEnd, inExpanded }: {
+const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDragStart, onDragEnd, inExpanded }: {
     node: TreeNode,
     fullId: string,
     dragKey?: string,
@@ -24,7 +24,7 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
     onClick: (fullId: string) => void,
     onToggle: (fullId: string) => void,
     onDragStart?: (fullId: string) => void,
-    OnDragEnd?: (fullId: string) => void,
+    onDragEnd?: (fullId: string) => void,
     inExpanded: (fullId: string) => boolean
 }) => {
     function getFolderPath(path: string) {
@@ -72,8 +72,8 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
     }
     const handleDragEnd = () => {
         setIsDragging(false)
-        if (OnDragEnd != null) {
-            OnDragEnd(fullId)
+        if (onDragEnd != null) {
+            onDragEnd(fullId)
         }
     }
     const handleClick = () => {
@@ -129,7 +129,7 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
                                     node={child_node}
                                     onClick={onClick}
                                     onDragStart={onDragStart}
-                                    OnDragEnd={OnDragEnd}
+                                    onDragEnd={onDragEnd}
                                     inExpanded={inExpanded}
                                     onToggle={onToggle}
                                 />
@@ -142,14 +142,14 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
     )
 }
 
-const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, OnDragEnd }: {
+const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, onDragEnd }: {
     source: TreeNode[],
     dragKey?: string,
     dropKey?: string,
     expand?: string,
     onClick: (fullId: string) => void,
     onDragStart?: (fullId: string) => void,
-    OnDragEnd?: (fullId: string) => void
+    onDragEnd?: (fullId: string) => void
 }) => {
     const [expandedIds, setExpandedIds] = useState<string[]>(expand ? [expand] : []);
     const handleToggle = (fullId: string) => {
@@ -182,7 +182,7 @@ const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, On
                         inExpanded={inExpanded}
                         onToggle={handleToggle}
                         onDragStart={onDragStart}
-                        OnDragEnd={OnDragEnd}
+                        onDragEnd={onDragEnd}
                     />
                 )
             )}

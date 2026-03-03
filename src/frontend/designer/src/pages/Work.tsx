@@ -29,13 +29,17 @@ const Work = () => {
     const terminalOutputRef = useRef<LogViewerRef>(null)
     const executeOutputRef = useRef<LogViewerRef>(null)
     const rightTabRef = useRef<TabRef>(null)
-    const [componentDatas, setComponetDatas] = useState<TreeNode[]>([])
+    const [componentDatas, setComponentDatas] = useState<TreeNode[]>([])
     const [treeDatas, setTreeDatas] = useState<TreeNode[]>([])
     const [showAbout, setShowAbout] = useState(false)
     const [codePropertyData, setCodePropertyData] = useState<PropertyContent>()
-    const path = location.state["path"]
+    const path = location.state?.path
 
     useEffect(() => {
+        if (path == null) {
+            navigate("/")
+            return
+        }
         (async () => {
             editorRef.current!.reset()
             clearCodePropertyData()
@@ -49,7 +53,7 @@ const Work = () => {
             await project.init(componentDatas, path)
             handleFileTreeClick(project.getMainFile())
             setTreeDatas(await get_designer_file_tree_data(project.getAppPath()))
-            setComponetDatas(componentTreeNodes)
+            setComponentDatas(componentTreeNodes)
         })()
     }, [path])
 
@@ -165,7 +169,7 @@ const Work = () => {
                 {showAbout && <About onClose={handleAboutClose}></About>}
             </Top>
             <Vertical>
-                <Left><TreeViewer source={componentDatas} dragKey="editor" expand="Program" onClick={handleComponentTreeClick} onDragStart={handleComponentDragStart} OnDragEnd={handleComponentDragEnd}></TreeViewer></Left>
+                <Left><TreeViewer source={componentDatas} dragKey="editor" expand="Program" onClick={handleComponentTreeClick} onDragStart={handleComponentDragStart} onDragEnd={handleComponentDragEnd}></TreeViewer></Left>
                 <Horizontal>
                     <Editor onPropertiesPaneOpen={handlePropertiesPaneOpen} onTabChange={clearCodePropertyData} ref={editorRef}></Editor>
                     <Bottom>
