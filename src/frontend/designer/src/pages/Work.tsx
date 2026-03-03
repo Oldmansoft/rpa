@@ -9,7 +9,7 @@ import LogViewer, { LogViewerRef } from "../components/LogViewer"
 import { set_data_num_index } from "../containers/Editor/CodeEditor"
 import {Format} from "../containers/EditorContext"
 import Editor, { EditorRef, UpdateContentCategory } from "../containers/Editor"
-import { project } from "../containers/Project"
+import { useProject } from "../containers/Project"
 import About from './About'
 import { Counter } from "../components/Utils"
 import { codeDrager, CodeChooseCategory } from "../containers/Editor/Utils"
@@ -26,6 +26,7 @@ type PropertyContent = {
 const Work = () => {
     const location = useLocation()
     const navigate = useNavigate()
+    const project = useProject()
     const editorRef = useRef<EditorRef>(null)
     const terminalOutputRef = useRef<LogViewerRef>(null)
     const executeOutputRef = useRef<LogViewerRef>(null)

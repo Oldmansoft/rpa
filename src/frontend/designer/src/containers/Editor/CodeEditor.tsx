@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, DragEvent, useContext } from "react"
-import { project } from "../Project"
+import { useProject } from "../Project"
 import { KeyGenerator, Counter } from "../../components/Utils"
 import { CodeChooseCategory } from "./Utils"
 import { TagName, CodeNodePosition, make_numbers, codeDrager, mouse_in_node_top, find_previous_tag } from "./Utils"
@@ -158,6 +158,7 @@ const editor_composition_remove_last = (tabContent: TabContent, composition_num:
 
 const CodeEditorItem = ({ data, parent_num, index, onNodeChoose }: { data: any, parent_num: number, index: number, onNodeChoose: (num: number) => void }) => {
     const tabContent = useContext(EditorContext)
+    const project = useProject()
     const handleContextMenu = (e: React.MouseEvent<HTMLElement>) => {
         showContextMenu(e, [
             {

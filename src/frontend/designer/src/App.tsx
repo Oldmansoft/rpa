@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router'
+import { ProjectProvider } from './containers/Project'
 import Start from './pages/Start'
 import Work from './pages/Work'
 import NotFound from './pages/NotFound'
@@ -6,7 +7,7 @@ import './App.css'
 
 function App() {
     return (
-        <>
+        <ProjectProvider>
             <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<Start />} />
@@ -15,7 +16,7 @@ function App() {
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </BrowserRouter>
-        </>
+        </ProjectProvider>
     )
 }
 

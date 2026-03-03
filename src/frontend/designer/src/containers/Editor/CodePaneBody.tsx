@@ -1,6 +1,6 @@
 import InputExpression from "../../components/InputExpression"
 import InputFormat from "../../components/InputFormat"
-import { project } from "../Project"
+import { useProject } from "../Project"
 import { find_component } from "./CodeEditor"
 import './CodePaneProperties.css'
 
@@ -21,6 +21,7 @@ function get_param(params: any[], id: string) {
 }
 
 const CodePaneAction = ({ data, onChange }: { data: any, onChange(num: number, key: string, value: string): void }) => {
+    const project = useProject()
     if (!data) {
         return null
     }
