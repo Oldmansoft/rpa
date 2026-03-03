@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useState } from "react"
+import { forwardRef, useImperativeHandle, useState, useRef, useEffect, useMemo } from "react"
 import './Editor.css'
 import CodeEditor, { set_data_num_index, find_node_from_data } from "./Editor/CodeEditor"
 import { CodeNodePosition, CodeChooseCategory, DragMode, codeDrager } from "./Editor/Utils"
@@ -29,6 +29,22 @@ export interface EditorRef {
 const Editor = forwardRef(({ onPropertiesPaneOpen, onTabChange }: { onPropertiesPaneOpen: (category: CodeChooseCategory, data: any) => void, onTabChange: () => void }, ref: React.Ref<EditorRef>) => {
     const [activeTabIndex, setActiveTabIndex] = useState(-1)
     const [tabs, setTabs] = useState<TabContentValue[]>([])
+    const tabsRef = useRef(tabs)
+    const activeTabIndexRef = useRef(activeTabIndex)
+
+    useEffect(() => {
+        tabsRef.current = tabs
+        activeTabIndexRef.current = activeTabIndex
+    }, [tabs, activeTabIndex])
+
+    const activeTabSetContent = (content: any) => {
+        const currentTabs = tabsRef.current
+        const currentIndex = activeTabIndexRef.current
+        const editTabs = [...currentTabs]
+        editTabs[currentIndex].content = JSON.parse(JSON.stringify(content))
+        editTabs[currentIndex].modified = true
+        setTabs(editTabs)
+    }
 
     useImperativeHandle(ref, () => {
         return {
@@ -36,42 +52,58 @@ const Editor = forwardRef(({ onPropertiesPaneOpen, onTabChange }: { onProperties
                 setTabs([])
             },
             open(file: string, format: Format, content: any) {
-                const fileIndex = tabs.findIndex(element => element.file == file)
+                const currentTabs = tabsRef.current
+                const fileIndex = currentTabs.findIndex(element => element.file == file)
                 if (fileIndex == -1) {
-                    setTabs([...tabs, {
+                    setTabs([...currentTabs, {
                         file: file,
                         format: format,
                         content: content,
                         modified: false,
                         stamp: new Date().getTime()
                     }])
-                    switchActiveTabIndex(tabs.length)
+                    setActiveTabIndex(currentTabs.length)
+                    onTabChange()
                 } else {
-                    tabs[fileIndex].stamp = new Date().getTime()
-                    switchActiveTabIndex(fileIndex)
+                    const nextTabs = [...currentTabs]
+                    nextTabs[fileIndex] = { ...nextTabs[fileIndex], stamp: new Date().getTime() }
+                    setTabs(nextTabs)
+                    setActiveTabIndex(fileIndex)
+                    onTabChange()
                 }
             },
             async save(projectPath: string) {
-                if (tabs[activeTabIndex].modified) {
-                    await communication.Executor.Designer.SetProjectTextContent(projectPath, tabs[activeTabIndex].file, JSON.stringify(tabs[activeTabIndex].content))
-                    const editTabs = [...tabs]
-                    editTabs[activeTabIndex].modified = false
+                const currentTabs = tabsRef.current
+                const currentIndex = activeTabIndexRef.current
+                if (currentIndex < 0 || currentIndex >= currentTabs.length) return
+                if (currentTabs[currentIndex].modified) {
+                    await communication.Executor.Designer.SetProjectTextContent(projectPath, currentTabs[currentIndex].file, JSON.stringify(currentTabs[currentIndex].content))
+                    const editTabs = [...currentTabs]
+                    editTabs[currentIndex] = { ...editTabs[currentIndex], modified: false }
                     setTabs(editTabs)
                 }
             },
             run(projectPath: string) {
-                communication.Executor.Designer.RunProjectAppTarget(projectPath, tabs[activeTabIndex].file)
+                const currentTabs = tabsRef.current
+                const currentIndex = activeTabIndexRef.current
+                if (currentIndex >= 0 && currentIndex < currentTabs.length) {
+                    communication.Executor.Designer.RunProjectAppTarget(projectPath, currentTabs[currentIndex].file)
+                }
             },
             getContent() {
-                return tabs[activeTabIndex].content
+                const currentTabs = tabsRef.current
+                const currentIndex = activeTabIndexRef.current
+                if (currentIndex < 0 || currentIndex >= currentTabs.length) return undefined
+                return currentTabs[currentIndex].content
             },
             insertContent(target: CodeNodePosition | null, data: any) {
-                const content = tabs[activeTabIndex].content
-                if (tabs[activeTabIndex].format == Format.Code) {
+                const currentTabs = tabsRef.current
+                const currentIndex = activeTabIndexRef.current
+                if (currentIndex < 0 || currentIndex >= currentTabs.length) return
+                const content = currentTabs[currentIndex].content
+                if (currentTabs[currentIndex].format == Format.Code) {
                     if (target == null) {
-                        if (content["body"].length > 0) {
-                            return
-                        }
+                        if (content["body"].length > 0) return
                         content["body"].push(data)
                     } else {
                         let target_data = content
@@ -80,15 +112,16 @@ const Editor = forwardRef(({ onPropertiesPaneOpen, onTabChange }: { onProperties
                         }
                         target_data["body"].splice(target.index + 1, 0, data)
                     }
-
                     set_data_num_index(content["body"], new Counter())
                 }
-
                 activeTabSetContent(content)
             },
             updateContent(category: UpdateContentCategory, num: number, key: string, value: string) {
-                const content = tabs[activeTabIndex].content
-                let data
+                const currentTabs = tabsRef.current
+                const currentIndex = activeTabIndexRef.current
+                if (currentIndex < 0 || currentIndex >= currentTabs.length) return undefined
+                const content = currentTabs[currentIndex].content
+                let data: any
                 if (category == UpdateContentCategory.Body) {
                     data = find_node_from_data(content, num)
                     if (key == "") {
@@ -105,13 +138,14 @@ const Editor = forwardRef(({ onPropertiesPaneOpen, onTabChange }: { onProperties
                 } else if (category == UpdateContentCategory.ParameterOut) {
                     data = content["parameter"]["out"][num]
                     data[key] = value
+                } else {
+                    return undefined
                 }
-
                 activeTabSetContent(content)
                 return data
             }
         }
-    })
+    }, [onTabChange])
 
     const switchActiveTabIndex = (index: number) => {
         if (index == activeTabIndex) {
@@ -126,15 +160,15 @@ const Editor = forwardRef(({ onPropertiesPaneOpen, onTabChange }: { onProperties
         editTabs.splice(index, 1)
 
         if (index == activeTabIndex) {
-            let index = -1
+            let newActiveIndex = -1
             let maxValue = 0
             for (let i = 0; i < editTabs.length; i++) {
                 if (editTabs[i].stamp > maxValue) {
                     maxValue = editTabs[i].stamp
-                    index = i
+                    newActiveIndex = i
                 }
             }
-            setActiveTabIndex(index)
+            setActiveTabIndex(newActiveIndex)
             onTabChange()
         }
         setTabs(editTabs)
@@ -188,46 +222,39 @@ const Editor = forwardRef(({ onPropertiesPaneOpen, onTabChange }: { onProperties
         activeTabSetContent(content)
     }
 
-    const activeTabSetContent = (content: any) => {
-        const editTabs = [...tabs]
-        editTabs[activeTabIndex].content = JSON.parse(JSON.stringify(content))
-        editTabs[activeTabIndex].modified = true
-        setTabs(editTabs)
-    }
-
-    const tabNames = new Map<string, { name: string, path: string, paths: string[], other: string }[]>()
-    const tabContentParser = tabs.map(
-        (item) => {
-            const paths = item.file.split("/")
-            const name = paths[paths.length - 1]
-            if (!tabNames.has(name)) {
-                tabNames.set(name, [])
+    const tabContentParser = useMemo(() => {
+        const tabNames = new Map<string, { name: string, path: string, paths: string[], other: string }[]>()
+        const parser = tabs.map(
+            (item) => {
+                const paths = item.file.split("/")
+                const name = paths[paths.length - 1]
+                if (!tabNames.has(name)) {
+                    tabNames.set(name, [])
+                }
+                const value = {
+                    name: name,
+                    path: item.file,
+                    paths: paths.slice(0, -1),
+                    other: ""
+                }
+                tabNames.get(name)?.push(value)
+                return value
             }
-            const value = {
-                name: name,
-                path: item.file,
-                paths: paths.slice(0, -1),
-                other: ""
+        )
+        tabNames.forEach((value) => {
+            if (value.length == 1) return
+            for (const item of value) {
+                if (item.paths.length == 0) {
+                    item.other = "./"
+                } else if (item.paths.length == 1) {
+                    item.other = item.paths[0]
+                } else {
+                    item.other = `.../${item.paths[item.paths.length - 1]}`
+                }
             }
-            tabNames.get(name)?.push(value)
-            return value
-        }
-    )
-
-    tabNames.forEach((value) => {
-        if (value.length == 1) {
-            return
-        }
-        for (const item of value) {
-            if (item.paths.length == 0) {
-                item.other = "./"
-            } else if (item.paths.length == 1) {
-                item.other = item.paths[0]
-            } else {
-                item.other = `.../${item.paths[item.paths.length - 1]}`
-            }
-        }
-    })
+        })
+        return parser
+    }, [tabs])
 
     const tabContent = {
         index : activeTabIndex,
