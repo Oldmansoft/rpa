@@ -1,9 +1,7 @@
 import React, { useContext } from "react"
 import { useProject } from "../Project"
 import { KeyGenerator, Counter } from "../../components/Utils"
-import { TagName } from "./Utils"
-import { IconButton } from "../../components/Button"
-import { showContextMenu } from "../../components/ContextMenu"
+import { showContextMenu, MenuItem } from "../../components/ContextMenu"
 import { EditorContext, TabContent } from "../EditorContext"
 import { communication } from "../../components/Communication"
 import {
@@ -352,7 +350,7 @@ const Composition = ({
 
     const handleContextMenu = (e: React.MouseEvent<HTMLElement>) => {
         const targetNum = Number(e.currentTarget.getAttribute("data-num"))
-        const items: { display: string; callback?: () => void }[] = []
+        const items: MenuItem[] = []
         for (const component_optional of component["optional"]) {
             if (last != null && component_optional["category"] == "Last") {
                 items.push({ display: `添加 ${component_optional["name"]}` })

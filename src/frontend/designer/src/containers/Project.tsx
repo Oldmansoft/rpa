@@ -2,33 +2,41 @@ import { createContext, useContext, ReactNode } from 'react'
 import { communication } from '../components/Communication'
 
 export class Project {
+    private name: string
     private path: string
     private mainFile: string
     private components: any
 
     constructor() {
         this.path = ""
+        this.name = ""
         this.mainFile = ""
         this.components = {}
     }
 
     async init(components: any, app_file_path: string): Promise<void> {
         this.components = components
+        this.path = ""
+        this.name = ""
+        this.mainFile = ""
 
         const app_content = await communication.Executor.Designer.GetProjectAppContent(app_file_path)
         if (app_content == null || typeof app_content !== "object") {
-            this.path = ""
-            this.mainFile = ""
             return
         }
         this.path = app_content["path"] ?? ""
-        this.mainFile = (app_content["project"] != null && typeof app_content["project"] === "object")
-            ? (app_content["project"]["main"] ?? "")
-            : ""
+        if (app_content["project"] != null && typeof app_content["project"] === "object") {
+            this.name = app_content["project"]["name"] ?? ""
+            this.mainFile = app_content["project"]["main"] ?? ""
+        }
     }
 
     getAppPath(): string {
         return this.path
+    }
+
+    getAppName(): string {
+        return this.name
     }
 
     getMainFile(): string {

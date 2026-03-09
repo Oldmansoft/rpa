@@ -16,7 +16,7 @@ export interface TreeNode {
 
 const margin_left = 14
 
-const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDragStart, onDragEnd, inExpanded }: {
+const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDragStart, onDragEnd, onContextMenu, inExpanded }: {
     node: TreeNode,
     fullId: string,
     dragKey?: string,
@@ -25,6 +25,7 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
     onToggle: (fullId: string) => void,
     onDragStart?: (fullId: string) => void,
     onDragEnd?: (fullId: string) => void,
+    onContextMenu?: (e: React.MouseEvent<HTMLElement>, fullId: string, node: TreeNode) => void,
     inExpanded: (fullId: string) => boolean
 }) => {
     function getFolderPath(path: string) {
@@ -95,6 +96,10 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
         }
     }
 
+    const handleContextMenu = (e: React.MouseEvent<HTMLElement>) => {
+        onContextMenu?.(e, fullId, node)
+    }
+
     const is_category = node.children && node.children.length > 0
     const is_category_and_expanded = is_category && inExpanded(fullId)
     return (
@@ -104,6 +109,7 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 onDrop={handleDrop}
+                onContextMenu={handleContextMenu}
                 draggable={dragKey ? "true" : "false"}
                 className="hover:bg-gray-200"
                 style={{
@@ -130,6 +136,7 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
                                     onClick={onClick}
                                     onDragStart={onDragStart}
                                     onDragEnd={onDragEnd}
+                                    onContextMenu={onContextMenu}
                                     inExpanded={inExpanded}
                                     onToggle={onToggle}
                                 />
@@ -142,16 +149,17 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
     )
 }
 
-const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, onDragEnd }: {
+const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, onDragEnd, onContextMenu }: {
     source: TreeNode[],
     dragKey?: string,
     dropKey?: string,
     expand?: string,
     onClick: (fullId: string) => void,
     onDragStart?: (fullId: string) => void,
-    onDragEnd?: (fullId: string) => void
+    onDragEnd?: (fullId: string) => void,
+    onContextMenu?: (e: React.MouseEvent<HTMLElement>, fullId: string, node: TreeNode) => void
 }) => {
-    const [expandedIds, setExpandedIds] = useState<string[]>(expand ? [expand] : []);
+    const [expandedIds, setExpandedIds] = useState<string[]>(expand || expand == "" ? [expand] : [])
     const handleToggle = (fullId: string) => {
         if (expandedIds.includes(fullId)) {
             setExpandedIds(expandedIds.filter((expandedId) => expandedId !== fullId))
@@ -183,6 +191,7 @@ const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, on
                         onToggle={handleToggle}
                         onDragStart={onDragStart}
                         onDragEnd={onDragEnd}
+                        onContextMenu={onContextMenu}
                     />
                 )
             )}

@@ -16,7 +16,7 @@ import { codeDrager, CodeChooseCategory } from "../containers/Editor/Utils"
 import CodePaneBody from "../containers/Editor/CodePaneBody"
 import CodePaneVariable from "../containers/Editor/CodePaneVariable"
 import CodePaneParameter from "../containers/Editor/CodePaneParameter"
-import {ContextMenu} from '../components/ContextMenu'
+import { ContextMenu, showContextMenu, MenuItem } from '../components/ContextMenu'
 
 type PropertyContent = {
     category: CodeChooseCategory,
@@ -54,7 +54,7 @@ const Work = () => {
             const [componentDatas, componentTreeNodes] = await get_designer_components_raw_and_tree()
             await project.init(componentDatas, path)
             handleFileTreeClick(project.getMainFile())
-            setTreeDatas(await get_designer_file_tree_data(project.getAppPath()))
+            setTreeDatas(await get_designer_file_tree_data(project.getAppName(), project.getAppPath()))
             setComponentDatas(componentTreeNodes)
         })()
     }, [path])
@@ -95,12 +95,13 @@ const Work = () => {
 
     const handleFileTreeClick = async (filePath: string) => {
         const extName = filePath.substring(filePath.lastIndexOf(".") + 1)
+        const relativePath = filePath.substring(1)
         if (extName == "scs") {
-            const fileContent = await communication.Executor.Designer.GetProjectJsonContent(project.getAppPath(), filePath)
+            const fileContent = await communication.Executor.Designer.GetProjectJsonContent(project.getAppPath(), relativePath)
             set_data_num_index(fileContent["body"], new Counter())
             editorRef.current!.open(filePath, Format.Code, fileContent)
         } else if (extName == "txt") {
-            const fileContent = await communication.Executor.Designer.GetProjectTextContent(project.getAppPath(), filePath)
+            const fileContent = await communication.Executor.Designer.GetProjectTextContent(project.getAppPath(), relativePath)
             editorRef.current!.open(filePath, Format.Text, fileContent)
         } else {
             return
@@ -184,7 +185,32 @@ const Work = () => {
                 <Right>
                     <Tab ref={rightTabRef}>
                         <TabItem title="项目管理">
-                            <TreeViewer source={treeDatas} dragKey="file" dropKey="file" onClick={handleFileTreeClick}></TreeViewer>
+                            <TreeViewer
+                                source={treeDatas}
+                                dragKey="file"
+                                dropKey="file"
+                                expand=""
+                                onClick={handleFileTreeClick}
+                                onContextMenu={(e, _fullId, _node) => {
+                                    const items: MenuItem[] = []
+
+                                    if (_node.children != null) {
+                                        if (_fullId == "") {
+                                            items.push({ display: "项目重命名", callback: () => {} })
+                                        }
+                                        items.push({ display: "新建文件夹", callback: () => {} })
+                                        items.push({ display: "新建流程", callback: () => {} })
+                                    } else {
+                                        items.push({ display: "打开", callback: () => { handleFileTreeClick(_fullId) } })
+                                        if (_fullId == "/Main.scs" || _fullId == "/App.proj") {
+                                            items.push({ display: "删除"})
+                                        } else {
+                                            items.push({ display: "删除", callback: () => {} })
+                                        }
+                                    }
+                                    showContextMenu(e, items)
+                                }}
+                            />
                         </TabItem>
                         <TabItem title="属性">
                             <div className="code-pane-properties">

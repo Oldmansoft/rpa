@@ -1,7 +1,7 @@
 import { TreeNode } from './TreeViewer'
 import { communication } from '../components/Communication'
 
-export const get_designer_file_tree_data = async (path: string) => {
+export const get_designer_file_tree_data = async (name: string, path: string) => {
     function get_list_data(datas: any): TreeNode[] {
         const result: TreeNode[] = []
         for (const data of datas) {
@@ -30,7 +30,16 @@ export const get_designer_file_tree_data = async (path: string) => {
     }
 
     const datas = await communication.Executor.Designer.GetFileTree(path)
-    return get_list_data(datas)
+    const result: TreeNode[] = [{
+        id: "",
+        name: name,
+        draggable: false,
+        icon: "icon-[mdi--file]",
+        iconColor: "#ffd900",
+        children: get_list_data(datas)
+    }]
+
+    return result
 }
 
 export const get_designer_components_raw_and_tree = async () => {

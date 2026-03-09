@@ -2,7 +2,7 @@ import React, { useContext, useRef, useCallback, ReactNode } from "react"
 import { DragEvent } from "react"
 import { CodeChooseCategory } from "./Utils"
 import { IconButton } from "../../components/Button"
-import { showContextMenu } from "../../components/ContextMenu"
+import { showContextMenu, MenuItem } from "../../components/ContextMenu"
 import { EditorContext } from "../EditorContext"
 import {
     setChosen,
@@ -124,7 +124,7 @@ export function CodeEditorVarSections({ content, onPropertiesPaneOpen, insertBef
             const category = getCategoryFromDragKey(dragKey)
             const index = Number(e.currentTarget.getAttribute("data-index"))
             const list = getVarListByCategory(content, category)
-            const items = [
+            const items: MenuItem[] = [
                 {
                     display: "删除",
                     callback: () => {
