@@ -39,6 +39,10 @@ export class Project {
         return this.name
     }
 
+    setName(name: string): void {
+        this.name = name
+    }
+
     getMainFile(): string {
         return this.mainFile
     }

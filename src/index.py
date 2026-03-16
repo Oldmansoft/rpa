@@ -212,15 +212,16 @@ class Designer(ServerCommandHandle):
 
         return {"result": True, "path": app_path}
 
-    def RenameProject(self, app_path: str, name: str) -> dict:
-        if app_path is None or app_path == "":
-            raise ValueError("app_path 不能为空")
+    def RenameProject(self, path: str, name: str) -> dict:
+        if path is None or path == "":
+            raise ValueError("path 不能为空")
         if name.strip() == "":
             raise ValueError("name 不能为空")
+        app_path = join(path, "App.proj")
         if not isfile(app_path):
             return {"result": False, "message": f"找不到项目文件{app_path}"}
         try:
-            studio.project.rename(app_path)
+            studio.project.rename(app_path, name)
         except Exception as ex:
             return {"result": False, "message": f"修改项目发生错误 {ex}"}
         return {"result": True}
@@ -238,14 +239,11 @@ class Designer(ServerCommandHandle):
 
         return {"result": True, "path": folder_path}
 
-    def CreateFlowFile(self, path: str, folder: str, name: str) -> dict:
+    def CreateFlowFile(self, path: str, name: str) -> dict:
         if not isdir(path):
             return {"result": False, "message": f"不存在目录 {path}"}
-        folder_path = join(path, folder)
-        if not isdir(folder_path):
-            return {"result": False, "message": f"在 {path} 不存在目录 {folder}"}
         try:
-            file_path = studio.project.create_flow(path, folder, name)
+            file_path = studio.project.create_flow_file(path, name)
         except Exception as ex:
             return {"result": False, "message": f"创建项目发生错误 {ex}"}
 

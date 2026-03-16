@@ -28,12 +28,12 @@ def create(path: str, name: str):
 def rename(app_path: str, name: str):
     with open(app_path, mode="r", encoding="utf-8") as file:
         app_data = load(file)
-        app_data["name"] = name.strip()
+        app_data["project"]["name"] = name.strip()
     with open(app_path, "w") as file:
         dump(app_data, file, ensure_ascii=False)
 
-def create_flow_file(path: str, folder: str, name: str):
-    file_path = join(path, folder, f"{name}.scs")
+def create_flow_file(path: str, name: str):
+    file_path = join(path, f"{name}.scs")
     fs_data = {"local": [], "parameter": {"in": [], "out": []}, "body": []}
     with open(file_path, "w", encoding="utf-8") as file:
         dump(fs_data, file, ensure_ascii=False)

@@ -11,12 +11,14 @@ import {Format} from "../containers/EditorContext"
 import Editor, { EditorRef, UpdateContentCategory } from "../containers/Editor"
 import { useProject } from "../containers/Project"
 import About from './About'
+import RenameProject from './RenameProject'
 import { Counter } from "../components/Utils"
 import { codeDrager, CodeChooseCategory } from "../containers/Editor/Utils"
 import CodePaneBody from "../containers/Editor/CodePaneBody"
 import CodePaneVariable from "../containers/Editor/CodePaneVariable"
 import CodePaneParameter from "../containers/Editor/CodePaneParameter"
 import { ContextMenu, showContextMenu, MenuItem } from '../components/ContextMenu'
+import { DialogAlert, DialogAlertRef, DialogConfirm, DialogConfirmRef } from "../components/Modal"
 
 type PropertyContent = {
     category: CodeChooseCategory,
@@ -31,9 +33,12 @@ const Work = () => {
     const terminalOutputRef = useRef<LogViewerRef>(null)
     const executeOutputRef = useRef<LogViewerRef>(null)
     const rightTabRef = useRef<TabRef>(null)
+    const dialogAlertRef = useRef<DialogAlertRef>(null)
+    const dialogConfirmRef = useRef<DialogConfirmRef>(null)
     const [componentDatas, setComponentDatas] = useState<TreeNode[]>([])
     const [treeDatas, setTreeDatas] = useState<TreeNode[]>([])
     const [showAbout, setShowAbout] = useState(false)
+    const [showRenameProject, setShowRenameProject] = useState(false)
     const [codePropertyData, setCodePropertyData] = useState<PropertyContent>()
     const path = location.state?.path
 
@@ -163,6 +168,8 @@ const Work = () => {
 
     return (
         <Layout>
+            <DialogAlert ref={dialogAlertRef} />
+            <DialogConfirm ref={dialogConfirmRef} />
             <ContextMenu></ContextMenu>
             <Top>
                 <Button text="打开" className="icon-[mingcute--open-door-line]" onClick={handleOpenClick} />
@@ -170,6 +177,17 @@ const Work = () => {
                 <Button text="运行" className="icon-[material-symbols--play-circle-outline]" onClick={handleRunClick} />
                 <Button text="关于" className="icon-[ix--about]" onClick={handleAboutClick} />
                 {showAbout && <About onClose={handleAboutClose}></About>}
+                {showRenameProject && (
+                    <RenameProject
+                        onClose={() => setShowRenameProject(false)}
+                        currentPath={project.getAppPath()}
+                        currentName={project.getAppName()}
+                        onSuccess={async (newName) => {
+                        project.setName(newName)
+                        setTreeDatas(await get_designer_file_tree_data(newName, project.getAppPath()))
+                    }}
+                    />
+                )}
             </Top>
             <Vertical>
                 <Left><TreeViewer source={componentDatas} dragKey="editor" expand="Program" onClick={handleComponentTreeClick} onDragStart={handleComponentDragStart} onDragEnd={handleComponentDragEnd}></TreeViewer></Left>
@@ -196,10 +214,44 @@ const Work = () => {
 
                                     if (_node.children != null) {
                                         if (_fullId == "") {
-                                            items.push({ display: "项目重命名", callback: () => {} })
+                                            items.push({ display: "项目重命名", callback: () => { setShowRenameProject(true) } })
                                         }
-                                        items.push({ display: "新建文件夹", callback: () => {} })
-                                        items.push({ display: "新建流程", callback: () => {} })
+                                        items.push({
+                                            display: "新建文件夹",
+                                            callback: async () => {
+                                                const folder = await dialogConfirmRef.current?.show("新建文件夹名称") ?? null
+                                                if (folder == null || folder.trim() === "") {
+                                                    return
+                                                }
+                                                const parentPath = _fullId === ""
+                                                    ? project.getAppPath()
+                                                    : project.getAppPath() + _fullId.substring(1)
+                                                const result = await communication.Executor.Designer.CreateFolder(parentPath, folder.trim())
+                                                if (!result["result"]) {
+                                                    dialogAlertRef.current?.show(result["message"])
+                                                    return
+                                                }
+                                                setTreeDatas(await get_designer_file_tree_data(project.getAppName(), project.getAppPath()))
+                                            }
+                                        })
+                                        items.push({
+                                            display: "新建流程",
+                                            callback: async () => {
+                                                const name = await dialogConfirmRef.current?.show("新建流程名称") ?? null
+                                                if (name == null || name.trim() === "") {
+                                                    return
+                                                }
+                                                const parentPath = _fullId === ""
+                                                    ? project.getAppPath()
+                                                    : project.getAppPath() + _fullId.substring(1)
+                                                const result = await communication.Executor.Designer.CreateFlowFile(parentPath, name.trim())
+                                                if (!result["result"]) {
+                                                    dialogAlertRef.current?.show(result["message"])
+                                                    return
+                                                }
+                                                setTreeDatas(await get_designer_file_tree_data(project.getAppName(), project.getAppPath()))
+                                            }
+                                        })
                                     } else {
                                         items.push({ display: "打开", callback: () => { handleFileTreeClick(_fullId) } })
                                         if (_fullId == "/Main.scs" || _fullId == "/App.proj") {
