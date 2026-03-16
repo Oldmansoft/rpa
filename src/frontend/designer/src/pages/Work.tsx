@@ -104,10 +104,10 @@ const Work = () => {
         if (extName == "scs") {
             const fileContent = await communication.Executor.Designer.GetProjectJsonContent(project.getAppPath(), relativePath)
             set_data_num_index(fileContent["body"], new Counter())
-            editorRef.current!.open(filePath, Format.Code, fileContent)
+            editorRef.current!.open(relativePath, Format.Code, fileContent)
         } else if (extName == "txt") {
             const fileContent = await communication.Executor.Designer.GetProjectTextContent(project.getAppPath(), relativePath)
-            editorRef.current!.open(filePath, Format.Text, fileContent)
+            editorRef.current!.open(relativePath, Format.Text, fileContent)
         } else {
             return
         }

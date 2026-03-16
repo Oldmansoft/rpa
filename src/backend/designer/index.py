@@ -175,20 +175,23 @@ class Designer(ServerCommandHandle):
             terminal_output.write(
                 f"{datetime.now().strftime('%H:%M:%S')} 开始执行流程 {file_path}"
             )
-            with open(join(path, file_path), mode="r", encoding="utf-8") as file:
-                component_data = load(file)
-            with output_execute_file as output_execute_writer:
-                execute_output = OutputFileAndNotice(
-                    output_execute_writer, "ExecuteOutput", self.launcher
-                )
-                procedure = builder.create(
-                    FontendOutput(terminal_output, execute_output), component_data
-                )
-                try:
-                    procedure.execute()
-                except Exception as e:
-                    terminal_output.write(str(e))
-            terminal_output.write(f"{datetime.now().strftime('%H:%M:%S')} 完成结束流程")
+            try:
+                with open(join(path, file_path), mode="r", encoding="utf-8") as file:
+                    component_data = load(file)
+                with output_execute_file as output_execute_writer:
+                    execute_output = OutputFileAndNotice(
+                        output_execute_writer, "ExecuteOutput", self.launcher
+                    )
+                    procedure = builder.create(
+                        FontendOutput(terminal_output, execute_output), component_data
+                    )
+                    try:
+                        procedure.execute()
+                    except Exception as e:
+                        terminal_output.write(str(e))
+                terminal_output.write(f"{datetime.now().strftime('%H:%M:%S')} 完成结束流程")
+            except Exception as e:
+                logger.error()
 
     def ReadOutput(self, category: str) -> list:
         with BlockFile(
