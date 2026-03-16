@@ -20,7 +20,7 @@ function get_param(params: any[], id: string) {
     return null
 }
 
-const CodePaneAction = ({ data, onChange }: { data: any, onChange(num: number, key: string, value: string): void }) => {
+const CodePaneAction = ({ data, onChange, variables }: { data: any, onChange(num: number, key: string, value: string): void, variables?: string[] }) => {
     const project = useProject()
     if (!data) {
         return null
@@ -59,7 +59,7 @@ const CodePaneAction = ({ data, onChange }: { data: any, onChange(num: number, k
         } else {
             let input: React.JSX.Element
             if (component_param.type == "Expression") {
-                input = <InputExpression placeholder={inputTypeTips.get(component_param.type)} value={data.params[key]} onNativeChange={(value) => { onChange(data.num, key, value); return true; }}></InputExpression>
+                input = <InputExpression placeholder={inputTypeTips.get(component_param.type)} value={data.params[key]} variables={variables} onNativeChange={(value) => { onChange(data.num, key, value); return true; }}></InputExpression>
             } else if (component_param.type == "Format") {
                 input = <InputFormat placeholder={inputTypeTips.get(component_param.type)} value={data.params[key]} onNativeChange={(value) => { onChange(data.num, key, value); return true; }}></InputFormat>
             } else {

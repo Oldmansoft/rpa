@@ -40,6 +40,7 @@ const Work = () => {
     const [showAbout, setShowAbout] = useState(false)
     const [showRenameProject, setShowRenameProject] = useState(false)
     const [codePropertyData, setCodePropertyData] = useState<PropertyContent>()
+    const [inputExpressionVariables, setInputExpressionVariables] = useState<string[]>([])
     const path = location.state?.path
 
     useEffect(() => {
@@ -120,6 +121,13 @@ const Work = () => {
         setShowAbout(false)
     }
     const handlePropertiesPaneOpen = (category: CodeChooseCategory, data: any) => {
+        if (category == CodeChooseCategory.Body) {
+            setInputExpressionVariables(editorRef.current?.getBodyVariables() ?? [])
+        } else if (category == CodeChooseCategory.Variable) {
+            setInputExpressionVariables(editorRef.current?.getVariableVariables() ?? [])
+        } else if (category == CodeChooseCategory.ParameterOut) {
+            setInputExpressionVariables(editorRef.current?.getParameterOutVariables() ?? [])
+        }
         if (rightTabRef.current) {
             rightTabRef.current.active(1)
             setCodePropertyData({
@@ -266,10 +274,10 @@ const Work = () => {
                         </TabItem>
                         <TabItem title="属性">
                             <div className="code-pane-properties">
-                                {codePropertyData && codePropertyData.category == CodeChooseCategory.Body && <CodePaneBody data={codePropertyData.data} onChange={handlePropertyChange}></CodePaneBody>}
-                                {codePropertyData && codePropertyData.category == CodeChooseCategory.Variable &&  <CodePaneVariable data={codePropertyData.data} onChange={handleVariableChange}></CodePaneVariable>}
+                                {codePropertyData && codePropertyData.category == CodeChooseCategory.Body && <CodePaneBody data={codePropertyData.data} onChange={handlePropertyChange} variables={inputExpressionVariables}></CodePaneBody>}
+                                {codePropertyData && codePropertyData.category == CodeChooseCategory.Variable &&  <CodePaneVariable data={codePropertyData.data} onChange={handleVariableChange} variables={inputExpressionVariables}></CodePaneVariable>}
                                 {codePropertyData && codePropertyData.category == CodeChooseCategory.ParameterIn &&  <CodePaneParameter data={codePropertyData.data} direction="in" onChange={handleParameterChange}></CodePaneParameter>}
-                                {codePropertyData && codePropertyData.category == CodeChooseCategory.ParameterOut &&  <CodePaneParameter data={codePropertyData.data} direction="out" onChange={handleParameterChange}></CodePaneParameter>}
+                                {codePropertyData && codePropertyData.category == CodeChooseCategory.ParameterOut &&  <CodePaneParameter data={codePropertyData.data} direction="out" onChange={handleParameterChange} variables={inputExpressionVariables}></CodePaneParameter>}
                             </div>
                         </TabItem>
                     </Tab>

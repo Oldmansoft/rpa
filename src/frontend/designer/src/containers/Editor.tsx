@@ -22,6 +22,9 @@ export interface EditorRef {
     save(projectPath: string): void,
     run(projectPath: string): void,
     getContent(): any,
+    getVariableVariables(): string[],
+    getBodyVariables(): string[],
+    getParameterOutVariables(): string[],
     insertContent(target: CodeNodePosition | null, data: any): void
     updateContent(category: UpdateContentCategory, num: number, key: string, value: string): any
 }
@@ -95,6 +98,53 @@ const Editor = forwardRef(({ onPropertiesPaneOpen, onTabChange }: { onProperties
                 const currentIndex = activeTabIndexRef.current
                 if (currentIndex < 0 || currentIndex >= currentTabs.length) return undefined
                 return currentTabs[currentIndex].content
+            },
+            getVariableVariables() {
+                const currentTabs = tabsRef.current
+                const currentIndex = activeTabIndexRef.current
+                if (currentIndex < 0 || currentIndex >= currentTabs.length) return []
+                const result: string[] = []
+                for (const item of currentTabs[currentIndex].content["parameter"]["in"]) {
+                    if (item["name"] == "") continue
+                    result.push(item["name"])
+                }
+                return result
+            },
+            getBodyVariables() {
+                const currentTabs = tabsRef.current
+                const currentIndex = activeTabIndexRef.current
+                if (currentIndex < 0 || currentIndex >= currentTabs.length) return []
+
+                const result: string[] = []
+                for (const item of currentTabs[currentIndex].content["local"]) {
+                    if (item["name"] == "") continue
+                    result.push(item["name"])
+                }
+                for (const item of currentTabs[currentIndex].content["parameter"]["in"]) {
+                    if (item["name"] == "") continue
+                    result.push(item["name"])
+                }
+                for (const item of currentTabs[currentIndex].content["parameter"]["out"]) {
+                    if (item["name"] == "") continue
+                    result.push(item["name"])
+                }
+                return result
+            },
+            getParameterOutVariables() {
+                const currentTabs = tabsRef.current
+                const currentIndex = activeTabIndexRef.current
+                if (currentIndex < 0 || currentIndex >= currentTabs.length) return []
+
+                const result: string[] = []
+                for (const item of currentTabs[currentIndex].content["local"]) {
+                    if (item["name"] == "") continue
+                    result.push(item["name"])
+                }
+                for (const item of currentTabs[currentIndex].content["parameter"]["in"]) {
+                    if (item["name"] == "") continue
+                    result.push(item["name"])
+                }
+                return result
             },
             insertContent(target: CodeNodePosition | null, data: any) {
                 const currentTabs = tabsRef.current

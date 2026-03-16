@@ -1,7 +1,7 @@
 import Input from "../../components/Input"
 import InputExpression from "../../components/InputExpression"
 
-const CodePaneVariable = ({ data, onChange }: { data: any, onChange(index: number, key: string, value: string): void }) => {
+const CodePaneVariable = ({ data, onChange, variables }: { data: any, onChange(index: number, key: string, value: string): void, variables?: string[] }) => {
     if (!data) {
         return
     }
@@ -27,7 +27,7 @@ const CodePaneVariable = ({ data, onChange }: { data: any, onChange(index: numbe
             </label>
             <label className="property">
                 <span>初始值</span>
-                <InputExpression value={data["value"]} onNativeChange={handleValueChange} onInput={(value) => value.trim()}></InputExpression>
+                <InputExpression value={data["value"]} variables={variables} onNativeChange={handleValueChange} onInput={(value) => value.trim()}></InputExpression>
             </label>
         </>
     )

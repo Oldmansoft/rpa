@@ -38,19 +38,16 @@ const expressionTheme = createTheme({
     ],
 })
 
-const DEFAULT_VARIABLES = ["user_name", "user_age", "order_total", "today"]
-
 export interface InputExpressionProps {
     value: string
     onNativeChange?: (value: string) => boolean
     onInput?: (value: string) => string
     placeholder?: string
     className?: string
-    /** 自动补全变量名列表，不传则使用默认列表 */
     variables?: string[]
 }
 
-const InputExpression = ({ onNativeChange, onInput, value, placeholder, className, variables = DEFAULT_VARIABLES }: InputExpressionProps) => {
+const InputExpression = ({ onNativeChange, onInput, value, placeholder, className, variables = [] }: InputExpressionProps) => {
     const [innerValue, setInnerValue] = useState(value)
     const prevValueRef = useRef(value)
     const onEnterRef = useRef<() => void>(() => {})

@@ -1,9 +1,10 @@
 import Input from "../../components/Input"
 import InputExpression from "../../components/InputExpression"
 
-const CodePaneParameter = ({ data, direction, onChange }: {
+const CodePaneParameter = ({ data, direction, variables, onChange }: {
     data: any,
     direction: "in" | "out",
+    variables?: string[],
     onChange(direction: "in" | "out", index: number, key: string, value: string): void
 }) => {
     if (!data) {
@@ -31,7 +32,7 @@ const CodePaneParameter = ({ data, direction, onChange }: {
             </label>
             <label className="property">
                 <span>默认值</span>
-                <InputExpression value={data["value"]} onNativeChange={handleValueChange} onInput={(value) => value.trim()}></InputExpression>
+                <InputExpression value={data["value"]} variables={variables} onNativeChange={handleValueChange} onInput={(value) => value.trim()}></InputExpression>
             </label>
         </>
     )
