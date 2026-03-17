@@ -22,7 +22,8 @@ import { DialogAlert, DialogAlertRef, DialogConfirm, DialogConfirmRef } from "..
 
 type PropertyContent = {
     category: CodeChooseCategory,
-    data: any
+    data: any,
+    variables?: string[]
 }
 
 const Work = () => {
@@ -40,7 +41,6 @@ const Work = () => {
     const [showAbout, setShowAbout] = useState(false)
     const [showRenameProject, setShowRenameProject] = useState(false)
     const [codePropertyData, setCodePropertyData] = useState<PropertyContent>()
-    const [inputExpressionVariables, setInputExpressionVariables] = useState<string[]>([])
     const path = location.state?.path
 
     useEffect(() => {
@@ -121,52 +121,38 @@ const Work = () => {
         setShowAbout(false)
     }
     const handlePropertiesPaneOpen = (category: CodeChooseCategory, data: any) => {
-        if (category == CodeChooseCategory.Body) {
-            setInputExpressionVariables(editorRef.current?.getBodyVariables() ?? [])
-        } else if (category == CodeChooseCategory.Variable) {
-            setInputExpressionVariables(editorRef.current?.getVariableVariables() ?? [])
-        } else if (category == CodeChooseCategory.ParameterOut) {
-            setInputExpressionVariables(editorRef.current?.getParameterOutVariables() ?? [])
-        }
+        const variables =
+            category === CodeChooseCategory.Body
+                ? (editorRef.current?.getBodyVariables() ?? [])
+                : category === CodeChooseCategory.Variable
+                    ? (editorRef.current?.getVariableVariables() ?? [])
+                    : category === CodeChooseCategory.ParameterIn || category === CodeChooseCategory.ParameterOut
+                        ? (editorRef.current?.getParameterOutVariables() ?? [])
+                        : undefined
         if (rightTabRef.current) {
             rightTabRef.current.active(1)
-            setCodePropertyData({
-                category: category,
-                data: data
-            })
+            setCodePropertyData({ category, data, variables })
         }
     }
     const handlePropertyChange = (num: number, key: string, value: string) => {
         const data = editorRef.current?.updateContent(UpdateContentCategory.Body, num, key, value)
-        setCodePropertyData({
-            category: CodeChooseCategory.Body,
-            data: data
-        })
+        setCodePropertyData(prev => prev ? { ...prev, data: data! } : undefined)
     }
     const handleVariableChange = (index: number, key: string, value: string) => {
         const data = editorRef.current?.updateContent(UpdateContentCategory.Variable, index, key, value)
-        data.index = index
-        setCodePropertyData({
-            category: CodeChooseCategory.Variable,
-            data: data
-        })
+        data!.index = index
+        setCodePropertyData(prev => prev ? { ...prev, data: data! } : undefined)
     }
 
     const handleParameterChange = (direction: "in" | "out", index: number, key: string, value: string) => {
         if (direction == "in") {
             const data = editorRef.current?.updateContent(UpdateContentCategory.ParameterIn, index, key, value)
-            data.index = index
-            setCodePropertyData({
-                category: CodeChooseCategory.ParameterIn,
-                data: data
-            })
+            data!.index = index
+            setCodePropertyData(prev => prev ? { ...prev, data: data! } : undefined)
         } else {
             const data = editorRef.current?.updateContent(UpdateContentCategory.ParameterOut, index, key, value)
-            data.index = index
-            setCodePropertyData({
-                category: CodeChooseCategory.ParameterOut,
-                data: data
-            })
+            data!.index = index
+            setCodePropertyData(prev => prev ? { ...prev, data: data! } : undefined)
         }
     }
 
@@ -274,10 +260,10 @@ const Work = () => {
                         </TabItem>
                         <TabItem title="属性">
                             <div className="code-pane-properties">
-                                {codePropertyData && codePropertyData.category == CodeChooseCategory.Body && <CodePaneBody data={codePropertyData.data} onChange={handlePropertyChange} variables={inputExpressionVariables}></CodePaneBody>}
-                                {codePropertyData && codePropertyData.category == CodeChooseCategory.Variable &&  <CodePaneVariable data={codePropertyData.data} onChange={handleVariableChange} variables={inputExpressionVariables}></CodePaneVariable>}
-                                {codePropertyData && codePropertyData.category == CodeChooseCategory.ParameterIn &&  <CodePaneParameter data={codePropertyData.data} direction="in" onChange={handleParameterChange}></CodePaneParameter>}
-                                {codePropertyData && codePropertyData.category == CodeChooseCategory.ParameterOut &&  <CodePaneParameter data={codePropertyData.data} direction="out" onChange={handleParameterChange} variables={inputExpressionVariables}></CodePaneParameter>}
+                                {codePropertyData && codePropertyData.category == CodeChooseCategory.Body && <CodePaneBody data={codePropertyData.data} onChange={handlePropertyChange} variables={codePropertyData.variables}></CodePaneBody>}
+                                {codePropertyData && codePropertyData.category == CodeChooseCategory.Variable &&  <CodePaneVariable data={codePropertyData.data} onChange={handleVariableChange} variables={codePropertyData.variables}></CodePaneVariable>}
+                                {codePropertyData && codePropertyData.category == CodeChooseCategory.ParameterIn &&  <CodePaneParameter data={codePropertyData.data} direction="in" onChange={handleParameterChange} variables={codePropertyData.variables}></CodePaneParameter>}
+                                {codePropertyData && codePropertyData.category == CodeChooseCategory.ParameterOut &&  <CodePaneParameter data={codePropertyData.data} direction="out" onChange={handleParameterChange} variables={codePropertyData.variables}></CodePaneParameter>}
                             </div>
                         </TabItem>
                     </Tab>
