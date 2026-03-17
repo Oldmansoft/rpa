@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import styles from './ContextMenu.styles.module.css'
 
@@ -41,6 +41,9 @@ const setterRef: { current: React.Dispatch<React.SetStateAction<MenuItem[]>> | n
 
 export const ContextMenu = () => {
     const [menuItems, setContextMenuItems] = useState<MenuItem[]>([])
+    const [positionState, setPositionState] = useState<{ top: number; left: number } | null>(null)
+    const [adjusted, setAdjusted] = useState(false)
+    const menuRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         setterRef.current = setContextMenuItems
@@ -48,6 +51,31 @@ export const ContextMenu = () => {
             setterRef.current = null
         }
     }, [])
+
+    useEffect(() => {
+        if (menuItems.length > 0) {
+            setPositionState(null)
+            setAdjusted(false)
+        }
+    }, [menuItems])
+
+    useEffect(() => {
+        if (menuItems.length === 0 || !menuRef.current) return
+        const el = menuRef.current
+        const run = () => {
+            const rect = el.getBoundingClientRect()
+            const vw = window.innerWidth
+            const vh = window.innerHeight
+            let left = contextMenuPosition.left
+            let top = contextMenuPosition.top
+            if (left + rect.width > vw) left = contextMenuPosition.left - rect.width
+            if (top + rect.height > vh) top = contextMenuPosition.top - rect.height
+            setPositionState({ left, top })
+            setAdjusted(true)
+        }
+        const id = requestAnimationFrame(run)
+        return () => cancelAnimationFrame(id)
+    }, [menuItems])
 
     const closeMenu = (e: MouseEvent) => {
         if ((e.target as HTMLElement)?.closest(`.${styles.context_menu}`)) {
@@ -74,8 +102,17 @@ export const ContextMenu = () => {
         }
     }, [])
 
+    const pos = positionState ?? contextMenuPosition
     const result = menuItems.length > 0 ? (
-        <div className={styles.context_menu} style={{ top: `${contextMenuPosition.top}px`, left: `${contextMenuPosition.left}px` }}>
+        <div
+            ref={menuRef}
+            className={styles.context_menu}
+            style={{
+                top: `${pos.top}px`,
+                left: `${pos.left}px`,
+                visibility: adjusted ? 'visible' : 'hidden',
+            }}
+        >
             <PopupMenu items={menuItems} onClick={handleClick} />
         </div>
     ) : <></>
