@@ -13,8 +13,9 @@ from executor.component import (
 )
 from executor.log2 import logger
 from executor.block_file import BlockFile, BlockMode, Writer
-from os.path import isdir, isfile, join, split
+from os.path import isdir, isfile, join, split, basename, normpath
 from os import listdir, mkdir
+from shutil import move as shutil_move
 from json import load
 from datetime import datetime
 import studio.project
@@ -251,6 +252,34 @@ class Designer(ServerCommandHandle):
             return {"result": False, "message": f"创建项目发生错误 {ex}"}
 
         return {"result": True, "path": file_path}
+
+    def MoveFile(self, path: str, source_relative: str, target_folder_relative: str) -> dict:
+        if path is None or path == "":
+            raise ValueError("path 不能为空")
+        if source_relative is None or source_relative.strip() == "":
+            return {"result": False, "message": "源路径不能为空"}
+        source_relative = normpath(source_relative).replace("\\", "/").lstrip("/")
+        if source_relative == "App.proj":
+            return {"result": False, "message": "不能移动项目文件 App.proj"}
+        target_folder_relative = (normpath(target_folder_relative).replace("\\", "/") if target_folder_relative else "").strip("/")
+        source_full = join(path, source_relative)
+        if not isdir(source_full) and not isfile(source_full):
+            return {"result": False, "message": f"不存在源 {source_relative}"}
+        target_dir = join(path, target_folder_relative) if target_folder_relative else path
+        if not isdir(target_dir):
+            return {"result": False, "message": f"不存在目标目录 {target_folder_relative or '.'}"}
+        if isdir(source_full) and target_folder_relative and (target_folder_relative == source_relative or target_folder_relative.startswith(source_relative + "/")):
+            return {"result": False, "message": "不能将文件夹移动到自身或子目录内"}
+        dest = join(target_dir, basename(source_relative))
+        if source_full == dest:
+            return {"result": True}
+        if isdir(dest) or isfile(dest):
+            return {"result": False, "message": f"目标已存在 {basename(source_relative)}"}
+        try:
+            shutil_move(source_full, dest)
+        except Exception as ex:
+            return {"result": False, "message": f"移动失败 {ex}"}
+        return {"result": True}
 
 
 def main() -> None:

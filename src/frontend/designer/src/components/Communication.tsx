@@ -129,6 +129,10 @@ class Designer extends ExecutorProxy {
     CreateFlowFile(path: string, name: string): Promise<any> {
         return this.executor.Call(this.name, this.CreateFlowFile.name, { path: path, name: name })
     }
+
+    MoveFile(path: string, source_relative: string, target_folder_relative: string): Promise<any> {
+        return this.executor.Call(this.name, this.MoveFile.name, { path: path, source_relative: source_relative, target_folder_relative: target_folder_relative })
+    }
 }
 
 export type Callback = (result: any) => void
