@@ -160,6 +160,17 @@ const Work = () => {
         setCodePropertyData(undefined)
     }
 
+    const handleFileTreeDrop = async (sourceFullId: string, targetFolderFullId: string, _isSourceDir: boolean) => {
+        const source_relative = sourceFullId.startsWith("/") ? sourceFullId.slice(1) : sourceFullId
+        const target_folder_relative = targetFolderFullId.startsWith("/") ? targetFolderFullId.slice(1) : targetFolderFullId
+        const result = await communication.Executor.Designer.MoveFile(project.getAppPath(), source_relative, target_folder_relative)
+        if (!result["result"]) {
+            dialogAlertRef.current?.show(result["message"])
+            return
+        }
+        setTreeDatas(await get_designer_file_tree_data(project.getAppName(), project.getAppPath()))
+    }
+
     return (
         <Layout>
             <DialogAlert ref={dialogAlertRef} />
@@ -203,6 +214,14 @@ const Work = () => {
                                 dropKey="file"
                                 expand=""
                                 onClick={handleFileTreeClick}
+                                onDrop={handleFileTreeDrop}
+                                canAcceptDrop={(sourceFullId, sourceIsDir, targetFullId) => {
+                                    if (sourceFullId === "/Main.scs") return false
+                                    if (!sourceIsDir) return true
+                                    if (targetFullId === sourceFullId) return false
+                                    if (targetFullId.startsWith(sourceFullId + "/")) return false
+                                    return true
+                                }}
                                 onContextMenu={(e, _fullId, _node) => {
                                     const items: MenuItem[] = []
 

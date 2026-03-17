@@ -5,6 +5,8 @@ declare const window: {
     dragKey: string
 } & Window
 
+let currentDragSource: { fullId: string, isdir: boolean } | null = null
+
 export interface TreeNode {
     id: string,
     name: string,
@@ -16,15 +18,18 @@ export interface TreeNode {
 
 const margin_left = 14
 
-const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDragStart, onDragEnd, onContextMenu, inExpanded }: {
+const TreeViewerNode = ({ node, fullId, dragKey, dropKey, offset, onClick, onToggle, onDragStart, onDragEnd, onDrop, canAcceptDrop, onContextMenu, inExpanded }: {
     node: TreeNode,
     fullId: string,
     dragKey?: string,
+    dropKey?: string,
     offset: number,
     onClick: (fullId: string) => void,
     onToggle: (fullId: string) => void,
     onDragStart?: (fullId: string) => void,
     onDragEnd?: (fullId: string) => void,
+    onDrop?: (sourceFullId: string, targetFolderFullId: string, isSourceDir: boolean) => void,
+    canAcceptDrop?: (sourceFullId: string, sourceIsDir: boolean, targetFullId: string, targetIsDir: boolean) => boolean,
     onContextMenu?: (e: React.MouseEvent<HTMLElement>, fullId: string, node: TreeNode) => void,
     inExpanded: (fullId: string) => boolean
 }) => {
@@ -66,16 +71,24 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
             isdir: node.children != null
         }))
         window.dragKey = dragKey
+        currentDragSource = { fullId, isdir: node.children != null }
         setIsDragging(true)
         if (onDragStart != null) {
             onDragStart(fullId)
         }
     }
     const handleDragEnd = () => {
+        currentDragSource = null
         setIsDragging(false)
         if (onDragEnd != null) {
             onDragEnd(fullId)
         }
+    }
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        if (window.dragKey !== dropKey) return
+        const src = currentDragSource
+        if (canAcceptDrop && src && !canAcceptDrop(src.fullId, src.isdir, fullId, node.children != null)) return
+        e.preventDefault()
     }
     const handleClick = () => {
         if (node.children) {
@@ -85,14 +98,16 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
         }
     }
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        const drag_object = JSON.parse(e.dataTransfer.getData("text/plain"));
+        e.preventDefault()
+        if (!onDrop) return
+        const drag_object = JSON.parse(e.dataTransfer.getData("text/plain"))
         const source_path = getFolderPath(drag_object.name)
         let target_path = getFolderPath(fullId)
-        if (node.children) {
+        if (node.children != null) {
             target_path = fullId
         }
-        if (source_path != target_path && !folderContains(drag_object.isdir, drag_object.name, target_path)) {
-            console.warn(drag_object.name, "移动到", target_path)
+        if (source_path !== target_path && !folderContains(drag_object.isdir, drag_object.name, target_path)) {
+            onDrop(drag_object.name, target_path, drag_object.isdir)
         }
     }
 
@@ -108,6 +123,7 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
                 onClick={handleClick}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
+                onDragOver={handleDragOver}
                 onDrop={handleDrop}
                 onContextMenu={handleContextMenu}
                 draggable={dragKey ? "true" : "false"}
@@ -131,11 +147,14 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
                                     key={`${fullId}/${child_node.id}`}
                                     fullId={`${fullId}/${child_node.id}`}
                                     dragKey={dragKey}
+                                    dropKey={dropKey}
                                     offset={offset + margin_left}
                                     node={child_node}
                                     onClick={onClick}
                                     onDragStart={onDragStart}
                                     onDragEnd={onDragEnd}
+                                    onDrop={onDrop}
+                                    canAcceptDrop={canAcceptDrop}
                                     onContextMenu={onContextMenu}
                                     inExpanded={inExpanded}
                                     onToggle={onToggle}
@@ -149,7 +168,7 @@ const TreeViewerNode = ({ node, fullId, dragKey, offset, onClick, onToggle, onDr
     )
 }
 
-const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, onDragEnd, onContextMenu }: {
+const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, onDragEnd, onDrop, canAcceptDrop, onContextMenu }: {
     source: TreeNode[],
     dragKey?: string,
     dropKey?: string,
@@ -157,6 +176,8 @@ const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, on
     onClick: (fullId: string) => void,
     onDragStart?: (fullId: string) => void,
     onDragEnd?: (fullId: string) => void,
+    onDrop?: (sourceFullId: string, targetFolderFullId: string, isSourceDir: boolean) => void,
+    canAcceptDrop?: (sourceFullId: string, sourceIsDir: boolean, targetFullId: string, targetIsDir: boolean) => boolean,
     onContextMenu?: (e: React.MouseEvent<HTMLElement>, fullId: string, node: TreeNode) => void
 }) => {
     const [expandedIds, setExpandedIds] = useState<string[]>(expand || expand == "" ? [expand] : [])
@@ -170,20 +191,15 @@ const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, on
     const inExpanded = (fullId: string) => {
         return expandedIds.includes(fullId)
     }
-    const handleDragOver = (e: any) => {
-        if (window.dragKey == dropKey) {
-            e.preventDefault();
-        }
-    }
-
     return (
-        <ul className={styles.tree} onDragOver={handleDragOver}>
+        <ul className={styles.tree}>
             {source.map(
                 (node) => (
                     <TreeViewerNode
                         key={node.id}
                         fullId={node.id}
                         dragKey={dragKey}
+                        dropKey={dropKey}
                         offset={margin_left}
                         node={node}
                         onClick={onClick}
@@ -191,6 +207,8 @@ const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, on
                         onToggle={handleToggle}
                         onDragStart={onDragStart}
                         onDragEnd={onDragEnd}
+                        onDrop={onDrop}
+                        canAcceptDrop={canAcceptDrop}
                         onContextMenu={onContextMenu}
                     />
                 )
