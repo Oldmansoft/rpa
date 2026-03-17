@@ -18,7 +18,7 @@ import CodePaneBody from "../containers/Editor/CodePaneBody"
 import CodePaneVariable from "../containers/Editor/CodePaneVariable"
 import CodePaneParameter from "../containers/Editor/CodePaneParameter"
 import { ContextMenu, showContextMenu, MenuItem } from '../components/ContextMenu'
-import { DialogAlert, DialogAlertRef, DialogConfirm, DialogConfirmRef } from "../components/Modal"
+import { DialogAlert, DialogAlertRef, DialogConfirm, DialogConfirmRef, DialogPrompt, DialogPromptRef } from "../components/Modal"
 
 type PropertyContent = {
     category: CodeChooseCategory,
@@ -36,6 +36,7 @@ const Work = () => {
     const rightTabRef = useRef<TabRef>(null)
     const dialogAlertRef = useRef<DialogAlertRef>(null)
     const dialogConfirmRef = useRef<DialogConfirmRef>(null)
+    const dialogPromptRef = useRef<DialogPromptRef>(null)
     const [componentDatas, setComponentDatas] = useState<TreeNode[]>([])
     const [treeDatas, setTreeDatas] = useState<TreeNode[]>([])
     const [showAbout, setShowAbout] = useState(false)
@@ -175,6 +176,7 @@ const Work = () => {
         <Layout>
             <DialogAlert ref={dialogAlertRef} />
             <DialogConfirm ref={dialogConfirmRef} />
+            <DialogPrompt ref={dialogPromptRef} />
             <ContextMenu></ContextMenu>
             <Top>
                 <Button text="打开" className="icon-[mingcute--open-door-line]" onClick={handleOpenClick} />
@@ -233,7 +235,7 @@ const Work = () => {
                                         items.push({
                                             display: "新建文件夹",
                                             callback: async () => {
-                                                const folder = await dialogConfirmRef.current?.show("新建文件夹名称") ?? null
+                                                const folder = await dialogPromptRef.current?.show("新建文件夹名称") ?? null
                                                 if (folder == null || folder.trim() === "") {
                                                     return
                                                 }
@@ -251,7 +253,7 @@ const Work = () => {
                                         items.push({
                                             display: "新建流程",
                                             callback: async () => {
-                                                const name = await dialogConfirmRef.current?.show("新建流程名称") ?? null
+                                                const name = await dialogPromptRef.current?.show("新建流程名称") ?? null
                                                 if (name == null || name.trim() === "") {
                                                     return
                                                 }
@@ -266,12 +268,45 @@ const Work = () => {
                                                 setTreeDatas(await get_designer_file_tree_data(project.getAppName(), project.getAppPath()))
                                             }
                                         })
+                                        if (_fullId !== "") {
+                                            if (_node.children!.length > 0) {
+                                                items.push({ display: "删除" })
+                                            } else {
+                                                items.push({
+                                                    display: "删除",
+                                                    callback: async () => {
+                                                        const ok = await dialogConfirmRef.current?.show("确定删除该文件夹？")
+                                                        if (!ok) return
+                                                        const relative_path = _fullId.startsWith("/") ? _fullId.slice(1) : _fullId
+                                                        const result = await communication.Executor.Designer.DeleteFile(project.getAppPath(), relative_path)
+                                                        if (!result["result"]) {
+                                                            dialogAlertRef.current?.show(result["message"])
+                                                            return
+                                                        }
+                                                        setTreeDatas(await get_designer_file_tree_data(project.getAppName(), project.getAppPath()))
+                                                    }
+                                                })
+                                            }
+                                        }
                                     } else {
                                         items.push({ display: "打开", callback: () => { handleFileTreeClick(_fullId) } })
                                         if (_fullId == "/Main.scs" || _fullId == "/App.proj") {
-                                            items.push({ display: "删除"})
+                                            items.push({ display: "删除" })
                                         } else {
-                                            items.push({ display: "删除", callback: () => {} })
+                                            items.push({
+                                                display: "删除",
+                                                callback: async () => {
+                                                    const ok = await dialogConfirmRef.current?.show("确定删除？")
+                                                    if (!ok) return
+                                                    const relative_path = _fullId.startsWith("/") ? _fullId.slice(1) : _fullId
+                                                    const result = await communication.Executor.Designer.DeleteFile(project.getAppPath(), relative_path)
+                                                    if (!result["result"]) {
+                                                        dialogAlertRef.current?.show(result["message"])
+                                                        return
+                                                    }
+                                                    setTreeDatas(await get_designer_file_tree_data(project.getAppName(), project.getAppPath()))
+                                                }
+                                            })
                                         }
                                     }
                                     showContextMenu(e, items)

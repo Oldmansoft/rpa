@@ -14,8 +14,8 @@ from executor.component import (
 from executor.log2 import logger
 from executor.block_file import BlockFile, BlockMode, Writer
 from os.path import isdir, isfile, join, split, basename, normpath
-from os import listdir, mkdir
-from shutil import move as shutil_move
+from os import listdir, mkdir, remove
+from shutil import move as shutil_move, rmtree as shutil_rmtree
 from json import load
 from datetime import datetime
 import studio.project
@@ -286,6 +286,26 @@ class Designer(ServerCommandHandle):
             shutil_move(source_full, dest)
         except Exception as ex:
             return {"result": False, "message": f"移动失败 {ex}"}
+        return {"result": True}
+
+    def DeleteFile(self, path: str, relative_path: str) -> dict:
+        if path is None or path == "":
+            raise ValueError("path 不能为空")
+        relative_path = normpath(relative_path).replace("\\", "/").strip("/")
+        if not relative_path:
+            return {"result": False, "message": "不能删除根目录"}
+        if relative_path == "App.proj" or relative_path == "Main.scs":
+            return {"result": False, "message": "不能删除受保护的文件"}
+        full = join(path, relative_path)
+        if not isdir(full) and not isfile(full):
+            return {"result": False, "message": f"不存在 {relative_path}"}
+        try:
+            if isdir(full):
+                shutil_rmtree(full)
+            else:
+                remove(full)
+        except Exception as ex:
+            return {"result": False, "message": f"删除失败 {ex}"}
         return {"result": True}
 
 

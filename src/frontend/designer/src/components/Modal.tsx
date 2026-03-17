@@ -56,11 +56,11 @@ export const DialogAlert = forwardRef((props: React.ComponentProps<'dialog'>, re
     )
 })
 
-export interface DialogConfirmRef {
+export interface DialogPromptRef {
     show(message: string, defaultValue?: string): Promise<string | null>
 }
 
-export const DialogConfirm = forwardRef((props: React.ComponentProps<'dialog'>, ref: React.Ref<DialogConfirmRef>) => {
+export const DialogPrompt = forwardRef((props: React.ComponentProps<'dialog'>, ref: React.Ref<DialogPromptRef>) => {
     const [content, setContent] = useState("")
     const [inputValue, setInputValue] = useState("")
     const dialogRef = useRef<HTMLDialogElement>(null)
@@ -103,6 +103,49 @@ export const DialogConfirm = forwardRef((props: React.ComponentProps<'dialog'>, 
                     if (e.key === "Escape") handleCancel()
                 }}
             />
+            <div>
+                <button onClick={handleCancel}>取消</button>
+                <button onClick={handleConfirm}>确定</button>
+            </div>
+        </dialog>,
+        document.body
+    )
+})
+
+export interface DialogConfirmRef {
+    show(message: string): Promise<boolean>
+}
+
+export const DialogConfirm = forwardRef((props: React.ComponentProps<'dialog'>, ref: React.Ref<DialogConfirmRef>) => {
+    const [content, setContent] = useState("")
+    const dialogRef = useRef<HTMLDialogElement>(null)
+    const resolveRef = useRef<(value: boolean) => void>(() => {})
+
+    useImperativeHandle(ref, () => {
+        return {
+            show(message: string) {
+                setContent(message)
+                dialogRef.current!.showModal()
+                return new Promise<boolean>((resolve) => {
+                    resolveRef.current = resolve
+                })
+            }
+        };
+    }, []);
+
+    const handleConfirm = () => {
+        dialogRef.current!.close()
+        resolveRef.current(true)
+    }
+
+    const handleCancel = () => {
+        dialogRef.current!.close()
+        resolveRef.current(false)
+    }
+
+    return createPortal(
+        <dialog {...props} ref={dialogRef}>
+            <div>{content}</div>
             <div>
                 <button onClick={handleCancel}>取消</button>
                 <button onClick={handleConfirm}>确定</button>

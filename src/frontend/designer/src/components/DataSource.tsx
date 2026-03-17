@@ -32,7 +32,6 @@ export const get_designer_file_tree_data = async (name: string, path: string) =>
     }
 
     const datas = await communication.Executor.Designer.GetFileTree(path)
-    console.log(datas)
     const result: TreeNode[] = [{
         id: "",
         name: name,
