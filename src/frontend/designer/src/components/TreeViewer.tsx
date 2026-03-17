@@ -18,7 +18,7 @@ export interface TreeNode {
 
 const margin_left = 14
 
-const TreeViewerNode = ({ node, fullId, dragKey, dropKey, offset, onClick, onToggle, onDragStart, onDragEnd, onDrop, canAcceptDrop, onContextMenu, inExpanded }: {
+const TreeViewerNode = ({ node, fullId, dragKey, dropKey, offset, onClick, onToggle, onDragStart, onDragEnd, onDrop, canAcceptDrop, isNodeHidden, onContextMenu, inExpanded }: {
     node: TreeNode,
     fullId: string,
     dragKey?: string,
@@ -30,6 +30,7 @@ const TreeViewerNode = ({ node, fullId, dragKey, dropKey, offset, onClick, onTog
     onDragEnd?: (fullId: string) => void,
     onDrop?: (sourceFullId: string, targetFolderFullId: string, isSourceDir: boolean) => void,
     canAcceptDrop?: (sourceFullId: string, sourceIsDir: boolean, targetFullId: string, targetIsDir: boolean) => boolean,
+    isNodeHidden?: (fullId: string, node: TreeNode) => boolean,
     onContextMenu?: (e: React.MouseEvent<HTMLElement>, fullId: string, node: TreeNode) => void,
     inExpanded: (fullId: string) => boolean
 }) => {
@@ -141,8 +142,9 @@ const TreeViewerNode = ({ node, fullId, dragKey, dropKey, offset, onClick, onTog
             {
                 is_category_and_expanded && (
                     <ul>
-                        {node.children?.map(
-                            (child_node) => (
+                        {node.children
+                            ?.filter((child_node) => !isNodeHidden?.(`${fullId}/${child_node.id}`, child_node))
+                            .map((child_node) => (
                                 <TreeViewerNode
                                     key={`${fullId}/${child_node.id}`}
                                     fullId={`${fullId}/${child_node.id}`}
@@ -155,12 +157,12 @@ const TreeViewerNode = ({ node, fullId, dragKey, dropKey, offset, onClick, onTog
                                     onDragEnd={onDragEnd}
                                     onDrop={onDrop}
                                     canAcceptDrop={canAcceptDrop}
+                                    isNodeHidden={isNodeHidden}
                                     onContextMenu={onContextMenu}
                                     inExpanded={inExpanded}
                                     onToggle={onToggle}
                                 />
-                            )
-                        )}
+                            ))}
                     </ul>
                 )
             }
@@ -168,7 +170,7 @@ const TreeViewerNode = ({ node, fullId, dragKey, dropKey, offset, onClick, onTog
     )
 }
 
-const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, onDragEnd, onDrop, canAcceptDrop, onContextMenu }: {
+const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, onDragEnd, onDrop, canAcceptDrop, isNodeHidden, onContextMenu }: {
     source: TreeNode[],
     dragKey?: string,
     dropKey?: string,
@@ -178,6 +180,7 @@ const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, on
     onDragEnd?: (fullId: string) => void,
     onDrop?: (sourceFullId: string, targetFolderFullId: string, isSourceDir: boolean) => void,
     canAcceptDrop?: (sourceFullId: string, sourceIsDir: boolean, targetFullId: string, targetIsDir: boolean) => boolean,
+    isNodeHidden?: (fullId: string, node: TreeNode) => boolean,
     onContextMenu?: (e: React.MouseEvent<HTMLElement>, fullId: string, node: TreeNode) => void
 }) => {
     const [expandedIds, setExpandedIds] = useState<string[]>(expand || expand == "" ? [expand] : [])
@@ -193,8 +196,9 @@ const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, on
     }
     return (
         <ul className={styles.tree}>
-            {source.map(
-                (node) => (
+            {source
+                .filter((node) => !isNodeHidden?.(node.id, node))
+                .map((node) => (
                     <TreeViewerNode
                         key={node.id}
                         fullId={node.id}
@@ -209,10 +213,10 @@ const TreeViewer = ({ source, dragKey, dropKey, expand, onClick, onDragStart, on
                         onDragEnd={onDragEnd}
                         onDrop={onDrop}
                         canAcceptDrop={canAcceptDrop}
+                        isNodeHidden={isNodeHidden}
                         onContextMenu={onContextMenu}
                     />
-                )
-            )}
+                ))}
         </ul>
     )
 }

@@ -18,10 +18,10 @@ export const get_designer_file_tree_data = async (name: string, path: string) =>
                 const ext = data["name"].split(".").pop()
                 if (ext == "proj") {
                     node.name = data["name"].split(".")[0]
-                    node.icon = "icon-[mdi--file]"
+                    node.icon = "icon-[uil--file]"
                 } else if (ext == "scs") {
                     node.name = data["name"].split(".")[0]
-                    node.icon = "icon-[uil--file]"
+                    node.icon = "icon-[mdi--file]"
                 } else {
                     node.icon = "icon-[bx--file]"
                 }
@@ -32,6 +32,7 @@ export const get_designer_file_tree_data = async (name: string, path: string) =>
     }
 
     const datas = await communication.Executor.Designer.GetFileTree(path)
+    console.log(datas)
     const result: TreeNode[] = [{
         id: "",
         name: name,

@@ -215,6 +215,7 @@ const Work = () => {
                                 expand=""
                                 onClick={handleFileTreeClick}
                                 onDrop={handleFileTreeDrop}
+                                isNodeHidden={(fullId) => fullId === "/App.proj"}
                                 canAcceptDrop={(sourceFullId, sourceIsDir, targetFullId) => {
                                     if (sourceFullId === "/Main.scs") return false
                                     if (!sourceIsDir) return true

@@ -115,15 +115,22 @@ class Designer(ServerCommandHandle):
                 )
 
     def GetFileTree(self, path: str) -> list:
+        return self._get_file_tree(path, is_root=True)
+
+    def _get_file_tree(self, path: str, is_root: bool) -> list:
         if path is None or path == "":
             raise ValueError("path 不能为空")
         result = []
         for dir in listdir(path):
             dir_path = join(path, dir)
             if isdir(dir_path):
-                result.append({"name": dir, "children": self.GetFileTree(dir_path)})
+                result.append({"name": dir, "children": self._get_file_tree(dir_path, False)})
             else:
-                result.append({"name": dir})
+                item = {"name": dir}
+                if is_root and dir == "Main.scs":
+                    item["fixed"] = True
+                result.append(item)
+        result.sort(key=lambda x: (0 if x.get("fixed") else 1, 0 if "children" in x else 1, x["name"]))
         return result
 
     def GetProjectAppContent(self, app_path: str) -> dict:
