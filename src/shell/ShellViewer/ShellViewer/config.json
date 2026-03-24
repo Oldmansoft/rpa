@@ -1,0 +1,7 @@
+﻿{
+    "Debug": true,
+    "Title": "ShellViewer",
+    "Entry": ".\\frontend\\index.html",
+    "PythonFile": ".\\backend\\index.py",
+    "ExecutorPath": "Python"
+}
