@@ -1,0 +1,9 @@
+{
+  "name": "com.rpa.script_bridge",
+  "description": "RPA Native Messaging Bridge (Rust)",
+  "path": "C:\\Job\\Work\\RPA浏览器扩展\\native-host\\host-rust.cmd",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://nkneaepdmdidnaaclhnlgghjnkaomnhj/"
+  ]
+}

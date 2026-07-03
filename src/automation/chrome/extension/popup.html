@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RPA 脚本注入</title>
+        <link rel="stylesheet" href="popup.css" />
+    </head>
+    <body>
+        <header class="header">
+            <h1>RPA 脚本注入</h1>
+            <p class="hint">执行预置动作（无任意 JS），提升 CSP 兼容性。</p>
+        </header>
+
+        <label class="field">
+            <span class="label">动作</span>
+            <select id="action" class="control">
+                <option value="elementPicker">elementPicker（页面拾取元素）</option>
+                <option value="getTabInfo">getTabInfo（列出标签页信息）</option>
+                <option value="getFrameInfo">getFrameInfo（按 URL 查询 frame）</option>
+                <option value="getInfos">getInfos（读取当前文档信息）</option>
+                <option value="click">click（点击）</option>
+                <option value="setValue">setValue（覆盖输入）</option>
+                <option value="getValue">getValue（读取 value）</option>
+                <option value="setText">setText（设置文本）</option>
+                <option value="getText">getText（读取文本）</option>
+                <option value="setAttribute">setAttribute（设置属性）</option>
+                <option value="getAttribute">getAttribute（读取属性）</option>
+                <option value="exists">exists（元素是否存在）</option>
+            </select>
+        </label>
+
+        <label class="field" style="margin-top: 10px" data-field="selector">
+            <span class="label">选择器（selector）</span>
+            <input id="selector" class="control" placeholder="例如：#login-btn 或 input[name='username']" />
+        </label>
+
+        <label class="field" style="margin-top: 10px" data-field="pickedHtml">
+            <span class="label">拾取元素 HTML</span>
+            <textarea
+                id="pickedHtml"
+                class="control mono"
+                rows="6"
+                readonly
+                spellcheck="false"
+                placeholder="拾取完成后在此显示目标元素的 outerHTML"
+            ></textarea>
+        </label>
+
+        <label class="field" style="margin-top: 10px" data-field="matchText">
+            <span class="label">匹配文本 text（可选）</span>
+            <input id="matchText" class="control" placeholder="在 selector 匹配元素内按子元素文本精确匹配" />
+        </label>
+
+        <label class="field" style="margin-top: 10px" data-field="parentSelectors">
+            <span class="label">父域 selector 列表（可选）</span>
+            <textarea
+                id="parentSelectors"
+                class="control"
+                rows="4"
+                placeholder="每行一个，按层级从外到内，例如：&#10;iframe#outer&#10;my-shell-element&#10;iframe#inner"
+            ></textarea>
+        </label>
+
+        <label class="field" style="margin-top: 10px" data-field="attributeName">
+            <span class="label">属性名 name（setAttribute / getAttribute 使用）</span>
+            <input id="attributeName" class="control" placeholder="例如：disabled、href、data-id" />
+        </label>
+
+        <label class="field" style="margin-top: 10px" data-field="value">
+            <span class="label">文本 / 值（setValue / setText / setAttribute 使用）</span>
+            <input id="value" class="control" placeholder="setValue 填 value；setText 填文本；setAttribute 填属性值" />
+        </label>
+
+        <label class="field" style="margin-top: 10px" data-field="frameId">
+            <span class="label">frameId（可选）</span>
+            <input id="frameId" class="control" type="number" min="0" step="1" placeholder="留空表示主框架（top frame）" />
+        </label>
+
+        <label class="field" style="margin-top: 10px" data-field="frameUrlContains">
+            <span class="label">frameUrlContains（可选）</span>
+            <input
+                id="frameUrlContains"
+                class="control"
+                placeholder="getFrameInfo 使用：URL 包含关键字（如 pay.example.com）"
+            />
+        </label>
+
+        <label class="field" style="margin-top: 10px" data-field="similarIndex">
+            <span class="label">similarIndex（可选）</span>
+            <input
+                id="similarIndex"
+                class="control"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="多个匹配时按序号选择（默认 0）；getFrameInfo / 元素 text 匹配均可用"
+            />
+        </label>
+
+        <p class="hint" style="margin-top: 8px" data-field="elementPickerHint">
+            开启后在页面上移动鼠标，目标元素会显示红色外框；点击选中，Esc 取消。选中结果会自动回填到 selector。
+        </p>
+
+        <p class="hint" style="margin-top: 8px" data-field="frameHint">
+            元素操作与 getInfos 支持可选 frameId；可用 text + similarIndex 在 selector 子元素中定位；getFrameInfo 使用 frameUrlContains + similarIndex。
+        </p>
+
+        <div class="actions" data-field="startPicker">
+            <button type="button" id="startPicker" class="btn primary">开启拾取</button>
+        </div>
+
+        <div class="actions" data-field="runAction">
+            <button type="button" id="inject" class="btn primary">执行动作</button>
+        </div>
+
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+
+        <script src="popup.js"></script>
+    </body>
+</html>

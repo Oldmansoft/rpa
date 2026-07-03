@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "RPA 脚本控制器",
+  "version": "1.0.0",
+  "description": "向当前页面注入自定义 RPA 自动化脚本（主世界执行，可访问页面 JS 与 DOM）",
+  "permissions": ["scripting", "storage", "activeTab", "nativeMessaging", "webNavigation"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "RPA 脚本控制"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
